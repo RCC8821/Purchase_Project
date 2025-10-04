@@ -94,7 +94,7 @@ const IndentToGetQuotation = () => {
     setIsModalOpen(true);
     setShowSuccess(false);
     setError(null);
-  };
+  }
 
   const closeModal = () => {
     setIsModalOpen(false);
