@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, User, FileText, ShoppingCart, DollarSign, Package, Truck, Receipt, CreditCard, ChevronDown, LogOut, Menu, Bell, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // Placeholder components (replace with actual imports in your project)
 import RequirementReceived from '../components/purchase/RequirementReceived';
@@ -23,6 +22,7 @@ const Dashboard = () => {
   const [userType, setUserType] = useState(null);
   const [selectedPage, setSelectedPage] = useState('no-access');
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Load userType from local storage on component mount and set default to Purchase FMS
   useEffect(() => {
@@ -31,11 +31,30 @@ const Dashboard = () => {
       setUserType(storedUserType);
       const purchasePages = getPurchasePages();
       if (purchasePages.length > 0) {
-        setSelectedPage(purchasePages[0].id); // Default to first purchase page
-        navigate(purchasePages[0].path);
+        const defaultPage = purchasePages[0].id;
+        setSelectedPage(defaultPage);
+        // Navigate to default page only if not already on a valid route
+        if (!purchasePages.some(page => location.pathname === page.path)) {
+          navigate(purchasePages[0].path);
+        }
       }
+    } else {
+      setSelectedPage('no-access');
+      navigate('/');
     }
-  }, [navigate]);
+  }, [navigate, location.pathname]);
+
+  // Sync selectedPage with current route
+  useEffect(() => {
+    const purchasePages = getPurchasePages();
+    const allPages = [...purchasePages, ...menuItems.find(m => m.id === 'billing-fms')?.pages || []];
+    const currentPage = allPages.find(page => location.pathname === page.path);
+    if (currentPage) {
+      setSelectedPage(currentPage.id);
+    } else if (!purchasePages.length && userType) {
+      setSelectedPage('no-access');
+    }
+  }, [location.pathname, userType]);
 
   const allPurchasePages = [
     {
