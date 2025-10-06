@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { FaPencilAlt, FaCheck, FaTimes, FaSpinner } from 'react-icons/fa';
 
@@ -7,7 +8,6 @@ const Take_Quotation = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedIndent, setSelectedIndent] = useState(null);
   const [vendors, setVendors] = useState([]);
-  const [materials, setMaterials] = useState([]);
   const [status4, setStatus4] = useState('Done');
   const [noOfQuotation4, setNoOfQuotation4] = useState('');
   const [remark4, setRemark4] = useState('');
@@ -17,7 +17,6 @@ const Take_Quotation = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [vendorOptions, setVendorOptions] = useState([]);
 
-  // Automatically set noOfQuotation4 based on vendors length
   useEffect(() => {
     setNoOfQuotation4(vendors.length.toString());
   }, [vendors]);
@@ -48,7 +47,6 @@ const Take_Quotation = () => {
             Material_Type: item.Material_Type || 'N/A',
             SKU_Code: item.SKU_Code || 'N/A',
             Material_Name: item.Material_Name || 'N/A',
-            Quantity: item.Quantity || 'N/A',
             Unit_Name: item.Unit_Name || 'N/A',
             Purpose: item.Purpose || 'N/A',
             Require_Date: item.Require_Date || 'N/A',
@@ -67,7 +65,7 @@ const Take_Quotation = () => {
         }
       } catch (error) {
         console.error('Error fetching requests:', error);
-        setError('Failed to load requests from API. Please try again later.');
+        setError('Data not available');
         setRequests([]);
       } finally {
         setLoading(false);
@@ -101,7 +99,6 @@ const Take_Quotation = () => {
     setCurrentStep(1);
     setSelectedIndent(null);
     setVendors([]);
-    setMaterials([]);
     setStatus4('Done');
     setNoOfQuotation4('');
     setRemark4('');
@@ -113,18 +110,12 @@ const Take_Quotation = () => {
     setCurrentStep(1);
     setSelectedIndent(null);
     setVendors([]);
-    setMaterials([]);
     setStatus4('Done');
     setNoOfQuotation4('');
     setRemark4('');
     setIsSaving(false);
     setShowSuccess(false);
   };
-
-
-  
-
-
 
   const addVendor = () => {
     setVendors([...vendors, {
@@ -141,6 +132,7 @@ const Take_Quotation = () => {
       expectedTransportCharges: '',
       freightCharges: '',
       expectedFreightCharges: '',
+      materials: [],
     }]);
   };
 
@@ -172,8 +164,9 @@ const Take_Quotation = () => {
     setVendors(newVendors);
   };
 
-  const addMaterial = () => {
-    setMaterials([...materials, {
+  const addMaterialToVendor = (vendorIndex) => {
+    const newVendors = [...vendors];
+    newVendors[vendorIndex].materials.push({
       Material_Name: '',
       Rate: '',
       'Discount (%)': '',
@@ -182,27 +175,52 @@ const Take_Quotation = () => {
       'IGST (%)': '',
       Total: '',
       Remark: '',
-    }]);
+      Revised_Quantity: '', // New field for quantity
+      Total_Value: '', // New field for total value
+    });
+    setVendors(newVendors);
   };
 
-  const handleMaterialChange = (index, field, value) => {
-    const newMaterials = [...materials];
-    newMaterials[index][field] = value;
+  const handleMaterialChange = (vendorIndex, materialIndex, field, value) => {
+    const newVendors = [...vendors];
+    const newMaterials = [...newVendors[vendorIndex].materials];
+    newMaterials[materialIndex][field] = value;
+
+    // Update Revised_Quantity when Material_Name is selected
+    if (field === 'Material_Name' && value) {
+      const selectedRequest = requests.find(
+        req => req.INDENT_NUMBER_3 === selectedIndent && req.Material_Name === value
+      );
+      if (selectedRequest) {
+        newMaterials[materialIndex].Revised_Quantity = selectedRequest.REVISED_QUANTITY_2 || '';
+      }
+    }
+
+    // Calculate Total and Total_Value
     if (['Rate', 'Discount (%)', 'CGST (%)', 'SGST (%)', 'IGST (%)'].includes(field)) {
-      const rate = parseFloat(newMaterials[index].Rate) || 0;
-      const discount = parseFloat(newMaterials[index]['Discount (%)']) || 0;
-      const cgst = parseFloat(newMaterials[index]['CGST (%)']) || 0;
-      const sgst = parseFloat(newMaterials[index]['SGST (%)']) || 0;
-      const igst = parseFloat(newMaterials[index]['IGST (%)']) || 0;
+      const rate = parseFloat(newMaterials[materialIndex].Rate) || 0;
+      const discount = parseFloat(newMaterials[materialIndex]['Discount (%)']) || 0;
+      const cgst = parseFloat(newMaterials[materialIndex]['CGST (%)']) || 0;
+      const sgst = parseFloat(newMaterials[materialIndex]['SGST (%)']) || 0;
+      const igst = parseFloat(newMaterials[materialIndex]['IGST (%)']) || 0;
       const baseAmount = rate * (1 - discount / 100);
       const taxAmount = baseAmount * ((cgst + sgst + igst) / 100);
-      newMaterials[index].Total = (baseAmount + taxAmount).toFixed(2);
+      newMaterials[materialIndex].Total = (baseAmount + taxAmount).toFixed(2);
+
+      // Calculate Total_Value
+      const revisedQuantity = parseFloat(newMaterials[materialIndex].Revised_Quantity) || 0;
+      const totalRate = parseFloat(newMaterials[materialIndex].Total) || 0;
+      newMaterials[materialIndex].Total_Value = (revisedQuantity * totalRate).toFixed(2);
     }
-    setMaterials(newMaterials);
+
+    newVendors[vendorIndex].materials = newMaterials;
+    setVendors(newVendors);
   };
 
-  const removeMaterial = (index) => {
-    setMaterials(materials.filter((_, i) => i !== index));
+  const removeMaterialFromVendor = (vendorIndex, materialIndex) => {
+    const newVendors = [...vendors];
+    newVendors[vendorIndex].materials = newVendors[vendorIndex].materials.filter((_, i) => i !== materialIndex);
+    setVendors(newVendors);
   };
 
   const validateStep3 = () => {
@@ -220,116 +238,113 @@ const Take_Quotation = () => {
       if (vendor.freightCharges === 'Yes' && !vendor.expectedFreightCharges) {
         return false;
       }
-    }
-    for (const material of materials) {
-      if (!material.Material_Name || !material.Rate) {
-        return false;
+      if (vendor.materials.length === 0) return false;
+      for (const material of vendor.materials) {
+        if (!material.Material_Name || !material.Rate || !material.Revised_Quantity) {
+          return false;
+        }
       }
     }
     return true;
   };
 
-
   const handleSave = async () => {
-  if (!selectedIndent) {
-    setError('Please select an indent number.');
-    return;
-  }
+    if (!selectedIndent) {
+      setError('Please select an indent number.');
+      return;
+    }
 
-  const selectedRequests = requests.filter(req => req.INDENT_NUMBER_3 === selectedIndent);
-  if (selectedRequests.length === 0) {
-    setError('No requests found for the selected indent.');
-    return;
-  }
+    const selectedRequests = requests.filter(req => req.INDENT_NUMBER_3 === selectedIndent);
+    if (selectedRequests.length === 0) {
+      setError('No requests found for the selected indent.');
+      return;
+    }
 
-  const common = {
-    Req_No: selectedRequests[0].Req_No,
-    site_name: selectedRequests[0].Site_Name,
-    Indent_No: selectedIndent,
+    const common = {
+      Req_No: selectedRequests[0].Req_No,
+      site_name: selectedRequests[0].Site_Name,
+      Indent_No: selectedIndent,
+    };
+
+    const entries = [];
+
+    for (const vendor of vendors) {
+      for (const material of vendor.materials) {
+        const req = selectedRequests.find(r => r.Material_Name === material.Material_Name);
+        if (!req) {
+          setError(`Material ${material.Material_Name} not found in selected indent.`);
+          return;
+        }
+
+        const revisedQuantity = parseFloat(material.Revised_Quantity) || 0;
+        const finalRate = parseFloat(material.Total) || 0;
+        const totalValue = parseFloat(material.Total_Value) || 0;
+
+        if (isNaN(totalValue) || totalValue <= 0) {
+          setError(`Invalid total value for material ${material.Material_Name}. Please check the Rate and Revised Quantity.`);
+          return;
+        }
+
+        const entry = {
+          Req_No: common.Req_No,
+          UID: req.UID,
+          site_name: common.site_name,
+          Indent_No: common.Indent_No,
+          Material_name: material.Material_Name,
+          Vendor_Name: vendor.name,
+          Vendor_Ferm_Name: vendor.firm,
+          Vendor_Address: vendor.address,
+          Contact_Number: vendor.contact,
+          Vendor_GST_No: vendor.gst,
+          RATE: material.Rate,
+          Discount: material['Discount (%)'],
+          CGST: material['CGST (%)'],
+          SGST: material['SGST (%)'],
+          IGST: material['IGST (%)'],
+          Final_Rate: material.Total,
+          Delivery_Expected_Date: vendor.deliveryDate,
+          Payment_Terms_Condistion_Advacne_Credit: vendor.paymentTerms,
+          Credit_in_Days: vendor.creditInDays,
+          Bill_Type: vendor.billType,
+          IS_TRANSPORT_REQUIRED: vendor.transportRequired,
+          EXPECTED_TRANSPORT_CHARGES: vendor.expectedTransportCharges,
+          FRIGHET_CHARGES: vendor.freightCharges,
+          EXPECTED_FRIGHET_CHARGES: vendor.expectedFreightCharges,
+          PLANNED_4: status4,
+          NO_OF_QUOTATION_4: noOfQuotation4,
+          REMARK_4: remark4,
+          REVISED_QUANTITY_2: revisedQuantity.toString(),
+          Total_Value: totalValue,
+        };
+        entries.push(entry);
+      }
+    }
+
+    try {
+      setIsSaving(true);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/save-take-Quotation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ entries }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save data');
+      }
+
+      setShowSuccess(true);
+      setTimeout(() => {
+        closeCreateModal();
+      }, 1500);
+    } catch (error) {
+      console.error('Error saving to sheet:', error);
+      setError('Failed to save due to a network error or invalid data.');
+    } finally {
+      setIsSaving(false);
+    }
   };
-
-  const entries = [];
-
-  for (const vendor of vendors) {
-    for (const material of materials) {
-      const req = selectedRequests.find(r => r.Material_Name === material.Material_Name);
-      if (!req) {
-        setError(`Material ${material.Material_Name} not found in selected indent.`);
-        return;
-      }
-
-      const revisedQuantity = parseFloat(req.REVISED_QUANTITY_2) || 0;
-      const finalRate = parseFloat(material.Total) || 0;
-      const totalValue = (revisedQuantity * finalRate).toFixed(2);
-
-      if (isNaN(totalValue) || totalValue <= 0) {
-        setError(`Invalid total value for material ${material.Material_Name}. Please check the Rate and Revised Quantity.`);
-        return;
-      }
-
-      const entry = {
-        // Time_Stamp: new Date().toISOString(),
-        Req_No: common.Req_No,
-        UID: req.UID,
-        site_name: common.site_name,
-        Indent_No: common.Indent_No,
-        Material_name: material.Material_Name,
-        Vendor_Name: vendor.name,
-        Vendor_Ferm_Name: vendor.firm,
-        Vendor_Address: vendor.address,
-        Contact_Number: vendor.contact,
-        Vendor_GST_No: vendor.gst,
-        RATE: material.Rate,
-        Discount: material['Discount (%)'],
-        CGST: material['CGST (%)'],
-        SGST: material['SGST (%)'],
-        IGST: material['IGST (%)'],
-        Final_Rate: material.Total,
-        Delivery_Expected_Date: vendor.deliveryDate,
-        Payment_Terms_Condistion_Advacne_Credit: vendor.paymentTerms,
-        Credit_in_Days: vendor.creditInDays,
-        Bill_Type: vendor.billType,
-        IS_TRANSPORT_REQUIRED: vendor.transportRequired,
-        EXPECTED_TRANSPORT_CHARGES: vendor.expectedTransportCharges,
-        FRIGHET_CHARGES: vendor.freightCharges,
-        EXPECTED_FRIGHET_CHARGES: vendor.expectedFreightCharges,
-        PLANNED_4: status4,
-        NO_OF_QUOTATION_4: noOfQuotation4,
-        REMARK_4: remark4,
-        REVISED_QUANTITY_2: revisedQuantity.toString(), // Add REVISED_QUANTITY_2
-        Total_Value: totalValue, // Include Total_Value for consistency
-      };
-      entries.push(entry);
-    }
-  }
-
-  try {
-    setIsSaving(true);
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/save-take-Quotation`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ entries }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to save data');
-    }
-
-    setShowSuccess(true);
-    setTimeout(() => {
-      closeCreateModal();
-    }, 1500);
-  } catch (error) {
-    console.error('Error saving to sheet:', error);
-    setError('Failed to save due to a network error or invalid data.');
-  } finally {
-    setIsSaving(false);
-  }
-};
-
-
 
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
@@ -359,16 +374,14 @@ const Take_Quotation = () => {
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">MATERIAL TYPE</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">SKU CODE</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">MATERIAL NAME</th>
-                  <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">QUANTITY</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">REVISED QUANTITY 2</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">UNIT NAME</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">PURPOSE</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">REQUIRE DATE</th>
-                  <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">REVISED QUANTITY 2</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">DECIDED BRAND/COMPANY NAME 2</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">INDENT NUMBER 3</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">PDF URL 3</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">REMARK 3</th>
-                 
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -377,8 +390,8 @@ const Take_Quotation = () => {
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">{request.PLANNED_4 || 'N/A'}</td>
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200 font-medium">{request.UID}</td>
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200 font-medium text-blue-600">{request.Req_No}</td>
-                    <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">
-                      <div className="max-w-[120px] truncate" title={request.Site_Name}>{request.Site_Name}</div>
+                    <td className="px-5 py-5 text-sm text-gray-800 border-r border-gray-200">
+                      <div className="max-w-[100px] " title={request.Site_Name}>{request.Site_Name}</div>
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">{request.Supervisor_Name}</td>
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">{request.Material_Type}</td>
@@ -386,15 +399,14 @@ const Take_Quotation = () => {
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">
                       <div className="max-w-[120px] truncate" title={request.Material_Name}>{request.Material_Name}</div>
                     </td>
-                    <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200 text-right font-semibold">{request.Quantity}</td>
+                    <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200 font-semibold text-orange-600">{request.REVISED_QUANTITY_2}</td>
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">{request.Unit_Name}</td>
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">
                       <div className="max-w-[100px] truncate" title={request.Purpose}>{request.Purpose}</div>
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">{request.Require_Date}</td>
-                    <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200 font-semibold text-orange-600">{request.REVISED_QUANTITY_2}</td>
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">
-                      <div className="max-w-[120px] truncate" title={request['DECIDED_BRAND/COMPANY_NAME_2']}>
+                      <div title={request['DECIDED_BRAND/COMPANY_NAME_2']}>
                         {request['DECIDED_BRAND/COMPANY_NAME_2']}
                       </div>
                     </td>
@@ -409,7 +421,6 @@ const Take_Quotation = () => {
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">
                       <div className="max-w-[120px] truncate" title={request.REMARK_3}>{request.REMARK_3}</div>
                     </td>
-                    
                   </tr>
                 ))}
               </tbody>
@@ -418,7 +429,6 @@ const Take_Quotation = () => {
         )}
       </div>
 
-      {/* Create Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-gray-100 bg-opacity-75 backdrop-blur-sm flex items-top justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-auto transform transition-all duration-300 scale-100 max-h-[90vh] flex flex-col">
@@ -504,7 +514,7 @@ const Take_Quotation = () => {
                   <div className="space-y-6">
                     <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
                       <h5 className="font-semibold text-purple-800 mb-2">Step 3: Add Vendors and Quotation Details</h5>
-                      <p className="text-purple-700 text-sm">Add vendor information and material details for quotation.</p>
+                      <p className="text-purple-700 text-sm">Add vendor information and their associated materials for quotation.</p>
                     </div>
                     
                     <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
@@ -519,20 +529,21 @@ const Take_Quotation = () => {
                         </button>
                       </div>
                       
-                      <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                        {vendors.map((vendor, index) => (
-                          <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4 relative shadow-sm">
+                      <div className="space-y-6 max-h-[600px] overflow-y-auto">
+                        {vendors.map((vendor, vIndex) => (
+                          <div key={vIndex} className="bg-gray-50 border border-gray-200 rounded-lg p-4 relative shadow-sm">
                             <div className="flex justify-between items-center mb-4">
-                              <h6 className="text-md font-semibold text-blue-800">Vendor {index + 1}</h6>
+                              <h6 className="text-md font-semibold text-blue-800">Vendor {vIndex + 1}</h6>
                               <button
-                                onClick={() => removeVendor(index)}
+                                onClick={() => removeVendor(vIndex)}
                                 className="text-red-500 hover:text-red-700 px-3 py-1 rounded-md hover:bg-red-50 transition-all duration-200"
                                 disabled={isSaving}
                               >
-                                Remove
+                                Remove Vendor
                               </button>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Vendor Firm *
@@ -540,7 +551,7 @@ const Take_Quotation = () => {
                                 </label>
                                 <select
                                   value={vendor.firm}
-                                  onChange={(e) => handleVendorChange(index, 'firm', e.target.value)}
+                                  onChange={(e) => handleVendorChange(vIndex, 'firm', e.target.value)}
                                   className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!vendor.firm ? 'border-red-500' : ''}`}
                                   disabled={isSaving}
                                   required
@@ -557,7 +568,7 @@ const Take_Quotation = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Vendor Name</label>
                                 <input
                                   value={vendor.name}
-                                  onChange={(e) => handleVendorChange(index, 'name', e.target.value)}
+                                  onChange={(e) => handleVendorChange(vIndex, 'name', e.target.value)}
                                   className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                   placeholder="Enter vendor name"
                                   disabled={isSaving}
@@ -567,7 +578,7 @@ const Take_Quotation = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">GST Number</label>
                                 <input
                                   value={vendor.gst}
-                                  onChange={(e) => handleVendorChange(index, 'gst', e.target.value)}
+                                  onChange={(e) => handleVendorChange(vIndex, 'gst', e.target.value)}
                                   className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                   placeholder="Enter GST number"
                                   disabled={isSaving}
@@ -577,25 +588,25 @@ const Take_Quotation = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
                                 <input
                                   value={vendor.contact}
-                                  onChange={(e) => handleVendorChange(index, 'contact', e.target.value)}
+                                  onChange={(e) => handleVendorChange(vIndex, 'contact', e.target.value)}
                                   className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                   placeholder="Enter contact number"
                                   disabled={isSaving}
                                 />
                               </div>
                             </div>
-                            <div className="mt-4">
+                            <div className="mb-6">
                               <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                               <textarea
                                 value={vendor.address}
-                                onChange={(e) => handleVendorChange(index, 'address', e.target.value)}
+                                onChange={(e) => handleVendorChange(vIndex, 'address', e.target.value)}
                                 className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
                                 rows={3}
                                 placeholder="Enter vendor address"
                                 disabled={isSaving}
                               />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Delivery Expected Date *
@@ -604,7 +615,7 @@ const Take_Quotation = () => {
                                 <input
                                   type="date"
                                   value={vendor.deliveryDate}
-                                  onChange={(e) => handleVendorChange(index, 'deliveryDate', e.target.value)}
+                                  onChange={(e) => handleVendorChange(vIndex, 'deliveryDate', e.target.value)}
                                   className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!vendor.deliveryDate ? 'border-red-500' : ''}`}
                                   disabled={isSaving}
                                   required
@@ -617,7 +628,7 @@ const Take_Quotation = () => {
                                 </label>
                                 <select
                                   value={vendor.billType}
-                                  onChange={(e) => handleVendorChange(index, 'billType', e.target.value)}
+                                  onChange={(e) => handleVendorChange(vIndex, 'billType', e.target.value)}
                                   className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!vendor.billType ? 'border-red-500' : ''}`}
                                   disabled={isSaving}
                                   required
@@ -635,16 +646,15 @@ const Take_Quotation = () => {
                                 </label>
                                 <select
                                   value={vendor.paymentTerms}
-                                  onChange={(e) => handleVendorChange(index, 'paymentTerms', e.target.value)}
+                                  onChange={(e) => handleVendorChange(vIndex, 'paymentTerms', e.target.value)}
                                   className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!vendor.paymentTerms ? 'border-red-500' : ''}`}
                                   disabled={isSaving}
                                   required
                                 >
                                   <option value="">Select Payment Terms</option>
                                   <option>Credit</option>
-                                  <option>Cash</option>
-                                  <option>Net 30</option>
-                                  <option>Net 60</option>
+                                  <option>Advance</option>
+                                  
                                 </select>
                               </div>
                               {vendor.paymentTerms === 'Credit' && (
@@ -656,7 +666,7 @@ const Take_Quotation = () => {
                                   <input
                                     type="number"
                                     value={vendor.creditInDays}
-                                    onChange={(e) => handleVendorChange(index, 'creditInDays', e.target.value)}
+                                    onChange={(e) => handleVendorChange(vIndex, 'creditInDays', e.target.value)}
                                     className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!vendor.creditInDays ? 'border-red-500' : ''}`}
                                     placeholder="Enter credit days"
                                     disabled={isSaving}
@@ -671,7 +681,7 @@ const Take_Quotation = () => {
                                 </label>
                                 <select
                                   value={vendor.transportRequired}
-                                  onChange={(e) => handleVendorChange(index, 'transportRequired', e.target.value)}
+                                  onChange={(e) => handleVendorChange(vIndex, 'transportRequired', e.target.value)}
                                   className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!vendor.transportRequired ? 'border-red-500' : ''}`}
                                   disabled={isSaving}
                                   required
@@ -690,7 +700,7 @@ const Take_Quotation = () => {
                                   <input
                                     type="number"
                                     value={vendor.expectedTransportCharges}
-                                    onChange={(e) => handleVendorChange(index, 'expectedTransportCharges', e.target.value)}
+                                    onChange={(e) => handleVendorChange(vIndex, 'expectedTransportCharges', e.target.value)}
                                     className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!vendor.expectedTransportCharges ? 'border-red-500' : ''}`}
                                     placeholder="Enter expected transport charges"
                                     disabled={isSaving}
@@ -705,7 +715,7 @@ const Take_Quotation = () => {
                                 </label>
                                 <select
                                   value={vendor.freightCharges}
-                                  onChange={(e) => handleVendorChange(index, 'freightCharges', e.target.value)}
+                                  onChange={(e) => handleVendorChange(vIndex, 'freightCharges', e.target.value)}
                                   className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!vendor.freightCharges ? 'border-red-500' : ''}`}
                                   disabled={isSaving}
                                   required
@@ -724,7 +734,7 @@ const Take_Quotation = () => {
                                   <input
                                     type="number"
                                     value={vendor.expectedFreightCharges}
-                                    onChange={(e) => handleVendorChange(index, 'expectedFreightCharges', e.target.value)}
+                                    onChange={(e) => handleVendorChange(vIndex, 'expectedFreightCharges', e.target.value)}
                                     className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!vendor.expectedFreightCharges ? 'border-red-500' : ''}`}
                                     placeholder="Enter expected freight charges"
                                     disabled={isSaving}
@@ -733,137 +743,160 @@ const Take_Quotation = () => {
                                 </div>
                               )}
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
 
-                    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                      <div className="flex justify-between items-center mb-4">
-                        <h5 className="text-lg font-semibold text-gray-800">Materials</h5>
-                        <button
-                          onClick={addMaterial}
-                          className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                          disabled={isSaving}
-                        >
-                          Add Material
-                        </button>
-                      </div>
-                      
-                      <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                        {materials.map((material, index) => (
-                          <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4 relative shadow-sm">
-                            <div className="flex justify-between items-center mb-4">
-                              <h6 className="text-md font-semibold text-indigo-800">Material {index + 1}</h6>
-                              <button
-                                onClick={() => removeMaterial(index)}
-                                className="text-red-500 hover:text-red-700 px-3 py-1 rounded-md hover:bg-red-50 transition-all duration-200"
-                                disabled={isSaving}
-                              >
-                                Remove
-                              </button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Material Name *
-                                  {!material.Material_Name && <span className="text-red-500 ml-1">Required</span>}
-                                </label>
-                                <select
-                                  value={material.Material_Name}
-                                  onChange={(e) => handleMaterialChange(index, 'Material_Name', e.target.value)}
-                                  className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!material.Material_Name ? 'border-red-500' : ''}`}
-                                  disabled={isSaving || !selectedIndent}
-                                  required
+                            <div className="border-t border-gray-300 pt-4">
+                              <div className="flex justify-between items-center mb-4">
+                                <h6 className="text-md font-semibold text-indigo-800">Materials for this Vendor</h6>
+                                <button
+                                  onClick={() => addMaterialToVendor(vIndex)}
+                                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                                  disabled={isSaving}
                                 >
-                                  <option value="">-- Select Material --</option>
-                                  {selectedIndent && requests
-                                    .filter(req => req.INDENT_NUMBER_3 === selectedIndent)
-                                    .map((req, i) => (
-                                      <option key={i} value={req.Material_Name}>
-                                        {`${req.Material_Name} (${req.REVISED_QUANTITY_2})`}
-                                      </option>
-                                    ))}
-                                </select>
+                                  Add Material
+                                </button>
                               </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Rate *
-                                  {!material.Rate && <span className="text-red-500 ml-1">Required</span>}
-                                </label>
-                                <input
-                                  type="number"
-                                  value={material.Rate}
-                                  onChange={(e) => handleMaterialChange(index, 'Rate', e.target.value)}
-                                  className={`w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${!material.Rate ? 'border-red-500' : ''}`}
-                                  placeholder="0.00"
-                                  disabled={isSaving}
-                                  required
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Discount (%)</label>
-                                <input
-                                  type="number"
-                                  value={material['Discount (%)']}
-                                  onChange={(e) => handleMaterialChange(index, 'Discount (%)', e.target.value)}
-                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                                  placeholder="0"
-                                  disabled={isSaving}
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">CGST (%)</label>
-                                <input
-                                  type="number"
-                                  value={material['CGST (%)']}
-                                  onChange={(e) => handleMaterialChange(index, 'CGST (%)', e.target.value)}
-                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                                  placeholder="0"
-                                  disabled={isSaving}
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">SGST (%)</label>
-                                <input
-                                  type="number"
-                                  value={material['SGST (%)']}
-                                  onChange={(e) => handleMaterialChange(index, 'SGST (%)', e.target.value)}
-                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                                  placeholder="0"
-                                  disabled={isSaving}
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">IGST (%)</label>
-                                <input
-                                  type="number"
-                                  value={material['IGST (%)']}
-                                  onChange={(e) => handleMaterialChange(index, 'IGST (%)', e.target.value)}
-                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                                  placeholder="0"
-                                  disabled={isSaving}
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Total</label>
-                                <input
-                                  type="number"
-                                  value={material.Total}
-                                  readOnly
-                                  className="w-full p-3 border border-gray-200 rounded-lg bg-gray-100 font-semibold text-green-600"
-                                  placeholder="Auto calculated"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Remark</label>
-                                <input
-                                  value={material.Remark}
-                                  onChange={(e) => handleMaterialChange(index, 'Remark', e.target.value)}
-                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                                  placeholder="Additional notes"
-                                  disabled={isSaving}
-                                />
+                              
+                              <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                                {vendor.materials.map((material, mIndex) => (
+                                  <div key={mIndex} className="bg-white border border-gray-200 rounded-lg p-3 relative shadow-sm">
+                                    <div className="flex justify-between items-center mb-3">
+                                      <h7 className="text-sm font-semibold text-indigo-600">Material {mIndex + 1}</h7>
+                                      <button
+                                        onClick={() => removeMaterialFromVendor(vIndex, mIndex)}
+                                        className="text-red-500 hover:text-red-700 px-2 py-1 rounded-md hover:bg-red-50 transition-all duration-200 text-xs"
+                                        disabled={isSaving}
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                          Material Name *
+                                          {!material.Material_Name && <span className="text-red-500 ml-1">Required</span>}
+                                        </label>
+                                        <select
+                                          value={material.Material_Name}
+                                          onChange={(e) => handleMaterialChange(vIndex, mIndex, 'Material_Name', e.target.value)}
+                                          className={`w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm ${!material.Material_Name ? 'border-red-500' : ''}`}
+                                          disabled={isSaving || !selectedIndent}
+                                          required
+                                        >
+                                          <option value="">-- Select Material --</option>
+                                          {selectedIndent && requests
+                                            .filter(req => req.INDENT_NUMBER_3 === selectedIndent)
+                                            .map((req, i) => (
+                                              <option key={i} value={req.Material_Name}>
+                                                {req.Material_Name}
+                                              </option>
+                                            ))}
+                                        </select>
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                          Rate *
+                                          {!material.Rate && <span className="text-red-500 ml-1">Required</span>}
+                                        </label>
+                                        <input
+                                          type="number"
+                                          value={material.Rate}
+                                          onChange={(e) => handleMaterialChange(vIndex, mIndex, 'Rate', e.target.value)}
+                                          className={`w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm ${!material.Rate ? 'border-red-500' : ''}`}
+                                          placeholder="0.00"
+                                          disabled={isSaving}
+                                          required
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Discount (%)</label>
+                                        <input
+                                          type="number"
+                                          value={material['Discount (%)']}
+                                          onChange={(e) => handleMaterialChange(vIndex, mIndex, 'Discount (%)', e.target.value)}
+                                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm"
+                                          placeholder="0"
+                                          disabled={isSaving}
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">CGST (%)</label>
+                                        <input
+                                          type="number"
+                                          value={material['CGST (%)']}
+                                          onChange={(e) => handleMaterialChange(vIndex, mIndex, 'CGST (%)', e.target.value)}
+                                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm"
+                                          placeholder="0"
+                                          disabled={isSaving}
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">SGST (%)</label>
+                                        <input
+                                          type="number"
+                                          value={material['SGST (%)']}
+                                          onChange={(e) => handleMaterialChange(vIndex, mIndex, 'SGST (%)', e.target.value)}
+                                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm"
+                                          placeholder="0"
+                                          disabled={isSaving}
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">IGST (%)</label>
+                                        <input
+                                          type="number"
+                                          value={material['IGST (%)']}
+                                          onChange={(e) => handleMaterialChange(vIndex, mIndex, 'IGST (%)', e.target.value)}
+                                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm"
+                                          placeholder="0"
+                                          disabled={isSaving}
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Total</label>
+                                        <input
+                                          type="number"
+                                          value={material.Total}
+                                          readOnly
+                                          className="w-full p-2 border border-gray-200 rounded-lg bg-gray-100 font-semibold text-green-600 text-sm"
+                                          placeholder="Auto calculated"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Revised Quantity</label>
+                                        <input
+                                          type="number"
+                                          value={material.Revised_Quantity}
+                                          readOnly
+                                          className="w-full p-2 border border-gray-200 rounded-lg bg-gray-100 font-semibold text-orange-600 text-sm"
+                                          placeholder="Auto fetched"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Total Value</label>
+                                        <input
+                                          type="number"
+                                          value={material.Total_Value}
+                                          readOnly
+                                          className="w-full p-2 border border-gray-200 rounded-lg bg-gray-100 font-semibold text-blue-600 text-sm"
+                                          placeholder="Auto calculated"
+                                        />
+                                      </div>
+                                      <div className="md:col-span-2">
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Remark</label>
+                                        <input
+                                          value={material.Remark}
+                                          onChange={(e) => handleMaterialChange(vIndex, mIndex, 'Remark', e.target.value)}
+                                          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm"
+                                          placeholder="Additional notes"
+                                          disabled={isSaving}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                                {vendor.materials.length === 0 && (
+                                  <p className="text-sm text-gray-500 text-center py-4">No materials added for this vendor. Add one above.</p>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -877,15 +910,14 @@ const Take_Quotation = () => {
                   <div className="space-y-6">
                     <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
                       <h5 className="font-semibold text-emerald-800 mb-2">Step 4: Review Vendors and Materials</h5>
-                      <p className="text-emerald-700 text-sm">Review the vendors and materials you have added.</p>
+                      <p className="text-emerald-700 text-sm">Review the vendors and their associated materials.</p>
                     </div>
 
-                    <div className="space-y-4">
-                      <h5 className="text-lg font-semibold text-gray-800">Vendors</h5>
-                      {vendors.map((vendor, index) => (
-                        <div key={index} className="bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm">
-                          <h6 className="text-md font-semibold text-blue-800 mb-2">Vendor {index + 1}</h6>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-6">
+                      {vendors.map((vendor, vIndex) => (
+                        <div key={vIndex} className="bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm">
+                          <h6 className="text-md font-semibold text-blue-800 mb-3 border-b border-blue-200 pb-2">Vendor {vIndex + 1}</h6>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                               <label className="block text-xs font-medium text-gray-500 mb-1">Firm</label>
                               <p className="text-sm text-gray-800">{vendor.firm}</p>
@@ -945,59 +977,67 @@ const Take_Quotation = () => {
                               </div>
                             )}
                           </div>
-                        </div>
-                      ))}
-                    </div>
 
-                    <div className="space-y-4">
-                      <h5 className="text-lg font-semibold text-gray-800">Materials</h5>
-                      {materials.map((material, index) => (
-                        <div key={index} className="bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm">
-                          <h6 className="text-md font-semibold text-indigo-800 mb-2">Material {index + 1}</h6>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Material Name</label>
-                              <p className="text-sm text-gray-800">{material.Material_Name}</p>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Rate</label>
-                              <p className="text-sm text-gray-800">{material.Rate}</p>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Discount (%)</label>
-                              <p className="text-sm text-gray-800">{material['Discount (%)']}</p>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">CGST (%)</label>
-                              <p className="text-sm text-gray-800">{material['CGST (%)']}</p>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">SGST (%)</label>
-                              <p className="text-sm text-gray-800">{material['SGST (%)']}</p>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">IGST (%)</label>
-                              <p className="text-sm text-gray-800">{material['IGST (%)']}</p>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Total</label>
-                              <p className="text-sm text-gray-800">{material.Total}</p>
-                            </div>
-                            
-                            <div>
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Remark</label>
-                              <p className="text-sm text-gray-800">{material.Remark}</p>
+                          <div className="border-t border-gray-300 pt-3">
+                            <h6 className="text-sm font-semibold text-indigo-800 mb-2">Materials</h6>
+                            <div className="space-y-3">
+                              {vendor.materials.map((material, mIndex) => (
+                                <div key={mIndex} className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm">
+                                  <h7 className="text-xs font-semibold text-indigo-600 mb-2">Material {mIndex + 1}</h7>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                      <label className="block text-gray-500 mb-0.5">Material Name</label>
+                                      <p className="text-gray-800">{material.Material_Name}</p>
+                                    </div>
+                                    <div>
+                                      <label className="block text-gray-500 mb-0.5">Rate</label>
+                                      <p className="text-gray-800">{material.Rate}</p>
+                                    </div>
+                                    <div>
+                                      <label className="block text-gray-500 mb-0.5">Discount (%)</label>
+                                      <p className="text-gray-800">{material['Discount (%)']}</p>
+                                    </div>
+                                    <div>
+                                      <label className="block text-gray-500 mb-0.5">CGST (%)</label>
+                                      <p className="text-gray-800">{material['CGST (%)']}</p>
+                                    </div>
+                                    <div>
+                                      <label className="block text-gray-500 mb-0.5">SGST (%)</label>
+                                      <p className="text-gray-800">{material['SGST (%)']}</p>
+                                    </div>
+                                    <div>
+                                      <label className="block text-gray-500 mb-0.5">IGST (%)</label>
+                                      <p className="text-gray-800">{material['IGST (%)']}</p>
+                                    </div>
+                                    <div>
+                                      <label className="block text-gray-500 mb-0.5">Total</label>
+                                      <p className="text-gray-800 font-semibold text-green-600">{material.Total}</p>
+                                    </div>
+                                    <div>
+                                      <label className="block text-gray-500 mb-0.5">Revised Quantity</label>
+                                      <p className="text-gray-800 font-semibold text-orange-600">{material.Revised_Quantity}</p>
+                                    </div>
+                                    <div>
+                                      <label className="block text-gray-500 mb-0.5">Total Value</label>
+                                      <p className="text-gray-800 font-semibold text-blue-600">{material.Total_Value}</p>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                      <label className="block text-gray-500 mb-0.5">Remark</label>
+                                      <p className="text-gray-800">{material.Remark}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              {vendor.materials.length === 0 && (
+                                <p className="text-sm text-gray-500 text-center py-2">No materials for this vendor.</p>
+                              )}
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                )} 
-
-               
-
-   
+                )}
 
                 {currentStep === 5 && (
                   <div className="space-y-6">

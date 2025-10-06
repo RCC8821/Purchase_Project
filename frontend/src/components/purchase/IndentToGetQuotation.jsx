@@ -75,7 +75,7 @@ const IndentToGetQuotation = () => {
         }
       } catch (error) {
         console.error("Error fetching requests:", error);
-        setError("Failed to load requests from API.");
+        setError("Data not available");
         setRequests([]);
       } finally {
         setLoading(false);
@@ -88,7 +88,7 @@ const IndentToGetQuotation = () => {
     setCurrentStep(1);
     setSelectedReqNo(null);
     setSelectedUIDs([]);
-    setStatus3("Indent");
+    setStatus3("");
     setRemark3("");
     setIndentNumber3(`IND-${nextIndentNumber.toString().padStart(3, "0")}`);
     setIsModalOpen(true);
@@ -101,7 +101,7 @@ const IndentToGetQuotation = () => {
     setCurrentStep(1);
     setSelectedReqNo(null);
     setSelectedUIDs([]);
-    setStatus3("Indent");
+    setStatus3("");
     setIndentNumber3("");
     setRemark3("");
     setIsSaving(false);
@@ -263,7 +263,7 @@ const IndentToGetQuotation = () => {
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       <div
-                        className="max-w-[120px] truncate"
+                        // className="max-w-[120px] truncate"
                         title={request.Site_Name}
                       >
                         {request.Site_Name}
@@ -280,7 +280,7 @@ const IndentToGetQuotation = () => {
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       <div
-                        className="max-w-[120px] truncate"
+                        // className="max-w-[120px] truncate"
                         title={request.Material_Name}
                       >
                         {request.Material_Name}
@@ -472,6 +472,7 @@ const IndentToGetQuotation = () => {
                         className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 bg-white appearance-none cursor-pointer"
                         disabled={isSaving}
                       >
+                         <option value="">-------- Select Status ---------</option>
                         <option value="Indent">Indent</option>
                         <option value="No Indent">No Indent</option>
                         <option value="Shifting">Shifting</option>

@@ -30,7 +30,7 @@ const Final_Material_Received = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      setError('Failed to load data.');
+      setError('Data not available');
       setRequests([]);
     } finally {
       setLoading(false);
@@ -155,8 +155,8 @@ const handleSave = async () => {
                     <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Timestamp}</td>
                     <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{request.uid}</td>
                     <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{request.reqNo}</td>
-                    <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div className="max-w-[120px] truncate" title={request.siteName}>{request.siteName}</div>
+                    <td className="px-5 py-5 text-sm text-gray-800 border-r border-gray-200">
+                      <div className="max-w-[150px]"  title={request.siteName}>{request.siteName}</div>
                     </td>
                     <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{request.supervisorName}</td>
                     <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{request.materialType}</td>

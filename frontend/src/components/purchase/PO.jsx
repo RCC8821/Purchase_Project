@@ -31,7 +31,7 @@ const PO = () => {
         }
       } catch (error) {
         console.error('Error fetching requests:', error);
-        setError('Failed to load requests from API.');
+        setError('Data not available');
         setRequests([]);
       } finally {
         setLoading(false);
@@ -248,14 +248,14 @@ const PO = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.UID}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Req_No}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div className="max-w-[120px] truncate" title={request.Site_Name}>
+                      <div  title={request.Site_Name}>
                         {request.Site_Name}
                       </div>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Material_Type}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.SKU_Code}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div className="max-w-[120px] truncate" title={request.Material_Name}>
+                      <div  title={request.Material_Name}>
                         {request.Material_Name}
                       </div>
                     </td>

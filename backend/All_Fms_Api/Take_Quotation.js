@@ -33,7 +33,6 @@ router.get('/vendors', async (req, res) => {
 
 
 // GET: Fetch get-indent-data
-
 router.get('/get-take-Quotation', async (req, res) => {
   try {
     const range = 'Purchase_FMS!B7:AD';
@@ -95,7 +94,7 @@ router.get('/get-take-Quotation', async (req, res) => {
       })));
     }
 
-    // Find ACTUAL_4 column index dynamically
+    // Find ACTUAL_4 and PLANNED_4 column indices dynamically
     const actual4Index = headers.find(h => h.key === 'ACTUAL_4')?.column;
     const planned4Index = headers.find(h => h.key === 'PLANNED_4')?.column;
     if (actual4Index === undefined || planned4Index === undefined) {
@@ -119,15 +118,19 @@ router.get('/get-take-Quotation', async (req, res) => {
           return null;
         }
 
-        // Check if ACTUAL_4 is empty
+        // Check if ACTUAL_4 is empty and PLANNED_4 is non-empty
         const actual4 = row[actual4Index]?.trim() || '';
         const planned4 = row[planned4Index]?.trim() || '';
         console.log(
           `Row ${index + 8} - ACTUAL_4: "${actual4}", PLANNED_4: "${planned4}", Full row: ${JSON.stringify(row)}`
         );
 
-        if (actual4) {
-          console.log(`Skipping row ${index + 8} with non-empty ACTUAL_4="${actual4}"`);
+        if (actual4 || !planned4) {
+          console.log(
+            `Skipping row ${index + 8} - Reason: ${actual4 ? `Non-empty ACTUAL_4="${actual4}"` : ''}${
+              actual4 && !planned4 ? ' and ' : ''
+            }${!planned4 ? `Empty PLANNED_4="${planned4}"` : ''}`
+          );
           return null;
         }
 
@@ -146,7 +149,7 @@ router.get('/get-take-Quotation', async (req, res) => {
       })
       .filter(obj => obj && Object.entries(obj).some(([key, value]) => key !== 'Action' && value !== ''));
 
-    console.log(`Rows with ACTUAL_4 empty: ${validRowCount}`);
+    console.log(`Rows with ACTUAL_4 empty and PLANNED_4 non-empty: ${validRowCount}`);
     console.log('Final formData:', JSON.stringify(formData, null, 2));
 
     if (!formData.length) {
@@ -154,8 +157,8 @@ router.get('/get-take-Quotation', async (req, res) => {
       return res.status(404).json({
         error: 'No valid data found after filtering',
         details: validRowCount === 0
-          ? 'All rows have ACTUAL_4 non-empty in column AC'
-          : 'All rows with empty ACTUAL_4 are empty in other columns',
+          ? 'No rows have ACTUAL_4 empty and PLANNED_4 non-empty in columns AC and AB'
+          : 'All rows with ACTUAL_4 empty and PLANNED_4 non-empty are empty in other columns',
       });
     }
 

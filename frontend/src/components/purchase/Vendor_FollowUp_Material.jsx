@@ -63,7 +63,7 @@ const Vendor_FollowUp_Material = () => {
         }
       } catch (error) {
         console.error('Error fetching materials:', error);
-        setError('Failed to load materials from API. Please try again later.');
+        setError('Data not available');
         setMaterials([]);
       } finally {
         setLoading(false);
@@ -217,13 +217,13 @@ const Vendor_FollowUp_Material = () => {
                       <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200 font-medium">{material.UID || 'N/A'}</td>
                       <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200 font-medium text-blue-600">{material.Req_No || 'N/A'}</td>
                       <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">
-                        <div className="max-w-[120px] truncate" title={material.Site_Name}>{material.Site_Name || 'N/A'}</div>
+                        <div  title={material.Site_Name}>{material.Site_Name || 'N/A'}</div>
                       </td>
                       <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">{material.Supervisor_Name || 'N/A'}</td>
                       <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">{material.Material_Type || 'N/A'}</td>
                       <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200 font-mono text-xs">{material.SKU_Code || 'N/A'}</td>
                       <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">
-                        <div className="max-w-[120px] truncate" title={material.Material_Name}>{material.Material_Name || 'N/A'}</div>
+                        <div  title={material.Material_Name}>{material.Material_Name || 'N/A'}</div>
                       </td>
                       <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200 text-right font-semibold">{material.Quantity || 'N/A'}</td>
                       <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">{material.Unit_Name || 'N/A'}</td>

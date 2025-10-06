@@ -129,15 +129,19 @@ router.get('/get-approval-Quotation', async (req, res) => {
           return null;
         }
 
-        // Check if ACTUAL_5 is empty
+        // Check if ACTUAL_5 is empty and PLANNED_5 is non-empty
         const actual5 = row[actual5Index]?.trim() || '';
         const planned5 = row[planned5Index]?.trim() || '';
         console.log(
-          `Row ${index + 8} - ACTUAL_5: "${actual5}", PLANNED_5: "${planned5}"`
+          `Row ${index + 8} - ACTUAL_5: "${actual5}", PLANNED_5: "${planned5}", Full row: ${JSON.stringify(row)}`
         );
 
-        if (actual5) {
-          console.log(`Skipping row ${index + 8} with non-empty ACTUAL_5="${actual5}"`);
+        if (actual5 || !planned5) {
+          console.log(
+            `Skipping row ${index + 8} - Reason: ${actual5 ? `Non-empty ACTUAL_5="${actual5}"` : ''}${
+              actual5 && !planned5 ? ' and ' : ''
+            }${!planned5 ? `Empty PLANNED_5="${planned5}"` : ''}`
+          );
           return null;
         }
 
@@ -156,7 +160,7 @@ router.get('/get-approval-Quotation', async (req, res) => {
       })
       .filter(obj => obj && Object.entries(obj).some(([key, value]) => key !== 'Action' && value !== ''));
 
-    console.log(`Rows with ACTUAL_5 empty: ${validRowCount}`);
+    console.log(`Rows with ACTUAL_5 empty and PLANNED_5 non-empty: ${validRowCount}`);
     console.log('Final formData:', JSON.stringify(formData, null, 2));
 
     if (!formData.length) {
@@ -164,8 +168,8 @@ router.get('/get-approval-Quotation', async (req, res) => {
       return res.status(404).json({
         error: 'No valid data found after filtering',
         details: validRowCount === 0
-          ? 'All rows have ACTUAL_5 non-empty in column AJ'
-          : 'All rows with empty ACTUAL_5 are empty in other columns',
+          ? 'No rows have ACTUAL_5 empty and PLANNED_5 non-empty in columns AJ and AI'
+          : 'All rows with ACTUAL_5 empty and PLANNED_5 non-empty are empty in other columns',
       });
     }
 
@@ -567,16 +571,17 @@ const generateQuotationPDF = (approvedItems, quotationNo, indentNo) => {
   }
 };
 
+
 // POST: Update approval
 router.post('/update-approval', async (req, res) => {
   console.log('=== UPDATE APPROVAL START ===');
   console.log('Received request:', req.body);
-  const { uids, status } = req.body;
+  const { approvals, status } = req.body;
 
   // Validate inputs
-  if (!uids || !Array.isArray(uids) || uids.length === 0) {
-    console.error('Validation error: No UIDs');
-    return res.status(400).json({ error: 'No UIDs provided or invalid format' });
+  if (!approvals || !Array.isArray(approvals) || approvals.length === 0) {
+    console.error('Validation error: No approvals provided');
+    return res.status(400).json({ error: 'No approvals provided or invalid format' });
   }
   if (!status) {
     console.error('Validation error: No status');
@@ -633,21 +638,25 @@ router.post('/update-approval', async (req, res) => {
     // Define column indices
     const uidColumnIndex = 2; // Column C (UID)
     const indentNoIndex = 4; // Column E (Indent_No)
+    const vendorFirmNameIndex = 7; // Column I (Vendor_Ferm_Name, assuming it's column I)
     const approvalStatusIndex = 31; // Column AF (Approval Status)
     const approvedQuotationNoIndex = 32; // Column AG (Approved Quotation No)
     const pdfUrlIndex = 33; // Column AH (PDF URL)
 
     // Verify columns exist
-    if (uidColumnIndex >= header.length || indentNoIndex >= header.length || 
-        approvalStatusIndex >= header.length || approvedQuotationNoIndex >= header.length || 
-        pdfUrlIndex >= header.length) {
+    if (
+      uidColumnIndex >= header.length ||
+      indentNoIndex >= header.length ||
+      vendorFirmNameIndex >= header.length ||
+      approvalStatusIndex >= header.length ||
+      approvedQuotationNoIndex >= header.length ||
+      pdfUrlIndex >= header.length
+    ) {
       console.error('Required columns not found in sheet');
-      return res.status(400).json({ error: 'Required columns (C, E, AF, AG, AH) not found in sheet' });
+      return res.status(400).json({
+        error: 'Required columns (C, E, I, AF, AG, AH) not found in sheet',
+      });
     }
-
-    const sheetUIDs = rows.slice(1).map(row => row[uidColumnIndex]?.toString().trim()).filter(uid => uid);
-    console.log('UIDs in sheet (Column C):', sheetUIDs);
-    console.log('Processing UIDs:', uids);
 
     // Track unique Indent_No and their corresponding approvedQuotationNo
     const indentNoMap = new Map();
@@ -655,27 +664,42 @@ router.post('/update-approval', async (req, res) => {
     let updatedCount = 0;
     let approvedRowsData = [];
 
-    // First pass: Identify unique Indent_No and assign quotation numbers
+    // First pass: Identify rows to update based on UID and Vendor_Ferm_Name
     rows.forEach((row, index) => {
       if (index === 0) return; // Skip header
       const uid = row[uidColumnIndex]?.toString().trim() || '';
+      const vendorFirmName = row[vendorFirmNameIndex]?.toString().trim() || '';
       const indentNo = row[indentNoIndex]?.toString().trim() || '';
-      if (uid && uids.includes(uid) && status.toLowerCase() === 'approved') {
-        if (!indentNoMap.has(indentNo)) {
+
+      // Check if this row matches any approval request
+      const matchingApproval = approvals.find(
+        (approval) =>
+          approval.uid.toString().trim() === uid &&
+          approval.vendor_firm_name.toString().trim() === vendorFirmName
+      );
+
+      if (matchingApproval) {
+        if (status.toLowerCase() === 'approved' && !indentNoMap.has(indentNo)) {
           approvalCounter++;
           indentNoMap.set(indentNo, generateApprovedQuotationNo(approvalCounter));
         }
         approvedRowsData.push({
-          uid: uid,
-          indentNo: indentNo,
-          quotationNo: indentNoMap.get(indentNo),
+          uid,
+          vendor_firm_name: vendorFirmName,
+          indentNo,
+          quotationNo: indentNoMap.get(indentNo) || '',
           rowData: row,
-          rowIndex: index + 1
+          rowIndex: index + 1,
         });
-        console.log(`Collected row for UID ${uid}, Indent ${indentNo}`);
+        console.log(
+          `Collected row for UID ${uid}, Vendor ${vendorFirmName}, Indent ${indentNo}`
+        );
       }
     });
-    console.log(`Approved rows collected: ${approvedRowsData.length}, Indent Map:`, Array.from(indentNoMap.entries()));
+    console.log(
+      `Approved rows collected: ${approvedRowsData.length}, Indent Map:`,
+      Array.from(indentNoMap.entries())
+    );
 
     // PDF Generation
     let pdfUrlsByIndent = {};
@@ -683,7 +707,7 @@ router.post('/update-approval', async (req, res) => {
     let indentGroups = {};
     if (status.toLowerCase() === 'approved' && approvedRowsData.length > 0) {
       console.log('=== STARTING PDF GENERATION ===');
-      approvedRowsData.forEach(item => {
+      approvedRowsData.forEach((item) => {
         if (!indentGroups[item.indentNo]) {
           indentGroups[item.indentNo] = [];
         }
@@ -707,7 +731,7 @@ router.post('/update-approval', async (req, res) => {
             throw new Error('PDF data URI does not start with expected base64 prefix');
           }
           const base64Data = pdfDataUri.replace(base64Prefix, '');
-          
+
           // Validate base64 data
           if (!base64Data || !/^[A-Za-z0-9+/=]+$/.test(base64Data)) {
             throw new Error('Invalid base64 data for PDF');
@@ -743,7 +767,6 @@ router.post('/update-approval', async (req, res) => {
           console.log(`Permissions set for ${indentNo}`);
 
           pdfUrlsByIndent[indentNo] = pdfUrl;
-
         } catch (pdfErr) {
           console.error(`PDF Error for ${indentNo}:`, pdfErr.message, pdfErr.stack);
           pdfErrors.push({ indentNo, error: pdfErr.message });
@@ -756,12 +779,20 @@ router.post('/update-approval', async (req, res) => {
       }
     }
 
-    // Second pass: Update rows based on UID and assigned quotation numbers
+    // Second pass: Update rows based on UID and Vendor_Ferm_Name
     rows.forEach((row, index) => {
       if (index === 0) return; // Skip header
       const uid = row[uidColumnIndex]?.toString().trim() || '';
+      const vendorFirmName = row[vendorFirmNameIndex]?.toString().trim() || '';
       const indentNo = row[indentNoIndex]?.toString().trim() || '';
-      if (uid && uids.includes(uid)) {
+
+      const matchingApproval = approvals.find(
+        (approval) =>
+          approval.uid.toString().trim() === uid &&
+          approval.vendor_firm_name.toString().trim() === vendorFirmName
+      );
+
+      if (matchingApproval) {
         updates.push({
           range: `Quotation_Master!AF${index + 1}`,
           values: [[status]],
@@ -779,7 +810,9 @@ router.post('/update-approval', async (req, res) => {
             values: [[pdfUrl]],
           });
 
-          console.log(`Prepared update for row ${index + 1}: UID ${uid}, Quotation: ${quotationNo}, PDF: ${pdfUrl ? 'URL set' : 'No PDF'}`);
+          console.log(
+            `Prepared update for row ${index + 1}: UID ${uid}, Vendor ${vendorFirmName}, Quotation: ${quotationNo}, PDF: ${pdfUrl ? 'URL set' : 'No PDF'}`
+          );
         }
 
         updatedCount++;
@@ -787,9 +820,11 @@ router.post('/update-approval', async (req, res) => {
     });
 
     if (updates.length === 0) {
-      console.error('No matching UIDs found');
+      console.error('No matching quotations found');
       return res.status(404).json({
-        error: `No matching UIDs found. Provided: ${uids.join(', ')}. Available in sheet: ${sheetUIDs.slice(0, 10).join(', ')}...`
+        error: `No matching quotations found. Provided: ${JSON.stringify(
+          approvals
+        )}.`,
       });
     }
 
@@ -814,14 +849,15 @@ router.post('/update-approval', async (req, res) => {
     console.log('Batch update successful');
 
     const responseData = {
-      message: `Updated ${updatedCount} rows. Generated PDFs: ${Object.keys(pdfUrlsByIndent).length}/${Object.keys(indentGroups).length}`,
+      message: `Updated ${updatedCount} rows. Generated PDFs: ${Object.keys(
+        pdfUrlsByIndent
+      ).length}/${Object.keys(indentGroups).length}`,
       pdfUrls: pdfUrlsByIndent,
       errors: pdfErrors.length > 0 ? pdfErrors : undefined,
-      indentNosProcessed: Array.from(indentNoMap.keys())
+      indentNosProcessed: Array.from(indentNoMap.keys()),
     };
     console.log('Response:', responseData);
     res.status(200).json(responseData);
-
   } catch (error) {
     console.error('=== MAJOR ERROR ===', error.message, error.stack);
     res.status(500).json({ error: 'Failed: ' + error.message, details: error.stack });

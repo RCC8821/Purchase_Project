@@ -228,7 +228,7 @@ const Material_Received = () => {
       }, 1500);
     } catch (error) {
       console.error('Error saving data:', error.message);
-      setError(`Failed to save: ${error.message}`);
+      setError(`Data not available`);
     } finally {
       setIsSaving(false);
     }
@@ -319,14 +319,14 @@ const Material_Received = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.uid}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.reqNo}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div className="max-w-[120px] truncate" title={request.siteName}>{request.siteName}</div>
+                      <div  title={request.siteName}>{request.siteName}</div>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.supervisorName}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.vendorName}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.materialType}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.skuCode}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div className="max-w-[120px] truncate" title={request.materialName}>{request.materialName}</div>
+                      <div  title={request.materialName}>{request.materialName}</div>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.unitName}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200 text-right">{request.totalReceivedQuantity}</td>
