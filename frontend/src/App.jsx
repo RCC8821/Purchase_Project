@@ -13,6 +13,11 @@ import Final_Material_Received from './components/purchase/Final_Material_Receiv
 import MRN from './components/purchase/MRN';
 import BillingFMS from './components/BillingFMS';
 
+
+/////// Billing 
+
+import Vendor_followup_billing from './components/purchase/Vendor_followup_billing';
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -29,6 +34,7 @@ const App = () => {
           <Route path="Material_Received" element={<Material_Received />} />
           <Route path='Final_Material_Received' element={<Final_Material_Received/>} />
           <Route path='MRN' element={<MRN/>}/>
+          <Route path='Vendor_followup_billing' element={<Vendor_followup_billing/>}/>
           {/* <Route path="procurement-reports" element={<ProcurementReports />} /> */}
           <Route path="invoice-generation" element={<BillingFMS selectedPage="invoice-generation" />} />
           <Route path="payment-tracking" element={<BillingFMS selectedPage="payment-tracking" />} />

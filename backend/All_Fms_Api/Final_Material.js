@@ -1,6 +1,5 @@
 const express = require('express');
 const { sheets, spreadsheetId } = require('../config/googleSheet');
-
 const router = express.Router();
 
 router.get('/get-Final-material-received', async (req, res) => {
@@ -12,50 +11,130 @@ router.get('/get-Final-material-received', async (req, res) => {
     });
 
     let data1 = response1.data.values || [];
+    if (!data1.length) {
+      console.log('No data found in Material_Received sheet for range: A2:BW');
+      return res.status(404).json({ error: 'No data found in Material_Received sheet', details: 'Sheet or range is empty' });
+    }
 
-    // Fetch data from Purchase_FMS sheet
+    // Fetch data from Purchase_FMS sheet, including PLANNED_9 and ACTUAL_9
     const response3 = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Purchase_FMS!A8:Q', // Adjust range to include row 8 onwards and column Q
+      range: 'Purchase_FMS!A8:BQ', // Extended range to include BP (PLANNED_9) and BQ (ACTUAL_9)
     });
 
     let data3 = response3.data.values || [];
+    if (!data3.length) {
+      console.log('No data found in Purchase_FMS sheet for range: A8:BQ');
+      return res.status(404).json({ error: 'No data found in Purchase_FMS sheet', details: 'Sheet or range is empty' });
+    }
+
+    // Define headers for Purchase_FMS with their expected column positions (0-based index relative to A)
+    const headers = [
+      { key: 'Req_No', column: 2 }, // C
+      { key: 'REVISED_QUANTITY_2', column: 16 }, // Q
+      { key: 'PLANNED_9', column: 67 }, // BP (adjust column index if different)
+      { key: 'ACTUAL_9', column: 68 }, // BQ (adjust column index if different)
+    ];
 
     // Create a map for Purchase_FMS data using reqNo as the key
-    const revisedQuantityMap = new Map();
-    data3.forEach(row => {
-      const reqNo = row[2] || ''; // Column C (3rd column, 0-based index) for reqNo
-      const revisedQuantity = row[16] || ''; // Column Q (17th column, 0-based index) for REVISED QUANTITY 2
+    const purchaseDataMap = new Map();
+    let validRowCount = 0;
+
+    data3.forEach((row, index) => {
+      const reqNo = row[2]?.trim() || ''; // Column C for Req_No
+      const revisedQuantity = row[16]?.trim() || ''; // Column Q for REVISED_QUANTITY_2
+      const planned9 = row[67]?.trim() || ''; // Column BP for PLANNED_9 (adjust if needed)
+      const actual9 = row[68]?.trim() || ''; // Column BQ for ACTUAL_9 (adjust if needed)
+
+      // Skip empty rows
+      if (!row || row.every(cell => !cell || cell.trim() === '')) {
+        console.log(`Skipping empty row ${index + 8} in Purchase_FMS`);
+        return;
+      }
+
+      // Check if ACTUAL_9 is empty and PLANNED_9 is non-empty
+      if (actual9 || !planned9) {
+        console.log(
+          `Skipping row ${index + 8} - Reason: ${actual9 ? `Non-empty ACTUAL_9="${actual9}"` : ''}${
+            actual9 && !planned9 ? ' and ' : ''
+          }${!planned9 ? `Empty PLANNED_9="${planned9}"` : ''}`
+        );
+        return;
+      }
+
       if (reqNo) {
-        revisedQuantityMap.set(reqNo, revisedQuantity);
+        validRowCount++;
+        purchaseDataMap.set(reqNo, { revisedQuantity, planned9, actual9 });
       }
     });
-   
-    // Transform data from the first sheet and include both quantities
-    const filteredData = data1.map(row => ({
-      Timestamp: row[0] || '',
-      uid: row[1] || '',
-      reqNo: row[2] || '',
-      siteName: row[3] || '',
-      supervisorName: row[4] || '',
-      vendorName: row[12] || '',
-      materialType: row[5] || '',
-      skuCode: row[6] || '',
-      materialName: row[7] || '',
-      unitName: row[8] || '',
-      totalReceivedQuantity: row[9] || '', // Quantity received
-      status: row[10] || '',
-      Challan_url: row[11] || '',
-      revisedQuantity: revisedQuantityMap.get(row[2] || '') || '' // Revised quantity based on reqNo
-    }));
+
+    console.log(`Rows with ACTUAL_9 empty and PLANNED_9 non-empty: ${validRowCount}`);
+
+    if (!purchaseDataMap.size) {
+      console.log('No valid data found in Purchase_FMS after filtering');
+      return res.status(404).json({
+        error: 'No valid data found in Purchase_FMS after filtering',
+        details: 'No rows have ACTUAL_9 empty and PLANNED_9 non-empty in columns BQ and BP'
+      });
+    }
+
+    // Transform and filter data from Material_Received sheet
+    const filteredData = data1
+      .map((row, index) => {
+        const reqNo = row[2]?.trim() || '';
+        const purchaseData = purchaseDataMap.get(reqNo);
+
+        // Only include rows where reqNo matches a valid Purchase_FMS row
+        if (!purchaseData) {
+          console.log(`Skipping row ${index + 2} in Material_Received - No matching reqNo=${reqNo} in Purchase_FMS`);
+          return null;
+        }
+
+        return {
+          Timestamp: row[0]?.trim() || '',
+          uid: row[1]?.trim() || '',
+          reqNo: reqNo,
+          siteName: row[3]?.trim() || '',
+          supervisorName: row[4]?.trim() || '',
+          vendorName: row[12]?.trim() || '',
+          materialType: row[5]?.trim() || '',
+          skuCode: row[6]?.trim() || '',
+          materialName: row[7]?.trim() || '',
+          unitName: row[8]?.trim() || '',
+          totalReceivedQuantity: row[9]?.trim() || '',
+          status: row[10]?.trim() || '',
+          Challan_url: row[11]?.trim() || '',
+          revisedQuantity: purchaseData.revisedQuantity || '',
+          planned9: purchaseData.planned9 || '',
+          actual9: purchaseData.actual9 || ''
+        };
+      })
+      .filter(row => row !== null);
+
+    if (!filteredData.length) {
+      console.log('No valid data found after matching Material_Received with Purchase_FMS');
+      return res.status(404).json({
+        error: 'No valid data found after matching',
+        details: 'No rows in Material_Received match filtered Purchase_FMS rows'
+      });
+    }
+
+    // Sort object keys for consistent output
+    const sortedFilteredData = filteredData.map(obj => {
+      const sortedObj = {};
+      Object.keys(obj).sort().forEach(key => {
+        sortedObj[key] = obj[key];
+      });
+      return sortedObj;
+    });
 
     res.json({
       success: true,
-      data: filteredData
+      data: sortedFilteredData
     });
   } catch (error) {
-    console.error('Error fetching filtered data:', error);
-    res.status(500).json({ error: 'Failed to fetch filtered data' });
+    console.error('Error fetching filtered data:', error.message, error.stack);
+    res.status(500).json({ error: 'Failed to fetch filtered data', details: error.message });
   }
 });
 

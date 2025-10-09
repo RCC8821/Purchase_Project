@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.get('/get-approve-Requied', async (req, res) => {
   try {
-    const range = 'Purchase_FMS!B7:P'; // Updated range to include column P (STATUS_2)
-    console.log(`Fetching data from sheet: ${spreadsheetId}, range: ${range}`);
+    const range = 'Purchase_FMS!B7:O'; // Updated range to exclude STATUS_2 (column P)
+    console.log(`Fetching data from sheet: ${process.env.SPREADSHEET_ID || spreadsheetId}, range: ${range}`);
 
     // Fetch data from Google Sheets
     const response = await sheets.spreadsheets.values.get({
@@ -20,25 +20,25 @@ router.get('/get-approve-Requied', async (req, res) => {
 
     if (!rows.length) {
       console.log('No data found in the sheet');
-      return res.status(404).json({ error: 'No data found in the sheet' });
+      return res.status(404).json({ error: 'No data found in the sheet', details: 'Sheet or range is empty' });
     }
 
-    // Define fallback headers (including Remark, excluding STATUS_2 from output)
+    // Define fallback headers (excluding STATUS_2)
     const fallbackHeaders = [
-      'Req_No',
-      'Site_Name',
-      'Supervisor_Name',
-      'Material_Type',
-      'SKU_Code',
-      'Material_Name',
-      'Quantity',
-      'Unit_Name',
-      'Purpose',
-      'Require_Date',
-      'PLANNED_2',
-      'Remark',
-      'Action',
-      'STATUS_2', // Included for filtering, excluded from output
+      'Req_No',           // C
+      'Site_Name',        // D
+      'Supervisor_Name',  // E
+      'Material_Type',    // F
+      'SKU_Code',         // G
+      'Material_Name',    // H
+      'Quantity',         // I
+      'Unit_Name',        // J
+      'Purpose',          // K
+      'Require_Date',     // L
+      'Remark',           // M
+      'PLANNED_2',        // N
+      'ACTUAL_2',         // O
+      'Action',           // Frontend column
     ];
 
     // Get headers from row 1 (index 0), with fallback
@@ -57,32 +57,45 @@ router.get('/get-approve-Requied', async (req, res) => {
     console.log('Data rows (from row 2):', dataRows);
 
     if (!dataRows.length) {
-      console.log('No data rows found starting from row 2');
-      return res.status(404).json({ error: 'No data found starting from row 2' });
+      console.log('No data rows found starting from row 8');
+      return res.status(404).json({ error: 'No data found starting from row 8', details: 'No rows after header' });
     }
 
-    // Map data rows to objects, excluding APPROVED rows and STATUS_2 from output
+    // Map data rows to objects, filtering by PLANNED_2 and ACTUAL_2
+    let validRowCount = 0;
     const formData = dataRows
       .map((row, index) => {
         // Skip completely empty rows
         if (!row || row.every((cell) => !cell || cell.trim() === '')) {
-          console.log(`Skipping empty row ${index + 8}:`, row); // Row number adjusted for B7 start
+          console.log(`Skipping empty row ${index + 8}:`, row);
           return null;
         }
 
-        // Check STATUS_2 (column P, index 14 since B=0)
-        const status = row[14] ? row[14].trim().toUpperCase() : '';
-        if (status === 'APPROVED') {
-          console.log(`Skipping row ${index + 8} with STATUS_2=APPROVED:`, row);
+        // Check PLANNED_2 (column N, index 12) and ACTUAL_2 (column O, index 13)
+        const planned2 = row[12] ? row[12].trim() : '';
+        const actual2 = row[13] ? row[13].trim() : '';
+        console.log(
+          `Row ${index + 8} - PLANNED_2: "${planned2}", ACTUAL_2: "${actual2}", Full row: ${JSON.stringify(row)}`
+        );
+
+        if (!planned2 || actual2) {
+          console.log(
+            `Skipping row ${index + 8} - Reason: ${
+              !planned2 ? `Empty PLANNED_2="${planned2}"` : ''
+            }${!planned2 && actual2 ? ' and ' : ''}${
+              actual2 ? `Non-empty ACTUAL_2="${actual2}"` : ''
+            }`
+          );
           return null;
         }
 
-        // Create object with headers, excluding STATUS_2
+        validRowCount++;
+        // Create object with headers
         const obj = {};
         headers.forEach((header, i) => {
           if (header === 'Action') {
             obj[header] = ''; // Empty string for frontend Action column
-          } else if (header !== 'STATUS_2') {
+          } else {
             obj[header] = row[i] ? row[i].trim() : ''; // Trim and handle missing values
           }
         });
@@ -90,7 +103,8 @@ router.get('/get-approve-Requied', async (req, res) => {
       })
       .filter((obj) => obj !== null);
 
-    console.log('Form data after filtering APPROVED rows:', formData);
+    console.log(`Rows with PLANNED_2 non-empty and ACTUAL_2 empty: ${validRowCount}`);
+    console.log('Form data after filtering:', JSON.stringify(formData, null, 2));
 
     // Filter out rows where all values (except Action) are empty
     const finalFormData = formData.filter((obj, index) => {
@@ -103,159 +117,24 @@ router.get('/get-approve-Requied', async (req, res) => {
       return hasData;
     });
 
-    console.log('Final form data:', finalFormData);
+    console.log('Final form data:', JSON.stringify(finalFormData, null, 2));
 
     if (!finalFormData.length) {
       console.log('No valid data found after filtering');
-      return res.status(404).json({ error: 'No valid data found starting from row 2' });
+      return res.status(404).json({
+        error: 'No valid data found after filtering',
+        details: validRowCount === 0
+          ? 'No rows have PLANNED_2 non-empty and ACTUAL_2 empty in columns N and O'
+          : 'All rows with PLANNED_2 non-empty and ACTUAL_2 empty are empty in other columns',
+      });
     }
 
     return res.json({ data: finalFormData });
   } catch (error) {
-    console.error('Error fetching data:', error.message);
+    console.error('Error fetching data:', error.message, error.stack);
     return res.status(500).json({ error: 'Failed to fetch data', details: error.message });
   }
 });
-
-
-// router.get('/get-approve-Requied', async (req, res) => {
-//   try {
-//     const range = 'Purchase_FMS!B7:Z'; // Extended range to include potential ACTUAL_2 column
-//     console.log(`Fetching data from sheet: ${spreadsheetId}, range: ${range}`);
-
-//     // Fetch data from Google Sheets
-//     const response = await sheets.spreadsheets.values.get({
-//       spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
-//       range,
-//     });
-
-//     const rows = response.data.values || [];
-//     console.log('Raw rows fetched:', JSON.stringify(rows, null, 2));
-
-//     if (!rows.length) {
-//       console.log('No data found in the sheet');
-//       return res.status(404).json({ error: 'No data found in the sheet' });
-//     }
-
-//     // Define fallback headers
-//     const fallbackHeaders = [
-//       'Req_No',
-//       'Site_Name',
-//       'Supervisor_Name',
-//       'Material_Type',
-//       'SKU_Code',
-//       'Material_Name',
-//       'Quantity',
-//       'Unit_Name',
-//       'Purpose',
-//       'Require_Date',
-//       'PLANNED_2',
-//       'Remark',
-//       'Action',
-//       'STATUS_2',
-//       'ACTUAL_2', // Added ACTUAL_2 to fallback headers
-//     ];
-
-//     // Get headers from row 1 (index 0), with fallback
-//     let headers = rows[0] || [];
-//     console.log('Headers from row 1:', headers);
-//     if (!headers.length || headers.some((h) => !h || h.trim() === '')) {
-//       console.log('Using fallback headers:', fallbackHeaders);
-//       headers = fallbackHeaders;
-//     } else {
-//       headers = headers.map((header) => header.trim().replace(/\s+/g, '_'));
-//       console.log('Normalized headers:', headers);
-//     }
-
-//     // Find PLANNED_2 and ACTUAL_2 column indices
-//     const plannedIndex = headers.indexOf('PLANNED_2');
-//     const actualIndex = headers.indexOf('ACTUAL_2');
-//     if (plannedIndex === -1) {
-//       console.log('PLANNED_2 column not found in headers');
-//       return res.status(400).json({ error: 'PLANNED_2 column not found in sheet' });
-//     }
-//     if (actualIndex === -1) {
-//       console.log('ACTUAL_2 column not found in headers');
-//       return res.status(400).json({ error: 'ACTUAL_2 column not found in sheet' });
-//     }
-
-//     // Process data rows (skip header row)
-//     const dataRows = rows.slice(1);
-//     console.log('Data rows (from row 2):', dataRows);
-
-//     if (!dataRows.length) {
-//       console.log('No data rows found starting from row 2');
-//       return res.status(404).json({ error: 'No data found starting from row 2' });
-//     }
-
-//     // Map data rows to objects, filtering based on PLANNED_2 and ACTUAL_2
-//     const formData = dataRows
-//       .map((row, index) => {
-//         // Skip completely empty rows
-//         if (!row || row.every((cell) => !cell || cell.trim() === '')) {
-//           console.log(`Skipping empty row ${index + 8}:`, row);
-//           return null;
-//         }
-
-//         // Check row length to avoid undefined errors
-//         if (row.length <= plannedIndex || row.length <= actualIndex) {
-//           console.log(`Row ${index + 8} is too short, missing PLANNED_2 or ACTUAL_2:`, row);
-//           return null;
-//         }
-
-//         // Check PLANNED_2 (must have data)
-//         const plannedValue = row[plannedIndex] ? row[plannedIndex].trim() : '';
-//         if (!plannedValue) {
-//           console.log(`Skipping row ${index + 8} with empty PLANNED_2:`, row);
-//           return null;
-//         }
-
-//         // Check ACTUAL_2 (must be empty)
-//         const actualValue = row[actualIndex] ? row[actualIndex].trim() : '';
-//         if (actualValue) {
-//           console.log(`Skipping row ${index + 8} with non-empty ACTUAL_2:`, row);
-//           return null;
-//         }
-
-//         // Create object with headers, excluding ACTUAL_2 and STATUS_2
-//         const obj = {};
-//         headers.forEach((header, i) => {
-//           if (header === 'Action') {
-//             obj[header] = ''; // Empty string for frontend Action column
-//           } else if (!['ACTUAL_2', 'STATUS_2'].includes(header)) {
-//             obj[header] = row[i] ? row[i].trim() : ''; // Include PLANNED_2 in output
-//           }
-//         });
-//         return obj;
-//       })
-//       .filter((obj) => obj !== null);
-
-//     console.log('Form data after filtering:', formData);
-
-//     // Filter out rows where all values (except Action) are empty
-//     const finalFormData = formData.filter((obj, index) => {
-//       const hasData = Object.entries(obj).some(
-//         ([key, value]) => key !== 'Action' && value !== ''
-//       );
-//       if (!hasData) {
-//         console.log(`Filtered out row ${index + 8} (all values empty except Action):`, obj);
-//       }
-//       return hasData;
-//     });
-
-//     console.log('Final form data:', finalFormData);
-
-//     if (!finalFormData.length) {
-//       console.log('No valid data found after filtering');
-//       return res.status(404).json({ error: 'No valid data found starting from row 2' });
-//     }
-
-//     return res.json({ data: finalFormData });
-//   } catch (error) {
-//     console.error('Error fetching data:', error.message, error.stack);
-//     return res.status(500).json({ error: 'Failed to fetch data', details: error.message });
-//   }
-// });
 
 ////////////////// ApproveRequied update Api Done //////////////////
 

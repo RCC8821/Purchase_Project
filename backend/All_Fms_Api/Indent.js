@@ -45,7 +45,6 @@ try {
 
 
 // GET: Fetch get-indent-data
-
 router.get("/get-indent-data", async (req, res) => {
   try {
     const range = "Purchase_FMS!B7:Y"; // Range B7:Y (columns B to Y)
@@ -85,9 +84,9 @@ router.get("/get-indent-data", async (req, res) => {
       { key: "Unit_Name", column: 8 }, // J
       { key: "Purpose", column: 9 }, // K
       { key: "Require_Date", column: 10 }, // L
-      { key: "REVISED_QUANTITY_2", column: 15 }, // M
-      { key: "DECIDED_BRAND/COMPANY_NAME_2", column: 16 }, // N
-      { key: "REMARKS_2", column: 17 }, // O
+      { key: "REVISED_QUANTITY_2", column: 15 }, // Q
+      { key: "DECIDED_BRAND/COMPANY_NAME_2", column: 16 }, // R
+      { key: "REMARKS_2", column: 17 }, // S
       { key: "PLANNED_3", column: 19 }, // V
       { key: "ACTUAL_3", column: 20 }, // W
     ];
@@ -118,11 +117,12 @@ router.get("/get-indent-data", async (req, res) => {
     }
 
     const actual3Index = headers.find((h) => h.key === "ACTUAL_3")?.column;
-    if (actual3Index === undefined) {
-      console.error("ACTUAL_3 column not found in headers");
+    const planned3Index = headers.find((h) => h.key === "PLANNED_3")?.column;
+    if (actual3Index === undefined || planned3Index === undefined) {
+      console.error("Required columns not found in headers");
       return res.status(500).json({
         error: "Invalid sheet structure",
-        details: "ACTUAL_3 column missing",
+        details: "ACTUAL_3 or PLANNED_3 column missing",
       });
     }
 
@@ -144,20 +144,19 @@ router.get("/get-indent-data", async (req, res) => {
         }
 
         const actual3 = row[actual3Index]?.trim() || "";
+        const planned3 = row[planned3Index]?.trim() || "";
         console.log(
-          `Row ${index + 8} - ACTUAL_3: "${actual3}", PLANNED_3: "${
-            row[19]?.trim() || ""
-          }", SKU_Code: "${row[5]?.trim() || ""}", Material_Name: "${
-            row[6]?.trim() || ""
-          }", REVISED_QUANTITY_2: "${row[15]?.trim() || ""}", DECIDED_BRAND: "${
-            row[16]?.trim() || ""
-          }", REMARKS_2: "${row[17]?.trim() || ""}"`
+          `Row ${index + 8} - PLANNED_3: "${planned3}", ACTUAL_3: "${actual3}", SKU_Code: "${row[5]?.trim() || ""}", Material_Name: "${row[6]?.trim() || ""}", REVISED_QUANTITY_2: "${row[15]?.trim() || ""}", DECIDED_BRAND: "${row[16]?.trim() || ""}", REMARKS_2: "${row[17]?.trim() || ""}"`
         );
 
-        // Filter out rows where ACTUAL_3 has any data
-        if (actual3) {
+        // Filter out rows where PLANNED_3 is empty or ACTUAL_3 has data
+        if (!planned3 || actual3) {
           console.log(
-            `Skipping row ${index + 8} with non-empty ACTUAL_3="${actual3}"`
+            `Skipping row ${index + 8} - Reason: ${
+              !planned3 ? `Empty PLANNED_3="${planned3}"` : ""
+            }${!planned3 && actual3 ? " and " : ""}${
+              actual3 ? `Non-empty ACTUAL_3="${actual3}"` : ""
+            }`
           );
           return null;
         }
@@ -192,14 +191,16 @@ router.get("/get-indent-data", async (req, res) => {
         (obj) => obj && Object.entries(obj).some(([key, value]) => value !== "")
       );
 
-    console.log(`Valid rows processed: ${validRowCount}`);
+    console.log(`Rows with PLANNED_3 non-empty and ACTUAL_3 empty: ${validRowCount}`);
     console.log("Final formData:", JSON.stringify(formData, null, 2));
 
     if (!formData.length) {
       console.log("No valid data found after filtering");
       return res.status(404).json({
         error: "No valid data found after filtering",
-        details: "All rows are empty or invalid",
+        details: validRowCount === 0
+          ? "No rows have PLANNED_3 non-empty and ACTUAL_3 empty in columns V and W"
+          : "All rows with PLANNED_3 non-empty and ACTUAL_3 empty are empty in other columns",
       });
     }
 

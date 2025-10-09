@@ -97,15 +97,19 @@ router.get('/get-vendor-follow-up-material', async (req, res) => {
           return null;
         }
 
-        // Check if ACTUAL_8 is empty
+        // Check if ACTUAL_8 is empty and PLANNED_8 is non-empty
         const actual8 = row[actual8Index]?.trim() || '';
         const planned8 = row[planned8Index]?.trim() || '';
         console.log(
           `Row ${index + 8} - ACTUAL_8: "${actual8}", PLANNED_8: "${planned8}", Full row: ${JSON.stringify(row)}`
         );
 
-        if (actual8) {
-          console.log(`Skipping row ${index + 8} with non-empty ACTUAL_8="${actual8}"`);
+        if (actual8 || !planned8) {
+          console.log(
+            `Skipping row ${index + 8} - Reason: ${actual8 ? `Non-empty ACTUAL_8="${actual8}"` : ''}${
+              actual8 && !planned8 ? ' and ' : ''
+            }${!planned8 ? `Empty PLANNED_8="${planned8}"` : ''}`
+          );
           return null;
         }
 
@@ -124,7 +128,7 @@ router.get('/get-vendor-follow-up-material', async (req, res) => {
       })
       .filter(obj => obj && Object.entries(obj).some(([key, value]) => key !== 'Action' && value !== ''));
 
-    console.log(`Rows with ACTUAL_8 empty: ${validRowCount}`);
+    console.log(`Rows with ACTUAL_8 empty and PLANNED_8 non-empty: ${validRowCount}`);
     console.log('Final formData:', JSON.stringify(formData, null, 2));
 
     if (!formData.length) {
@@ -132,8 +136,8 @@ router.get('/get-vendor-follow-up-material', async (req, res) => {
       return res.status(404).json({
         error: 'No valid data found after filtering',
         details: validRowCount === 0
-          ? 'All rows have ACTUAL_8 non-empty in column BN'
-          : 'All rows with empty ACTUAL_8 are empty in other columns',
+          ? 'No rows have ACTUAL_8 empty and PLANNED_8 non-empty in columns BN and BM'
+          : 'All rows with ACTUAL_8 empty and PLANNED_8 non-empty are empty in other columns',
       });
     }
 

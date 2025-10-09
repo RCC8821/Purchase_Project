@@ -44,7 +44,7 @@ try {
 
 router.get('/get-po-data', async (req, res) => {
   try {
-    const range = 'Purchase_FMS!B7:BH'; // Adjusted to include up to BH column
+    const range = 'Purchase_FMS!B7:BJ'; // Adjusted to include up to BJ column (PLANNED_7 and ACTUAL_7)
 
     // Fetch data from Google Sheets
     const response = await sheets.spreadsheets.values.get({
@@ -69,35 +69,42 @@ router.get('/get-po-data', async (req, res) => {
       { key: 'Material_Type', column: 4 }, // Column F
       { key: 'SKU_Code', column: 5 }, // Column G
       { key: 'Material_Name', column: 6 }, // Column H
-      { key: 'Require_Date', column: 10 }, // Column I
-      { key: 'REVISED_QUANTITY_2', column: 15 }, // Column J
-      { key: 'Unit_Name', column: 8 }, // Column K
-      { key: 'DECIDED_BRAND/COMPANY_NAME_2', column: 16 }, // Column L
-      { key: 'INDENT_NUMBER_3', column: 23 }, // Column M
-      { key: 'PDF_URL_3', column: 24 }, // Column N
-      { key: 'QUOTATION_NO_5', column: 36 }, // Column O
-      { key: 'Vendor_Name_5', column: 37 }, // Column P
-      { key: 'Vendor_Ferm_Name_5', column: 38 }, // Column Q
-      { key: 'Vendor_Address_5', column: 39 }, // Column R
-      { key: 'Vendor_GST_No_5', column: 41 }, // Column S
-      { key: 'Rate_5', column: 42 }, // Column T
-      { key: 'CGST_5', column: 44 }, // Column U
-      { key: 'SGST_5', column: 45 }, // Column V
-      { key: 'IGST_5', column: 46 }, // Column W
-      { key: 'FINAL_RATE_5', column: 47 }, // Column X
-      { key: 'TOTAL_VALUE_5', column: 48 }, // Column Y
-      { key: 'APPROVAL_5', column: 49 }, // Column Z
-      { key: 'IS_TRANSPORT_REQUIRED', column: 50 }, // Column AA
-      { key: 'EXPECTED_TRANSPORT_CHARGES', column: 51 }, // Column AB
-      { key: 'FRIGHET_CHARGES', column: 52 }, // Column AC
-      { key: 'EXPECTED_FRIGHET_CHARGES', column: 53 }, // Column AD
-      { key: 'PDF_URL_5', column: 54 }, // Column AE
+      { key: 'Require_Date', column: 10 }, // Column L
+      { key: 'REVISED_QUANTITY_2', column: 15 }, // Column Q
+      { key: 'Unit_Name', column: 8 }, // Column J
+      { key: 'DECIDED_BRAND/COMPANY_NAME_2', column: 16 }, // Column R
+      { key: 'INDENT_NUMBER_3', column: 23 }, // Column Y
+      { key: 'PDF_URL_3', column: 24 }, // Column Z
+      { key: 'QUOTATION_NO_5', column: 36 }, // Column AK
+      { key: 'Vendor_Name_5', column: 37 }, // Column AL
+      { key: 'Vendor_Ferm_Name_5', column: 38 }, // Column AM
+      { key: 'Vendor_Address_5', column: 39 }, // Column AN
+      { key: 'Vendor_GST_No_5', column: 41 }, // Column AP
+      { key: 'Rate_5', column: 42 }, // Column AQ
+      { key: 'CGST_5', column: 44 }, // Column AS
+      { key: 'SGST_5', column: 45 }, // Column AT
+      { key: 'IGST_5', column: 46 }, // Column AU
+      { key: 'FINAL_RATE_5', column: 47 }, // Column AV
+      { key: 'TOTAL_VALUE_5', column: 48 }, // Column AW
+      { key: 'APPROVAL_5', column: 49 }, // Column AX
+      { key: 'IS_TRANSPORT_REQUIRED', column: 50 }, // Column AY
+      { key: 'EXPECTED_TRANSPORT_CHARGES', column: 51 }, // Column AZ
+      { key: 'FRIGHET_CHARGES', column: 52 }, // Column BA
+      { key: 'EXPECTED_FRIGHET_CHARGES', column: 53 }, // Column BB
+      { key: 'PDF_URL_5', column: 54 }, // Column BC
       { key: 'ACTUAL_7', column: 57 }, // Column BJ
     ];
 
-    // Find BH column index (new filter column, index 58 relative to B, column BH)
-    const bhIndex = 58;
-    console.log('BH Index:', bhIndex);
+    // Validate PLANNED_7 and ACTUAL_7 columns
+    const planned7Index = headers.find(h => h.key === 'PLANNED_7')?.column;
+    const actual7Index = headers.find(h => h.key === 'ACTUAL_7')?.column;
+    if (planned7Index === undefined || actual7Index === undefined) {
+      console.error('Required columns not found in headers');
+      return res.status(500).json({
+        error: 'Invalid sheet structure',
+        details: 'PLANNED_7 or ACTUAL_7 column missing',
+      });
+    }
 
     // Process data rows (skip header row)
     const dataRows = rows.slice(1);
@@ -115,13 +122,22 @@ router.get('/get-po-data', async (req, res) => {
           return null;
         }
 
-        // Check BH column
-        const bhValue = row[bhIndex]?.trim() || '';
-        console.log(`Row ${index + 8} - BH: "${bhValue}"`);
+        // Check PLANNED_7 and ACTUAL_7
+        const planned7 = row[planned7Index]?.trim() || '';
+        const actual7 = row[actual7Index]?.trim() || '';
+        console.log(
+          `Row ${index + 8} - PLANNED_7: "${planned7}", ACTUAL_7: "${actual7}", Full row: ${JSON.stringify(row)}`
+        );
 
-        // Skip if BH is 'Done'
-        if (bhValue === 'Done') {
-          console.log(`Skipping row ${index + 8} with BH="Done"`);
+        // Skip if PLANNED_7 is empty or ACTUAL_7 is non-empty
+        if (!planned7 || actual7) {
+          console.log(
+            `Skipping row ${index + 8} - Reason: ${
+              !planned7 ? `Empty PLANNED_7="${planned7}"` : ''
+            }${!planned7 && actual7 ? ' and ' : ''}${
+              actual7 ? `Non-empty ACTUAL_7="${actual7}"` : ''
+            }`
+          );
           return null;
         }
 
@@ -136,14 +152,16 @@ router.get('/get-po-data', async (req, res) => {
       })
       .filter(obj => obj && Object.entries(obj).some(([key, value]) => value !== ''));
 
-    console.log(`Rows with BH not equal to "Done": ${validRowCount}`);
+    console.log(`Rows with PLANNED_7 non-empty and ACTUAL_7 empty: ${validRowCount}`);
     console.log('Final formData:', JSON.stringify(formData, null, 2));
 
     if (!formData.length) {
       console.log('No valid data found after filtering');
       return res.status(404).json({
         error: 'No valid data found after filtering',
-        details: 'All rows are empty or have BH="Done"',
+        details: validRowCount === 0
+          ? 'No rows have PLANNED_7 non-empty and ACTUAL_7 empty in columns BI and BJ'
+          : 'All rows with PLANNED_7 non-empty and ACTUAL_7 empty are empty in other columns',
       });
     }
 

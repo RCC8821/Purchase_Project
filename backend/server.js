@@ -14,6 +14,10 @@ const vendorFollowUpMaterial = require("./All_Fms_Api/Vendor_FollowUp_Material")
 const MaterialReceived = require('./All_Fms_Api/Material_Received')
 const FinalMaterial=require('./All_Fms_Api/Final_Material')
 const MRNDATA=require("./All_Fms_Api/MRN")
+const VendorFollowupBlling = require("./All_Fms_Api/Vendor_Followup_Billing")
+const BillProcessing = require("./All_Fms_Api/Bill_Processing")
+const Bill_Checked = require('./All_Fms_Api/Bill_Checked')
+const Bill_Tally= require('./All_Fms_Api/BILL_TALLY_ENTRY')
 const cloudinary = require("cloudinary").v2;
 
 const app = express();
@@ -46,6 +50,13 @@ app.use('/api',vendorFollowUpMaterial)
 app.use('/api',MaterialReceived)
 app.use('/api',FinalMaterial)
 app.use('/api',MRNDATA)
+
+// /// Billing Api 
+
+app.use('/api',VendorFollowupBlling)
+app.use('/api',BillProcessing)
+app.use('/api',Bill_Checked)
+app.use('/api',Bill_Tally)
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

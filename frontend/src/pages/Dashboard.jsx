@@ -15,6 +15,11 @@ import Material_Received from '../components/purchase/Material_Received';
 import Final_Material_Received from '../components/purchase/Final_Material_Received';
 import MRN from '../components/purchase/MRN';
 
+//  billing components 
+
+import Vendor_followup_billing from '../components/purchase/Vendor_followup_billing';
+
+
 const Dashboard = () => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [isPurchaseDropdownOpen, setIsPurchaseDropdownOpen] = useState(false);
@@ -137,6 +142,17 @@ const Dashboard = () => {
       path: '/dashboard/MRN',
       allowedUserTypes: ['admin', 'Somesh Chadhar'],
     },
+
+    // /////  Billing pages 
+
+    {
+      id: 'Vendor_followup_billing',
+      name: 'Vendor_followup_billing',
+      icon: Truck,
+      component: Vendor_followup_billing,
+      path: '/dashboard/Vendor_followup_billing',
+      allowedUserTypes: ['admin', 'Somesh Chadhar'],
+    },
   ];
 
   const getPurchasePages = () => {
@@ -176,7 +192,8 @@ const Dashboard = () => {
     'Vendor_FollowUp_Material': { title: 'Vendor Follow Up Material', content: 'Financial analytics, revenue reports, and accounting summaries.' },
     'Material_Received': { title: 'Material Received', content: 'Financial analytics, revenue reports, and accounting summaries.' },
     'Final_Material_Received': { title: 'Final Material Received', content: 'Financial analytics, revenue reports, and accounting summaries.' },
-    'MRN': { title: 'MRN', content: 'Financial analytics, revenue reports, and accounting summaries.' },
+    'MRN': { title: 'MRN', content: 'MRN, revenue reports, and accounting summaries.' },
+    'Vendor_followup_billing': { title: 'Vendor_followup_billing', content: 'You do not have permission to access any Purchase FMS pages.' },
     'no-access': { title: 'No Access', content: 'You do not have permission to access any Purchase FMS pages.' },
     'invoice-generation': { title: 'Invoice Generation', content: 'Generate and manage invoices.' },
     'payment-tracking': { title: 'Payment Tracking', content: 'Track payment statuses.' },
