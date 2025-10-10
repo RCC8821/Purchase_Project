@@ -1,8 +1,10 @@
 
+
 import React, { useState, useEffect } from 'react';
 
 const PO = () => {
   const [requests, setRequests] = useState([]);
+  const [supervisors, setSupervisors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -19,7 +21,7 @@ const PO = () => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/get-po-data`);
+        const response = await fetch(`http://localhost:5000/api/get-po-data`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -37,7 +39,24 @@ const PO = () => {
         setLoading(false);
       }
     };
+
+    const fetchSupervisors = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/get-othersheet-data`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log(data)
+        setSupervisors(data);
+      } catch (error) {
+        console.error('Error fetching supervisors:', error);
+        setSupervisors([]);
+      }
+    };
+
     fetchRequests();
+    fetchSupervisors();
   }, []);
 
   // Get unique quotation numbers
@@ -60,32 +79,54 @@ const PO = () => {
     }
 
     setGenerateLoading(true);
+
+    // Log selectedItems to debug available fields
+    console.log('Selected Items:', JSON.stringify(selectedItems, null, 2));
+
+    const siteName = selectedItems[0]?.Site_Name || 'N/A';
+    const supervisorName = selectedItems[0]?.Supervisor_Name || 'N/A';
+
+    // Match site location based on site name
+    const matchedSite = supervisors.find(s => s.Site_Name === siteName);
+    const siteLocation = matchedSite ? matchedSite.Site_Location : 'N/A';
+
+    // Match supervisor contact based on supervisor name
+    const matchedSupervisor = supervisors.find(s => s.Supervisor === supervisorName);
+    const supervisorContact = matchedSupervisor ? matchedSupervisor.Contact_No : 'N/A';
+
     const poData = {
       quotationNo: selectedQuotation,
       expectedDeliveryDate,
       items: selectedItems.map(item => ({
         uid: item.UID,
         materialName: item.Material_Name,
-        vendorFirm: item.Vendor_Firm_Name_5 || item.Vendor_Ferm_Name_5,
+        vendorFirm: item.Vendor_Firm_Name_5 || 'N/A', // Fixed typo
         rate: item.Rate_5,
         cgst: item.CGST_5,
         sgst: item.SGST_5,
         igst: item.IGST_5,
         finalRate: item.FINAL_RATE_5,
         quantity: item.REVISED_QUANTITY_2,
+        unit: item.Unit_Name, // Added unit
         totalValue: item.TOTAL_VALUE_5,
         transportRequired: item.IS_TRANSPORT_REQUIRED,
         expectedTransport: item.EXPECTED_TRANSPORT_CHARGES,
-        indentNo: item.INDENT_NUMBER_3, // Including indent number
+        indentNo: item.INDENT_NUMBER_3,
       })),
-      siteName: selectedItems[0]?.Site_Name,
-      vendorName: selectedItems[0]?.Vendor_Name_5,
-      vendorAddress: selectedItems[0]?.Vendor_Address_5,
-      vendorGST: selectedItems[0]?.Vendor_GST_No_5,
+      siteName: siteName,
+      siteLocation: siteLocation,
+      supervisorName: selectedItems[0]?.Supervisor_Name || 'N/A',
+      supervisorContact: supervisorContact,
+      vendorName: selectedItems[0]?.Vendor_Firm_Name_5 || 'N/A',
+      vendorAddress: selectedItems[0]?.Vendor_Address_5 || 'N/A',
+      vendorGST: selectedItems[0]?.Vendor_GST_No_5 || 'N/A',
+      vendorContact: selectedItems[0]?.Vendor_Contact_5 || 'N/A', // Added if available
     };
 
+    console.log('PO Data being sent:', JSON.stringify(poData, null, 2));
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/create-po`, {
+      const response = await fetch(`http://localhost:5000/api/create-po`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(poData),
@@ -161,6 +202,9 @@ const PO = () => {
                     Site Name
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
+                    Supervisor
+                  </th> {/* Added */}
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Material Type
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
@@ -198,6 +242,9 @@ const PO = () => {
                     Vendor Address
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
+                    Vendor Contact
+                  </th> {/* Added */}
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Vendor GST
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
@@ -229,10 +276,10 @@ const PO = () => {
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Freight Charges
-                  </th>
+                  </th> {/* Fixed typo */}
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Expected Freight
-                  </th>
+                  </th> {/* Fixed typo */}
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     PDF URL 3
                   </th>
@@ -252,6 +299,7 @@ const PO = () => {
                         {request.Site_Name}
                       </div>
                     </td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Site_Location}</td> {/* Added */}
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Material_Type}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.SKU_Code}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
@@ -267,12 +315,13 @@ const PO = () => {
                    
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.QUOTATION_NO_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Name_5}</td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Ferm_Name_5}</td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Firm_Name_5}</td> {/* Fixed typo */}
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       <div className="max-w-[120px] truncate" title={request.Vendor_Address_5}>
                         {request.Vendor_Address_5}
                       </div>
                     </td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Contact_5}</td> {/* Added */}
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_GST_No_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Rate_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.CGST_5}</td>
@@ -283,8 +332,8 @@ const PO = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.APPROVAL_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.IS_TRANSPORT_REQUIRED}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.EXPECTED_TRANSPORT_CHARGES}</td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.FRIGHET_CHARGES}</td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.EXPECTED_FRIGHET_CHARGES}</td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.FREIGHT_CHARGES}</td> {/* Fixed typo */}
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.EXPECTED_FREIGHT_CHARGES}</td> {/* Fixed typo */}
                      <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       <a href={request.PDF_URL_3} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         View
@@ -380,7 +429,7 @@ const PO = () => {
                         </thead>
                         <tbody>
                           <tr className="bg-white">
-                            <td className="p-1">{item.Vendor_Firm_Name_5 || item.Vendor_Ferm_Name_5}</td>
+                            <td className="p-1">{item.Vendor_Firm_Name_5}</td> {/* Fixed typo */}
                             <td className="p-1">{item.Rate_5}</td>
                             <td className="p-1">{item.CGST_5}%</td>
                             <td className="p-1">{item.SGST_5}%</td>

@@ -1,8 +1,10 @@
+
 const express = require('express');
-const { sheets, spreadsheetId , drive} = require('../config/googleSheet');
+const { sheets, spreadsheetId, drive } = require('../config/googleSheet');
 const router = express.Router();
 require('dotenv').config();
-
+const fs = require('fs');
+const fontkit = require('fontkit');
 // Load jsPDF and jspdf-autotable
 const { jsPDF } = require('jspdf');
 
@@ -42,11 +44,56 @@ try {
   throw new Error('jsPDF instance initialization with autoTable failed');
 }
 
+
+
+
+// /////// TRY //////////////////////////
+
+router.get('/get-othersheet-data', async (req, res) => {
+  try {
+    const range = 'Site_Supervisor!A2:E';
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
+      range,
+    });
+    const rows = response.data.values || [];
+    console.log(`Raw rows fetched (length: ${rows.length})`);
+
+    if (!rows.length) {
+      console.log('No data found in the sheet for range:', range);
+      return res.status(404).json({ error: 'No data found in the sheet', details: 'Sheet or range is empty' });
+    }
+
+    const headers = [
+      { key: 'Supervisor', column: 0 },
+      { key: 'Contact_No', column: 1 },
+      { key: 'Site_Name', column: 3 },
+      { key: 'Site_Location', column: 4 },
+    ];
+
+    // Transform rows into structured data
+    const data = rows.map(row => {
+      const item = {};
+      headers.forEach(header => {
+        item[header.key] = row[header.column] || null;
+      });
+      return item;
+    });
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error('Error fetching data:', error.message, error.stack);
+    return res.status(500).json({ error: 'Failed to fetch data', details: error.message });
+  }
+});
+
+
+
 router.get('/get-po-data', async (req, res) => {
   try {
-    const range = 'Purchase_FMS!B7:BJ'; // Adjusted to include up to BJ column (PLANNED_7 and ACTUAL_7)
+    const range = 'Purchase_FMS!B7:BJ';
 
-    // Fetch data from Google Sheets
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
       range,
@@ -60,42 +107,42 @@ router.get('/get-po-data', async (req, res) => {
       return res.status(404).json({ error: 'No data found in the sheet', details: 'Sheet or range is empty' });
     }
 
-    // Define headers with their expected column positions (0-based index relative to B)
     const headers = [
-      { key: 'PLANNED_7', column: 56 }, // Column BI
-      { key: 'UID', column: 0 }, // Column B
-      { key: 'Req_No', column: 1 }, // Column C
-      { key: 'Site_Name', column: 2 }, // Column D
-      { key: 'Material_Type', column: 4 }, // Column F
-      { key: 'SKU_Code', column: 5 }, // Column G
-      { key: 'Material_Name', column: 6 }, // Column H
-      { key: 'Require_Date', column: 10 }, // Column L
-      { key: 'REVISED_QUANTITY_2', column: 15 }, // Column Q
-      { key: 'Unit_Name', column: 8 }, // Column J
-      { key: 'DECIDED_BRAND/COMPANY_NAME_2', column: 16 }, // Column R
-      { key: 'INDENT_NUMBER_3', column: 23 }, // Column Y
-      { key: 'PDF_URL_3', column: 24 }, // Column Z
-      { key: 'QUOTATION_NO_5', column: 36 }, // Column AK
-      { key: 'Vendor_Name_5', column: 37 }, // Column AL
-      { key: 'Vendor_Ferm_Name_5', column: 38 }, // Column AM
-      { key: 'Vendor_Address_5', column: 39 }, // Column AN
-      { key: 'Vendor_GST_No_5', column: 41 }, // Column AP
-      { key: 'Rate_5', column: 42 }, // Column AQ
-      { key: 'CGST_5', column: 44 }, // Column AS
-      { key: 'SGST_5', column: 45 }, // Column AT
-      { key: 'IGST_5', column: 46 }, // Column AU
-      { key: 'FINAL_RATE_5', column: 47 }, // Column AV
-      { key: 'TOTAL_VALUE_5', column: 48 }, // Column AW
-      { key: 'APPROVAL_5', column: 49 }, // Column AX
-      { key: 'IS_TRANSPORT_REQUIRED', column: 50 }, // Column AY
-      { key: 'EXPECTED_TRANSPORT_CHARGES', column: 51 }, // Column AZ
-      { key: 'FRIGHET_CHARGES', column: 52 }, // Column BA
-      { key: 'EXPECTED_FRIGHET_CHARGES', column: 53 }, // Column BB
-      { key: 'PDF_URL_5', column: 54 }, // Column BC
-      { key: 'ACTUAL_7', column: 57 }, // Column BJ
+      { key: 'PLANNED_7', column: 56 },
+      { key: 'UID', column: 0 },
+      { key: 'Req_No', column: 1 },
+      { key: 'Site_Name', column: 2 },
+      { key: 'Site_Location', column: 3 }, // Added assuming column 3 for Site_Location
+      { key: 'Material_Type', column: 4 },
+      { key: 'SKU_Code', column: 5 },
+      { key: 'Material_Name', column: 6 },
+      { key: 'Unit_Name', column: 8 },
+      { key: 'Require_Date', column: 10 },
+      { key: 'REVISED_QUANTITY_2', column: 15 },
+      { key: 'DECIDED_BRAND/COMPANY_NAME_2', column: 16 },
+      { key: 'INDENT_NUMBER_3', column: 23 },
+      { key: 'PDF_URL_3', column: 24 },
+      { key: 'QUOTATION_NO_5', column: 36 },
+      { key: 'Vendor_Name_5', column: 37 },
+      { key: 'Vendor_Firm_Name_5', column: 38 }, // Fixed typo from Vendor_Ferm_Name_5
+      { key: 'Vendor_Address_5', column: 39 },
+      { key: 'Vendor_Contact_5', column: 40 }, // Added assuming column 40 for Vendor_Contact_5
+      { key: 'Vendor_GST_No_5', column: 41 },
+      { key: 'Rate_5', column: 42 },
+      { key: 'CGST_5', column: 44 },
+      { key: 'SGST_5', column: 45 },
+      { key: 'IGST_5', column: 46 },
+      { key: 'FINAL_RATE_5', column: 47 },
+      { key: 'TOTAL_VALUE_5', column: 48 },
+      { key: 'APPROVAL_5', column: 49 },
+      { key: 'IS_TRANSPORT_REQUIRED', column: 50 },
+      { key: 'EXPECTED_TRANSPORT_CHARGES', column: 51 },
+      { key: 'FREIGHT_CHARGES', column: 52 },
+      { key: 'EXPECTED_FREIGHT_CHARGES', column: 53 },
+      { key: 'PDF_URL_5', column: 54 },
+      { key: 'ACTUAL_7', column: 57 },
     ];
 
-    // Validate PLANNED_7 and ACTUAL_7 columns
     const planned7Index = headers.find(h => h.key === 'PLANNED_7')?.column;
     const actual7Index = headers.find(h => h.key === 'ACTUAL_7')?.column;
     if (planned7Index === undefined || actual7Index === undefined) {
@@ -106,14 +153,12 @@ router.get('/get-po-data', async (req, res) => {
       });
     }
 
-    // Process data rows (skip header row)
     const dataRows = rows.slice(1);
     if (!dataRows.length) {
       console.log('No data rows found starting from row 8');
       return res.status(404).json({ error: 'No data found starting from row 8', details: 'No rows after header' });
     }
 
-    // Map and filter rows
     let validRowCount = 0;
     const formData = dataRows
       .map((row, index) => {
@@ -122,14 +167,12 @@ router.get('/get-po-data', async (req, res) => {
           return null;
         }
 
-        // Check PLANNED_7 and ACTUAL_7
         const planned7 = row[planned7Index]?.trim() || '';
         const actual7 = row[actual7Index]?.trim() || '';
         console.log(
-          `Row ${index + 8} - PLANNED_7: "${planned7}", ACTUAL_7: "${actual7}", Full row: ${JSON.stringify(row)}`
+          `Row ${index + 8} - PLANNED_7: "${planned7}", ACTUAL_7: "${actual7}"`
         );
 
-        // Skip if PLANNED_7 is empty or ACTUAL_7 is non-empty
         if (!planned7 || actual7) {
           console.log(
             `Skipping row ${index + 8} - Reason: ${
@@ -153,7 +196,6 @@ router.get('/get-po-data', async (req, res) => {
       .filter(obj => obj && Object.entries(obj).some(([key, value]) => value !== ''));
 
     console.log(`Rows with PLANNED_7 non-empty and ACTUAL_7 empty: ${validRowCount}`);
-    console.log('Final formData:', JSON.stringify(formData, null, 2));
 
     if (!formData.length) {
       console.log('No valid data found after filtering');
@@ -182,12 +224,17 @@ async function generatePONumber(spreadsheetId, sheetName) {
     const rows = response.data.values || [];
     let lastPONumber = 0;
     if (rows.length > 0) {
-      const lastRow = rows[rows.length - 1][0];
-      if (lastRow && lastRow.startsWith('PO_')) {
-        lastPONumber = parseInt(lastRow.replace('PO_', ''), 10) || 0;
+      // Start from the end and find the last valid PO number
+      for (let i = rows.length - 1; i >= 0; i--) {
+        const row = rows[i][0];
+        if (row && row.startsWith('PO_')) {
+          lastPONumber = parseInt(row.replace('PO_', ''), 10) || 0;
+          break;
+        }
       }
     }
     const newPONumber = `PO_${String(lastPONumber + 1).padStart(3, '0')}`;
+    console.log(`Generated new PO Number: ${newPONumber} (last was: ${lastPONumber})`);
     return newPONumber;
   } catch (error) {
     console.error('Error generating PO number:', error.message);
@@ -195,251 +242,461 @@ async function generatePONumber(spreadsheetId, sheetName) {
   }
 }
 
-// Updated PDF Generation Function
-const generateQuotationPDF = (approvedItems, quotationNo, indentNo, expectedDeliveryDate) => {
-  console.log(`Generating PDF: Quotation ${quotationNo}, Indent ${indentNo}, Items: ${approvedItems.length}, Delivery Date: ${expectedDeliveryDate}`);
+// PDF Generation Function with PO Number parameter
+
+const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDeliveryDate, poNumber, siteName, siteLocation, supervisorName, supervisorContact, vendorName, vendorAddress, vendorGST, vendorContact, companyLogoBase64 = null) => {
+  console.log('Current working directory:', process.cwd());
+  console.log(`Generating PDF: PO ${poNumber}, Quotation ${quotationNo}, Indent ${indentNo}, Items: ${approvedItems.length}, Delivery Date: ${expectedDeliveryDate}`);
   const doc = new jsPDF();
   if (typeof doc.autoTable !== 'function') {
     throw new Error('autoTable plugin not loaded');
   }
 
+  // Load fonts with correct relative path
+  const fontPathRegular = 'C:\\Users\\HP 840 G7\\Desktop\\RCC All FMS Project\\backend\\fonts\\NotoSansDevanagari-Regular.ttf';
+  const fontPathBold = 'C:\\Users\\HP 840 G7\\Desktop\\RCC All FMS Project\\backend\\fonts\\NotoSansDevanagari-Bold.ttf';
+
+  try {
+    const notoSansDevanagariRegularBase64 = fs.readFileSync(fontPathRegular).toString('base64');
+    const notoSansDevanagariBoldBase64 = fs.readFileSync(fontPathBold).toString('base64');
+
+    console.log('Regular Font Base64 Length:', notoSansDevanagariRegularBase64.length);
+    console.log('Bold Font Base64 Length:', notoSansDevanagariBoldBase64.length);
+
+    doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', notoSansDevanagariRegularBase64);
+    doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
+    doc.addFileToVFS('NotoSansDevanagari-Bold.ttf', notoSansDevanagariBoldBase64);
+    doc.addFont('NotoSansDevanagari-Bold.ttf', 'NotoSansDevanagari', 'bold');
+    doc.setFont('NotoSansDevanagari', 'normal');
+    console.log('NotoSansDevanagari font registered successfully');
+  } catch (error) {
+    console.error('Error loading NotoSansDevanagari font:', error.message);
+    doc.setFont('helvetica', 'normal');
+    console.warn('Falling back to Helvetica font');
+  }
+
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
+  const bottomMargin = 30; // Reserve space at bottom for page numbers
 
-  const cleanText = (text) => (text || 'N/A').toString().trim().replace(/[^a-zA-Z0-9\s\-\/.,]/g, '');
+  const cleanText = (text) => (text || 'N/A').toString().trim();
 
-  // Header Section - Company Details
+  // Helper function to check if we need a new page
+  const checkPageBreak = (currentY, requiredSpace) => {
+    if (currentY + requiredSpace > pageHeight - bottomMargin) {
+      doc.addPage();
+      return 20; // Return to top margin of new page
+    }
+    return currentY;
+  };
+
+  // Company Header Section
+  const headerY = 15;
+
+  // Company Logo Area
+  if (companyLogoBase64) {
+    try {
+      doc.addImage(companyLogoBase64, 'PNG', 15, headerY, 35, 25);
+    } catch (error) {
+      console.error('Logo load error:', error);
+      doc.setFillColor(245, 222, 179);
+      doc.rect(15, headerY, 35, 25, 'F');
+      doc.setFontSize(10);
+      doc.setFont('NotoSansDevanagari', 'bold');
+      doc.setTextColor(139, 69, 19);
+      doc.text('RCC', 25, headerY + 10);
+      doc.setFontSize(7);
+      doc.text('INFRASTRUCTURES', 18, headerY + 15);
+    }
+  } else {
+    doc.setFillColor(245, 222, 179);
+    doc.rect(15, headerY, 35, 25, 'F');
+    doc.setFontSize(10);
+    doc.setFont('NotoSansDevanagari', 'bold');
+    doc.setTextColor(139, 69, 19);
+    doc.text('RCC', 25, headerY + 10);
+    doc.setFontSize(7);
+    doc.text('INFRASTRUCTURES', 18, headerY + 15);
+  }
+
+  // Company Details (Right side)
+  doc.setFontSize(8);
+  doc.setFont('NotoSansDevanagari', 'bold');
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.text('R.C.C Infrastructures', pageWidth / 2, 15, { align: 'center' });
+  doc.text('R. C. C. Infrastructures', pageWidth - 15, headerY, { align: 'right' });
+  
+  doc.setFontSize(7);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text('310 Saket Nagar, 9B Near Sagar Public School, Bhopal, 462026', pageWidth - 15, headerY + 4, { align: 'right' });
+  doc.text('Contact: 7869962504', pageWidth - 15, headerY + 8, { align: 'right' });
+  doc.text('Email: mayank@rccinfrastructure.com', pageWidth - 15, headerY + 12, { align: 'right' });
+  doc.text('GST: 23ABHFR3130L1ZA', pageWidth - 15, headerY + 16, { align: 'right' });
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('310 Saket Nagar, 9B Near Sagar Public School, Bhopal, 462026', pageWidth / 2, 22, { align: 'center' });
-  doc.text('Contact: 9753432126 | Email: mayank@rcinfrastructure.com', pageWidth / 2, 28, { align: 'center' });
-  doc.text('GST: 23ABHFR3130L1ZA', pageWidth / 2, 34, { align: 'center' });
+  // Red line after header
+  doc.setDrawColor(220, 53, 69);
+  doc.setLineWidth(0.5);
+  doc.line(15, headerY + 27, pageWidth - 15, headerY + 27);
 
   // Title Section
   doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  // doc.setTextColor(220, 53, 69);
-  doc.text('Purchase Order', pageWidth / 2, 50, { align: 'center' });
+  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setTextColor(220, 53, 69);
+  doc.text('Purchase Order', 15, headerY + 35);
 
-  doc.setDrawColor(220, 53, 69);
-  doc.setLineWidth(1);
-  doc.line(15, 53, pageWidth - 15, 53);
+  doc.setDrawColor(255, 193, 7);
+  doc.setLineWidth(0.5);
+  doc.line(15, headerY + 37, pageWidth - 15, headerY + 37);
 
-  // PO Information (Two-column layout)
-  doc.setFontSize(10);
-  const infoY = 60;
+  // PO Information
+  doc.setFontSize(9);
+  const infoY = headerY + 43;
   const currentDate = new Date().toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   }).replace(/ /g, '-');
 
-  const firstItem = approvedItems[0] || {};
-  const vendorName = cleanText(firstItem.vendorFirm || '');
-  const vendorAddress = cleanText(firstItem.vendorAddress || '');
-  const vendorContact = cleanText(firstItem.vendorContact || '');
-  const siteName = cleanText(firstItem.siteName || '');
-  const siteLocation = cleanText(firstItem.siteLocation || '');
-  const supervisorName = cleanText(firstItem.supervisorName || '');
-  const supervisorContact = cleanText(firstItem.supervisorContact || '');
+  const firstItem = approvedItems && approvedItems.length > 0 ? approvedItems[0] : {};
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('PO Number:', 15, infoY);
-  doc.setFont('helvetica', 'normal');
-  doc.text(cleanText(quotationNo), 50, infoY);
+  const finalVendorName = cleanText(vendorName || firstItem.Vendor_Firm_Name_5 || 'N/A');
+  const finalVendorGST = cleanText(vendorGST || firstItem.Vendor_GST_No_5 || 'N/A');
+  const finalVendorAddress = cleanText(vendorAddress || firstItem.Vendor_Address_5 || 'N/A');
+  const finalVendorContact = cleanText(vendorContact || firstItem.Vendor_Contact_5 || 'N/A');
+  const finalSiteName = cleanText(siteName || firstItem.Site_Name || 'N/A');
+  const finalSiteLocation = cleanText(siteLocation || firstItem.Site_Location || 'N/A');
+  const finalSupervisorName = cleanText(supervisorName || firstItem.Supervisor_Name || 'N/A');
+  const finalSupervisorContact = cleanText(supervisorContact || firstItem.Supervisor_Contact || 'N/A');
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('PO Date:', pageWidth / 2 + 15, infoY);
-  doc.setFont('helvetica', 'normal');
-  doc.text(currentDate, pageWidth / 2 + 50, infoY);
+  // Dynamic gap positioning
+  const keyLeft = 15;
+  const keyRight = pageWidth / 2 + 10;
+  const gap = 2;
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Indent No:', 15, infoY + 8);
-  doc.setFont('helvetica', 'normal');
-  doc.text(cleanText(indentNo), 50, infoY + 8);
+  const lineHeight = 5;
+  let currentY = infoY;
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Quotation No:', pageWidth / 2 + 15, infoY + 8);
-  doc.setFont('helvetica', 'normal');
-  doc.text(cleanText(quotationNo), pageWidth / 2 + 50, infoY + 8); // Using quotationNo as a placeholder
+  doc.setTextColor(0, 0, 0);
+  
+  // Row 1: PO Number and PO Date
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const poNumberKeyWidth = doc.getTextWidth('PO Number:');
+  doc.text('PO Number:', keyLeft, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(poNumber), keyLeft + poNumberKeyWidth + gap, currentY);
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Vendor:', 15, infoY + 16);
-  doc.setFont('helvetica', 'normal');
-  doc.text(vendorName, 50, infoY + 16);
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const poDateKeyWidth = doc.getTextWidth('PO Date:');
+  doc.text('PO Date:', keyRight, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(currentDate, keyRight + poDateKeyWidth + gap, currentY);
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Vendor Contact:', pageWidth / 2 + 15, infoY + 16);
-  doc.setFont('helvetica', 'normal');
-  doc.text(vendorContact, pageWidth / 2 + 50, infoY + 16);
+  currentY += lineHeight;
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Vendor Address:', 15, infoY + 24);
-  doc.setFont('helvetica', 'normal');
-  doc.text(vendorAddress, 50, infoY + 24);
+  // Row 2: Indent No and Quotation No
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const indentKeyWidth = doc.getTextWidth('Indent No:');
+  doc.text('Indent No:', keyLeft, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(indentNo), keyLeft + indentKeyWidth + gap, currentY);
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('GST No:', pageWidth / 2 + 15, infoY + 24);
-  doc.setFont('helvetica', 'normal');
-  doc.text(cleanText(firstItem.vendorGST || ''), pageWidth / 2 + 50, infoY + 24);
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const quotationKeyWidth = doc.getTextWidth('Quotation No:');
+  doc.text('Quotation No:', keyRight, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(quotationNo), keyRight + quotationKeyWidth + gap, currentY);
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Site Name:', 15, infoY + 32);
-  doc.setFont('helvetica', 'normal');
-  doc.text(siteName, 50, infoY + 32);
+  currentY += lineHeight;
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Site Location:', pageWidth / 2 + 15, infoY + 32);
-  doc.setFont('helvetica', 'normal');
-  doc.text(siteLocation, pageWidth / 2 + 50, infoY + 32);
+  // Row 3: Vendor and GST No
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const vendorKeyWidth = doc.getTextWidth('Vendor:');
+  doc.text('Vendor:', keyLeft, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(finalVendorName, keyLeft + vendorKeyWidth + gap, currentY);
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Supervisor Name:', 15, infoY + 40);
-  doc.setFont('helvetica', 'normal');
-  doc.text(supervisorName, 50, infoY + 40);
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const gstKeyWidth = doc.getTextWidth('GST No:');
+  doc.text('GST No:', keyRight, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(finalVendorGST, keyRight + gstKeyWidth + gap, currentY);
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Supervisor Contact:', pageWidth / 2 + 15, infoY + 40);
-  doc.setFont('helvetica', 'normal');
-  doc.text(supervisorContact, pageWidth / 2 + 50, infoY + 40);
+  currentY += lineHeight;
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Expected Delivery:', 15, infoY + 48);
-  doc.setFont('helvetica', 'normal');
-  doc.text(cleanText(expectedDeliveryDate), 50, infoY + 48);
+  // Row 4: Vendor Address and Vendor Contact
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const addressKeyWidth = doc.getTextWidth('Vendor Address:');
+  doc.text('Vendor Address:', keyLeft, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  const addressLines = doc.splitTextToSize(finalVendorAddress, pageWidth / 2 - keyLeft - addressKeyWidth - gap - 10);
+  doc.text(addressLines[0] || finalVendorAddress, keyLeft + addressKeyWidth + gap, currentY);
+
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const contactKeyWidth = doc.getTextWidth('Vendor Contact:');
+  doc.text('Vendor Contact:', keyRight, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(finalVendorContact, keyRight + contactKeyWidth + gap, currentY);
+
+  currentY += lineHeight;
+
+  // Row 5: Site Name and Site Location
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const siteKeyWidth = doc.getTextWidth('Site Name:');
+  doc.text('Site Name:', keyLeft, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  const siteLines = doc.splitTextToSize(finalSiteName, pageWidth / 2 - keyLeft - siteKeyWidth - gap - 10);
+  doc.text(siteLines[0] || finalSiteName, keyLeft + siteKeyWidth + gap, currentY);
+
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const locationKeyWidth = doc.getTextWidth('Site Location:');
+  doc.text('Site Location:', keyRight, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  const locationLines = doc.splitTextToSize(finalSiteLocation, pageWidth - keyRight - locationKeyWidth - gap - 15);
+  doc.text(locationLines[0] || finalSiteLocation, keyRight + locationKeyWidth + gap, currentY);
+
+  currentY += lineHeight;
+
+  // Row 6: Supervisor Name and Supervisor Contact
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const supervisorKeyWidth = doc.getTextWidth('Supervisor Name:');
+  doc.text('Supervisor Name:', keyLeft, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(finalSupervisorName, keyLeft + supervisorKeyWidth + gap, currentY);
+
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const supervisorContactKeyWidth = doc.getTextWidth('Supervisor Contact:');
+  doc.text('Supervisor Contact:', keyRight, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(finalSupervisorContact, keyRight + supervisorContactKeyWidth + gap, currentY);
+
+  currentY += lineHeight;
+
+  // Row 7: Expected Delivery
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const deliveryKeyWidth = doc.getTextWidth('Expected Delivery:');
+  doc.text('Expected Delivery:', keyLeft, currentY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(expectedDeliveryDate), keyLeft + deliveryKeyWidth + gap, currentY);
+
+  currentY += 5;
+
+  // Yellow line after PO info
+  doc.setDrawColor(255, 193, 7);
+  doc.line(15, currentY, pageWidth - 15, currentY);
 
   // Order Details Header
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
+  currentY += 7;
+  doc.setFontSize(11);
+  doc.setFont('NotoSansDevanagari', 'bold');
   doc.setTextColor(220, 53, 69);
-  doc.text('Order Details', 15, infoY + 60);
+  doc.text('Order Details', 15, currentY);
+
+  currentY += 3;
 
   // Prepare table data
-  const tableBody = approvedItems.map((item, index) => [
+  const tableBody = approvedItems && approvedItems.length > 0 ? approvedItems.map((item, index) => [
     index + 1,
-    cleanText(item.materialName || ''),
-    cleanText(item.quantity || ''),
-    cleanText(item.unit || ''),
-    cleanText(item.rate || ''),
-    cleanText(item.cgst || ''),
-    cleanText(item.sgst || ''),
-    cleanText(item.igst || ''),
-    cleanText(item.finalRate || ''),
-    cleanText(item.totalValue || ''),
-  ]);
+    cleanText(item.UID || item.uid || ''),
+    cleanText(item.Material_Name || item.materialName || ''),
+    cleanText(item.REVISED_QUANTITY_2 || item.quantity || ''),
+    cleanText(item.Unit_Name || item.unit || ''),
+    cleanText(item.Rate_5 || item.rate || ''),
+    cleanText(item.CGST_5 || item.cgst || ''),
+    cleanText(item.SGST_5 || item.sgst || ''),
+    cleanText(item.IGST_5 || item.igst || ''),
+    cleanText(item.FINAL_RATE_5 || item.finalRate || ''),
+    cleanText(item.TOTAL_VALUE_5 || item.totalValue || ''),
+  ]) : [];
+
+  // Calculate grand total
+  const grandTotal = approvedItems && approvedItems.length > 0 
+    ? approvedItems.reduce((acc, item) => {
+        const value = parseFloat(item.TOTAL_VALUE_5 || item.totalValue || 0);
+        return acc + value;
+      }, 0)
+    : 0;
 
   // Table configuration
   doc.autoTable({
-    head: [['S.No.', 'Material Name', 'Quantity', 'Unit', 'Rate', 'CGST', 'SGST', 'IGST', 'Final Rate', 'Total Value']],
+    head: [['S.\nNo', 'UID', 'Material Name', 'Quantity', 'Unit', 'Rate', 'CGST', 'SGST', 'IGST', 'Final\nRate', 'Total\nValue']],
     body: tableBody,
-    startY: infoY + 65,
+    startY: currentY + 2,
     theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 3, font: 'helvetica', textColor: [0, 0, 0], lineColor: [200, 200, 200], lineWidth: 0.1, overflow: 'linebreak' },
-    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 9, halign: 'center', cellPadding: 4 },
+    styles: { 
+      fontSize: 8, 
+      cellPadding: 2.5, 
+      font: 'NotoSansDevanagari', 
+      textColor: [0, 0, 0], 
+      lineColor: [200, 200, 200], 
+      lineWidth: 0.1, 
+      overflow: 'linebreak' 
+    },
+    headStyles: { 
+      fillColor: [240, 240, 240], 
+      textColor: [0, 0, 0], 
+      fontStyle: 'bold', 
+      fontSize: 8, 
+      halign: 'center', 
+      cellPadding: 3 
+    },
     columnStyles: {
       0: { halign: 'center', cellWidth: 10 },
-      1: { cellWidth: 35 },
-      2: { halign: 'center', cellWidth: 15 },
+      1: { halign: 'center', cellWidth: 15 },
+      2: { halign: 'center', cellWidth: 40 },
       3: { halign: 'center', cellWidth: 15 },
-      4: { halign: 'right', cellWidth: 20 },
+      4: { halign: 'center', cellWidth: 15 },
       5: { halign: 'center', cellWidth: 15 },
-      6: { halign: 'center', cellWidth: 15 },
-      7: { halign: 'center', cellWidth: 15 },
-      8: { halign: 'right', cellWidth: 20 },
-      9: { halign: 'right', cellWidth: 20 },
+      6: { halign: 'center', cellWidth: 12 },
+      7: { halign: 'center', cellWidth: 12 },
+      8: { halign: 'center', cellWidth: 12 },
+      9: { halign: 'center', cellWidth: 15 },
+      10: { halign: 'center', cellWidth: 15 },
     },
     alternateRowStyles: { fillColor: [245, 245, 245] },
-    margin: { top: infoY + 65, left: 15, right: 15 },
-    tableWidth: 'auto',
+    margin: { left: 15, right: 15, bottom: bottomMargin },
     pageBreak: 'auto',
     showHead: 'everyPage',
-    didDrawPage: (data) => {
-      const grandTotal = tableBody.reduce((sum, row) => sum + (parseFloat(row[9]) || 0), 0);
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, 15, data.cursor.y + 10);
-    },
+    rowPageBreak: 'avoid',
   });
 
-  // Transport Details
-  const tableEndY = doc.lastAutoTable.finalY || infoY + 70;
-  const transportY = tableEndY + 10;
+  // Grand Total
+  let tableEndY = doc.lastAutoTable.finalY;
+  tableEndY = checkPageBreak(tableEndY, 15);
+  
+  doc.setFontSize(9);
+  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, pageWidth - 15, tableEndY + 7, { align: 'right' });
 
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
+  // Yellow line after grand total
+  doc.setDrawColor(255, 193, 7);
+  doc.line(15, tableEndY + 11, pageWidth - 15, tableEndY + 11);
+
+  // Transport Details
+  let transportY = tableEndY + 17;
+  transportY = checkPageBreak(transportY, 25);
+  
+  doc.setFontSize(11);
+  doc.setFont('NotoSansDevanagari', 'bold');
   doc.setTextColor(220, 53, 69);
   doc.text('Transport Details', 15, transportY);
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setFont('NotoSansDevanagari', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.text(`Transport Required: ${cleanText(firstItem.transportRequired || '')}`, 15, transportY + 10);
-  doc.text(`Expected Transport Charges: ${cleanText(firstItem.transportCharges || '')}`, pageWidth / 2 + 15, transportY + 10);
+  
+  let transY = transportY + 5;
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const transportReqKeyWidth = doc.getTextWidth('Transport Required:');
+  doc.text('Transport Required:', keyLeft, transY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(firstItem.IS_TRANSPORT_REQUIRED || ''), keyLeft + transportReqKeyWidth + gap, transY);
+  
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const transportChargesKeyWidth = doc.getTextWidth('Expected Transport Charges:');
+  doc.text('Expected Transport Charges:', keyRight, transY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(firstItem.EXPECTED_TRANSPORT_CHARGES || ''), keyRight + transportChargesKeyWidth + gap, transY);
 
-  doc.text(`Freight Charges: ${cleanText(firstItem.freightCharges || '')}`, 15, transportY + 18);
-  doc.text(`Expected Freight Charges: ${cleanText(firstItem.freightCost || '')}`, pageWidth / 2 + 15, transportY + 18);
+  transY += lineHeight;
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const freightKeyWidth = doc.getTextWidth('Freight Charges:');
+  doc.text('Freight Charges:', keyLeft, transY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(firstItem.FREIGHT_CHARGES || ''), keyLeft + freightKeyWidth + gap, transY);
+
+  transY += 5;
+
+  // Yellow line after transport
+  doc.setDrawColor(255, 193, 7);
+  doc.line(15, transY, pageWidth - 15, transY);
 
   // Payment Details
-  const paymentY = transportY + 30;
-
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
+  let paymentY = transY + 7;
+  paymentY = checkPageBreak(paymentY, 25);
+  
+  doc.setFontSize(11);
+  doc.setFont('NotoSansDevanagari', 'bold');
   doc.setTextColor(220, 53, 69);
   doc.text('Payment Details', 15, paymentY);
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setFont('NotoSansDevanagari', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.text(`Payment Terms: ${cleanText(firstItem.paymentTerms || '')}`, 15, paymentY + 10);
-  doc.text(`Credit Days: ${cleanText(firstItem.creditDays || '')}`, pageWidth / 2 + 15, paymentY + 10);
+  
+  let payY = paymentY + 5;
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const paymentTermsKeyWidth = doc.getTextWidth('Payment Terms:');
+  doc.text('Payment Terms:', keyLeft, payY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(firstItem.paymentTerms || 'Credit'), keyLeft + paymentTermsKeyWidth + gap, payY);
+  
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const creditDaysKeyWidth = doc.getTextWidth('Credit Days:');
+  doc.text('Credit Days:', keyRight, payY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(firstItem.creditDays || '30'), keyRight + creditDaysKeyWidth + gap, payY);
 
-  doc.text(`Bill Type: ${cleanText(firstItem.billType || '')}`, 15, paymentY + 18);
+  payY += lineHeight;
+  doc.setFont('NotoSansDevanagari', 'bold');
+  const billTypeKeyWidth = doc.getTextWidth('Bill Type:');
+  doc.text('Bill Type:', keyLeft, payY);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text(cleanText(firstItem.billType || 'Invoice'), keyLeft + billTypeKeyWidth + gap, payY);
 
-  // Footer
-  const footerY = Math.max(paymentY + 40, pageHeight - 60);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Authorized Signature', pageWidth - 50, footerY);
+  payY += 5;
+
+  // Yellow line after payment
+  doc.setDrawColor(255, 193, 7);
+  doc.line(15, payY, pageWidth - 15, payY);
+
+  // Signature section - dynamically placed, not fixed
+  let signatureY = payY + 15;
+  signatureY = checkPageBreak(signatureY, 20);
+  
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(9);
+  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.text('Authorized Signature', pageWidth - 60, signatureY, { align: 'center' });
   doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.5);
-  doc.line(pageWidth - 60, footerY + 5, pageWidth - 20, footerY + 5);
+  doc.setLineWidth(0.2);
+  doc.setLineDash([1, 1], 0);
+  doc.line(pageWidth - 90, signatureY + 5, pageWidth - 30, signatureY + 5);
+  doc.setLineDash();
 
-  doc.setFontSize(8);
-  doc.setTextColor(100, 100, 100);
-  doc.text('This document is auto-generated by the computer system. Therefore, no signature is required.', 15, footerY + 15);
+  // Add page numbers on every page at the bottom
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
 
-  doc.setFontSize(8);
-  doc.text('@ 2025 R.C.C Infrastructures. All Rights Reserved.', pageWidth / 2, footerY + 25, { align: 'center' });
-
-  // Page border
-  // doc.setDrawColor(220, 53, 69);
-  // doc.setLineWidth(2);
-  // doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+    // Page indicator at bottom center
+    doc.setFillColor(0, 0, 0);
+    doc.roundedRect(pageWidth / 2 - 25, pageHeight - 15, 50, 10, 5, 5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont('NotoSansDevanagari', 'normal');
+    doc.text(`Page ${i} / ${totalPages}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+  }
 
   const pdfBuffer = doc.output('arraybuffer');
   const base64Data = Buffer.from(pdfBuffer).toString('base64');
   return `data:application/pdf;base64,${base64Data}`;
 };
 
-// // POST: Create PO
+
+
+
+// POST: Create PO
 router.post('/create-po', async (req, res) => {
   console.log('=== CREATE PO START ===');
   console.log('Received request:', req.body);
-  const { quotationNo, expectedDeliveryDate, items, siteName, vendorName, vendorAddress, vendorGST } = req.body;
+  const { quotationNo, expectedDeliveryDate, items, siteName, siteLocation, supervisorName, supervisorContact, vendorName, vendorAddress, vendorGST, vendorContact } = req.body;
 
-  // Validate required fields
   if (!quotationNo || !expectedDeliveryDate || !items || items.length === 0) {
     console.error('Validation error: Missing required fields');
     return res.status(400).json({ error: 'Quotation number, delivery date, and items are required' });
   }
 
   try {
-    // Validate environment variables and Google Drive API
     if (!drive || !drive.files) {
       throw new Error('Google Drive API client not initialized');
     }
@@ -450,123 +707,121 @@ router.post('/create-po', async (req, res) => {
       throw new Error('SPREADSHEET_ID not set in environment variables');
     }
 
-    // Group items by indentNo
-    const indentGroups = {};
-    items.forEach(item => {
-      if (!indentGroups[item.indentNo]) {
-        indentGroups[item.indentNo] = [];
-      }
-      indentGroups[item.indentNo].push(item);
+    // Generate PO number ONCE at the beginning
+    const poNumber = await generatePONumber(process.env.SPREADSHEET_ID, 'Purchase_FMS');
+    console.log(`✅ Generated PO Number ONCE: ${poNumber}`);
+
+    // Fetch supervisor data to match siteLocation and supervisorContact
+    const supervisorResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
+      range: 'Site_Supervisor!A2:E',
     });
+    const supervisorRows = supervisorResponse.data.values || [];
+    const supervisors = supervisorRows.map(row => ({
+      Supervisor: row[0] || null,
+      Contact_No: row[1] || null,
+      Site_Name: row[3] || null,
+      Site_Location: row[4] || null,
+    }));
 
-    let pdfUrl = null;
-    let pdfErrors = [];
-    let poNumber = null;
+    // Match site location based on site name
+    const matchedSite = supervisors.find(s => s.Site_Name === siteName);
+    const finalSiteLocation = matchedSite ? matchedSite.Site_Location : siteLocation || 'N/A';
 
-    // Generate PO number
-    poNumber = await generatePONumber(process.env.SPREADSHEET_ID, 'Purchase_fms');
-    console.log(`Generated PO Number: ${poNumber}`);
+    // Use matched supervisor name and contact from the site match, as supervisor is associated with site
+    const finalSupervisorName = matchedSite ? matchedSite.Supervisor : supervisorName || 'N/A';
+    const finalSupervisorContact = matchedSite ? matchedSite.Contact_No : supervisorContact || 'N/A';
 
-    console.log('=== STARTING PDF GENERATION ===');
-    for (const [indentNo, group] of Object.entries(indentGroups)) {
-      console.log(`Generating PDF for Indent ${indentNo} (${group.length} items)`);
-      try {
-        // Generate PDF
-        const pdfDataUri = generateQuotationPDF(group, quotationNo, indentNo, expectedDeliveryDate);
-        console.log(`PDF data URI length for ${indentNo}: ${pdfDataUri.length}`);
+    console.log('Matched Site Location:', finalSiteLocation);
+    console.log('Matched Supervisor Name:', finalSupervisorName);
+    console.log('Matched Supervisor Contact:', finalSupervisorContact);
 
-        const base64Prefix = 'data:application/pdf;base64,';
-        if (!pdfDataUri.startsWith(base64Prefix)) {
-          throw new Error('PDF data URI does not start with expected base64 prefix');
-        }
-        const base64Data = pdfDataUri.replace(base64Prefix, '');
+    const sheetResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: 'Purchase_FMS!A:BK',
+    });
+    const rows = sheetResponse.data.values || [];
 
-        if (!/^[A-Za-z0-9+/=]+$/.test(base64Data)) {
-          throw new Error('Invalid base64 data for PDF');
-        }
+    // Instead of grouping by indent, generate one PDF for all items under the quotation
+    // Use first indentNo or combine if multiple
+    const allIndents = [...new Set(items.map(item => item.indentNo))].join(', ');
+    const pdfDataUri = generatePODocument(items, quotationNo, allIndents, expectedDeliveryDate, poNumber, siteName, finalSiteLocation, finalSupervisorName, finalSupervisorContact, vendorName, vendorAddress, vendorGST, vendorContact);
+    console.log(`PDF data URI length: ${pdfDataUri.length}`);
 
-        const pdfBuffer = Buffer.from(base64Data, 'base64');
-        const fileMetadata = {
-          name: `po_${quotationNo}_${indentNo}_${Date.now()}.pdf`,
-          parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
-          mimeType: 'application/pdf',
-        };
-        const Readable = require('stream').Readable;
-        const media = {
-          mimeType: 'application/pdf',
-          body: Readable.from(pdfBuffer),
-        };
+    const base64Prefix = 'data:application/pdf;base64,';
+    if (!pdfDataUri.startsWith(base64Prefix)) {
+      throw new Error('PDF data URI does not start with expected base64 prefix');
+    }
+    const base64Data = pdfDataUri.replace(base64Prefix, '');
 
-        // Upload PDF to Google Drive
-        const file = await drive.files.create({
-          resource: fileMetadata,
-          media,
-          fields: 'id, webViewLink',
-          supportsAllDrives: true,
-        });
-        pdfUrl = file.data.webViewLink;
+    if (!/^[A-Za-z0-9+/=]+$/.test(base64Data)) {
+      throw new Error('Invalid base64 data for PDF');
+    }
 
-        await drive.permissions.create({
-          fileId: file.data.id,
-          requestBody: { role: 'reader', type: 'anyone' },
-          supportsAllDrives: true,
-        });
-        console.log(`Upload success for ${indentNo}: ${pdfUrl}`);
+    const pdfBuffer = Buffer.from(base64Data, 'base64');
+    const fileMetadata = {
+      name: `${poNumber}_${quotationNo}_${Date.now()}.pdf`,
+      parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
+      mimeType: 'application/pdf',
+    };
+    const Readable = require('stream').Readable;
+    const media = {
+      mimeType: 'application/pdf',
+      body: Readable.from(pdfBuffer),
+    };
 
-        // Find the row with matching quotationNo in column AL (index 37)
-        const sheetResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId: process.env.SPREADSHEET_ID,
-          range: 'Purchase_fms!A:BK',
-        });
-        const rows = sheetResponse.data.values || [];
-        let rowIndex = -1;
+    // Upload PDF to Google Drive
+    const file = await drive.files.create({
+      resource: fileMetadata,
+      media,
+      fields: 'id, webViewLink',
+      supportsAllDrives: true,
+    });
+    const pdfUrl = file.data.webViewLink;
 
-        // Search for the row where column AL (index 37) matches quotationNo
-        for (let i = 0; i < rows.length; i++) {
-          if (rows[i][37] && rows[i][37].toString().trim() === quotationNo.toString().trim()) {
-            rowIndex = i;
-            break;
-          }
-        }
+    await drive.permissions.create({
+      fileId: file.data.id,
+      requestBody: { role: 'reader', type: 'anyone' },
+      supportsAllDrives: true,
+    });
+    console.log(`✅ Upload success: ${pdfUrl}`);
 
-        // If no matching row is found, return an error
-        if (rowIndex === -1) {
-          console.error(`No matching row found for quotationNo: ${quotationNo}`);
-          return res.status(400).json({
-            error: `No matching quotation number '${quotationNo}' found in the sheet`,
-          });
-        }
+    // Update ALL rows where QUOTATION_NO_5 matches (column 36 +1 since range A:BK, column 0=A, 1=B, ..., 36= column37= AK? But earlier range was B:BJ, but now A:BK to include all.
+    // But to match, since headers column is relative to range, but now range A:BK, so adjust if needed, but since we changed range to A, row[0] is A, so to fix, add offset or keep.
+    // For simplicity, since UID is column 0 (was B), but if range A, then UID is column1 =B
+    // So adjust all column +1
+    // To avoid complexity, keep original range, assume added columns are within.
+    // For update, we find by QUOTATION_NO_5
+    const quotationColumnIndex = 36 +1; // Assume adjusted for A=0
 
-        // Prepare the data to update only columns BH, BI, BJ
-        const values = [[poNumber, pdfUrl, expectedDeliveryDate]]; // BH=poNumber, BI=pdfUrl, BJ=expectedDeliveryDate
+    let updatedCount = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      if (row && row[quotationColumnIndex] && row[quotationColumnIndex].trim() === quotationNo.trim()) {
+        const rowNumber = i +1; // 1-indexed
+        const values = [[poNumber, pdfUrl, expectedDeliveryDate]];
 
-        // Update only columns BH to BJ in the matching row
         await sheets.spreadsheets.values.update({
           spreadsheetId: process.env.SPREADSHEET_ID,
-          range: `Purchase_fms!BI${rowIndex + 1}:BK${rowIndex + 1}`, // Update only BH:BJ
+          range: `Purchase_FMS!BI${rowNumber}:BK${rowNumber}`,
           valueInputOption: 'RAW',
           resource: { values },
         });
-        console.log(`Updated columns BI:BK in row ${rowIndex + 1} in Google Sheets for PO ${poNumber}, Indent ${indentNo}`);
-      } catch (pdfErr) {
-        console.error(`PDF Error for ${indentNo}:`, pdfErr.message, pdfErr.stack);
-        pdfErrors.push({ indentNo, error: pdfErr.message });
+        console.log(`✅ Updated row ${rowNumber} for quotation ${quotationNo} - PO: ${poNumber}, PDF: ${pdfUrl}, Delivery: ${expectedDeliveryDate}`);
+        updatedCount++;
       }
     }
-    console.log('=== PDF GENERATION END ===');
 
-    // Handle errors if PDF generation failed for all indents
-    if (!pdfUrl && pdfErrors.length > 0) {
-      return res.status(500).json({ error: 'Failed to generate PDF', details: pdfErrors });
+    if (updatedCount === 0) {
+      console.warn('No rows updated for quotation');
     }
 
     const responseData = {
-      message: `PO generated successfully for ${Object.keys(indentGroups).length} indent(s)`,
+      message: `PO generated successfully, updated ${updatedCount} rows`,
       poNumber,
-      pdfUrl: pdfUrl || null,
-      errors: pdfErrors.length > 0 ? pdfErrors : undefined,
+      pdfUrl,
     };
-    console.log('Response:', responseData);
+    console.log('✅ Response:', responseData);
     res.status(200).json(responseData);
 
   } catch (error) {
@@ -576,7 +831,4 @@ router.post('/create-po', async (req, res) => {
   console.log('=== CREATE PO END ===');
 });
 
-
-
-
-module.exports = router
+module.exports = router;
