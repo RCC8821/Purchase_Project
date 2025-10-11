@@ -77,7 +77,7 @@ router.get('/get-MRN-Data', async (req, res) => {
         pdfUrl5: row[55] || '', // Column N (assumed)
         pdfUrl7: row[61] || '', // Column P (assumed)
         finalReceivedQuantity9: row[75] || '', // Column J (assumed)
-        vendorFermName5: row[38] || '', // Column M (assumed)
+        vendorFirmName5: row[39] || '', // Column M (assumed)
         indentNumber3: row[24] || '', // Column O (assumed)
         poNumber7: row[60] || '' // Column Q (assumed, may need adjustment)
       }));
@@ -86,6 +86,8 @@ router.get('/get-MRN-Data', async (req, res) => {
       success: true,
       data: filteredData
     });
+console.log(filteredData)
+
   } catch (error) {
     console.error('Error fetching filtered data:', error);
     res.status(500).json({ error: 'Failed to fetch filtered data' });

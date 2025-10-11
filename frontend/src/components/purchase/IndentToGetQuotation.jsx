@@ -41,7 +41,7 @@ const IndentToGetQuotation = () => {
             const transformedData = data.data.map((item) => ({
               UID: item.UID || "N/A",
               PLANNED_3: item.PLANNED_3 || "N/A",
-              Quantity: item.Quantity || "N/A",
+              // Quantity: item.Quantity || "N/A",
               Req_No: item.Req_No || "N/A",
               Site_Name: item.Site_Name || "N/A",
               Supervisor_Name: item.Supervisor_Name || "N/A",
@@ -233,9 +233,7 @@ const IndentToGetQuotation = () => {
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Require Date
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Quantity
-                  </th>
+                 
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Revised Quantity
                   </th>
@@ -294,9 +292,7 @@ const IndentToGetQuotation = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       {request.Require_Date}
                     </td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200 text-right">
-                      {request.Quantity}
-                    </td>
+                   
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       {request.REVISED_QUANTITY_2}
                     </td>

@@ -176,7 +176,7 @@ const MRN = () => {
                 <div><strong>FINAL RECEIVED QUANTITY 9:</strong> {poDetails.finalReceivedQuantity9}</div>
                 <div><strong>Indent Number:</strong> {poDetails.indentNumber3}</div>
                 <div><strong>Challan Number:</strong> {poDetails.challanNumber9}</div>
-                <div><strong>Actual Firm Name:</strong> {poDetails.vendorFermName5}</div>
+                <div><strong>Actual Firm Name:</strong> {poDetails.vendorFirmName5}</div>
               </div>
             </div>
             <div className="flex justify-end space-x-4">
@@ -279,7 +279,7 @@ const MRN = () => {
                         'N/A'
                       )}
                     </td>
-                    <td className="px-4 py-2 text-sm text-gray-800">{request.vendorFermName5}</td>
+                    <td className="px-4 py-2 text-sm text-gray-800">{request.vendorFirmName5}</td>
                   </tr>
                 ))}
               </tbody>

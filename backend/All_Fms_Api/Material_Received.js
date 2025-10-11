@@ -31,29 +31,85 @@ router.get('/dropdowns', async (req, res) => {
 });
 
 // Updated endpoint for filtered data with specified headers
+// router.get('/get-material-received-filter-data', async (req, res) => {
+//   try {
+//     const { siteName, supervisorName } = req.query;
+
+//     // Fetch all data from the sheet (adjust range to include all relevant columns)
+//     const response = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Purchase_FMS!B8:BW', // Adjusted to include 10 columns (A to J)
+//     });
+
+//     let data = response.data.values || [];
+
+//     // Filter data based on parameters and exclude rows where STATUS is 'Done'
+//     if (siteName || supervisorName) {
+//       data = data.filter(row => {
+//         const matchesSite = siteName ? row[2] === siteName : true; // Site Name is in column C
+//         const matchesSupervisor = supervisorName ? row[3] === supervisorName : true; // Supervisor Name is in column D
+//         const isNotDone = row[67] !== 'Dispatched'; // STATUS is in column 9 (index 8)
+//         return matchesSite && matchesSupervisor && isNotDone;
+//       });
+//     } else {
+//       // If no query parameters, only filter out rows where STATUS is 'Done'
+//       data = data.filter(row => row[67] !== 'Dispatched');
+//     }
+
+//     // Transform data into structured format with specified headers
+//     const filteredData = data.map(row => ({
+//       uid: row[0] || '',
+//       reqNo: row[1] || '',
+//       siteName: row[2] || '',
+//       supervisorName: row[3] || '',
+//       vendorName: row[37] || '',
+//       materialType: row[4] || '',
+//       skuCode: row[5] || '',
+//       materialName: row[6] || '',
+//       unitName: row[8] || '',
+//       totalReceivedQuantity: row[15] || ''
+//     }));
+
+//     res.json({
+//       success: true,
+//       data: filteredData
+//     });
+//   } catch (error) {
+//     console.error('Error fetching filtered data:', error);
+//     res.status(500).json({ error: 'Failed to fetch filtered data' });
+//   }
+// });
+
+
+
 router.get('/get-material-received-filter-data', async (req, res) => {
   try {
     const { siteName, supervisorName } = req.query;
 
-    // Fetch all data from the sheet (adjust range to include all relevant columns)
+    // Fetch all data from the sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Purchase_FMS!B8:BW', // Adjusted to include 10 columns (A to J)
+      range: 'Purchase_FMS!B8:BW', // Adjusted to include all relevant columns
     });
 
     let data = response.data.values || [];
 
-    // Filter data based on parameters and exclude rows where STATUS is 'Done'
+    // Filter data based on parameters, PLANNED 9 (BU, index 74) has data, and ACTUAL 9 (BV, index 75) is empty
     if (siteName || supervisorName) {
       data = data.filter(row => {
         const matchesSite = siteName ? row[2] === siteName : true; // Site Name is in column C
         const matchesSupervisor = supervisorName ? row[3] === supervisorName : true; // Supervisor Name is in column D
-        const isNotDone = row[74] !== 'Done'; // STATUS is in column 9 (index 8)
-        return matchesSite && matchesSupervisor && isNotDone;
+        const hasPlanned9 = row[71] && row[71].trim() !== ''; // PLANNED 9 (BU) has data
+        const noActual9 = !row[72] || row[72].trim() === ''; // ACTUAL 9 (BV) is empty
+        return matchesSite && matchesSupervisor && hasPlanned9 && noActual9;
       });
     } else {
-      // If no query parameters, only filter out rows where STATUS is 'Done'
-      data = data.filter(row => row[74] !== 'Done');
+      // If no query parameters, only filter based on PLANNED 9 and ACTUAL 9
+      data = data.filter(row => {
+        const hasPlanned9 = row[71] && row[71].trim() !== ''; // PLANNED 9 (BU) has data
+        const noActual9 = !row[72] || row[72].trim() === ''; // ACTUAL 9 (BV) is empty
+        return hasPlanned9 && noActual9;
+      });
     }
 
     // Transform data into structured format with specified headers
