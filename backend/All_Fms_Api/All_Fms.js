@@ -146,10 +146,10 @@ router.post('/approve-Requied-save', async (req, res) => {
   console.log('DECIDED_BRAND_COMPANY_NAME_2 value:', DECIDED_BRAND_COMPANY_NAME_2);
 
   // Validate input
-  if (!UID || !STATUS_2 || REVISED_QUANTITY_2 === undefined || !DECIDED_BRAND_COMPANY_NAME_2 || !REMARKS_2) {
+  if (!UID || !STATUS_2 || REVISED_QUANTITY_2 === undefined || !DECIDED_BRAND_COMPANY_NAME_2 ) {
     console.log('Validation failed - UID:', UID, 'STATUS_2:', STATUS_2, 'REVISED_QUANTITY_2:', REVISED_QUANTITY_2, 
-                'DECIDED_BRAND/COMPANY_NAME_2:', DECIDED_BRAND_COMPANY_NAME_2, 'REMARKS_2:', REMARKS_2);
-    return res.status(400).json({ error: 'UID, STATUS_2, REVISED_QUANTITY_2, DECIDED_BRAND/COMPANY_NAME_2, and REMARKS_2 are required' });
+                'DECIDED_BRAND/COMPANY_NAME_2:', DECIDED_BRAND_COMPANY_NAME_2, 'REMARKS_2:', );
+    return res.status(400).json({ error: 'UID, STATUS_2, REVISED_QUANTITY_2, DECIDED_BRAND/COMPANY_NAME_2, and are required' });
   }
 
   // Convert REVISED_QUANTITY_2 to number and validate

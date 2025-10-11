@@ -39,8 +39,8 @@ const ApproveRequired = () => {
             Material_Name: item.Material_Name || 'N/A',
             Unit_Name: item.Unit_Name || 'N/A',
             Purpose: item.Purpose || 'N/A',
-            Require_Date: item.Require_Date || 'N/A',
-            Remark: item.Remark || 'N/A', // Added Remark
+            Require_Days: item.Require_Days || 'N/A', // Map Require_Days instead of Require_Date
+            Remark: item.Remark || 'N/A',
             status2: item.STATUS_2 || '',
           })).filter(item => item.status2 !== 'APPROVED');
           console.log('Transformed Data:', transformedData);
@@ -86,12 +86,18 @@ const ApproveRequired = () => {
   const handleSave = async () => {
     if (!selectedRequest) return;
 
+    // Validate required fields (status2 is required, remarks2 is optional)
+    if (!status2) {
+      setError('Status is required');
+      return;
+    }
+
     const updatedData = {
       UID: selectedRequest.UID,
       STATUS_2: status2,
-      REVISED_QUANTITY_2: revisedQuantity2,
-      DECIDED_BRAND_COMPANY_NAME_2: decidedBrandCompanyName2,
-      REMARKS_2: remarks2,
+      REVISED_QUANTITY_2: revisedQuantity2 || '', // Allow empty
+      DECIDED_BRAND_COMPANY_NAME_2: decidedBrandCompanyName2 || '', // Allow empty
+      REMARKS_2: remarks2 || '', // Allow empty
     };
 
     try {
@@ -106,7 +112,7 @@ const ApproveRequired = () => {
 
       if (response.ok) {
         setShowSuccess(true);
-        
+
         if (status2 === 'APPROVED') {
           setRequests((prevRequests) =>
             prevRequests.filter((req) => req.UID !== selectedRequest.UID)
@@ -120,7 +126,7 @@ const ApproveRequired = () => {
             )
           );
         }
-        
+
         setTimeout(() => {
           closeModal();
         }, 1500);
@@ -143,7 +149,6 @@ const ApproveRequired = () => {
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-semibold text-gray-800">Approve Required</h2>
-    
         </div>
         <p className="text-gray-600 text-sm">Review and approve required requests.</p>
       </div>
@@ -168,9 +173,6 @@ const ApproveRequired = () => {
                     UID
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Quantity
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Req No
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
@@ -189,13 +191,16 @@ const ApproveRequired = () => {
                     Material Name
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
+                    Quantity
+                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Unit
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Purpose
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Require Date
+                    Require Days
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Remark
@@ -214,14 +219,11 @@ const ApproveRequired = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       {request.UID}
                     </td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200 text-right">
-                      {request.Quantity}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
+                    <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">
                       {request.Req_No}
                     </td>
-                    <td className="px-5 py-5 text-sm text-gray-800 border-r border-gray-200">
-                      <div  title={request.Site_Name}>
+                    <td className="px-6 py-3 text-sm text-gray-800 border-r border-gray-200">
+                      <div title={request.Site_Name}>
                         {request.Site_Name}
                       </div>
                     </td>
@@ -235,9 +237,12 @@ const ApproveRequired = () => {
                       {request.SKU_Code}
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div  title={request.Material_Name}>
+                      <div title={request.Material_Name}>
                         {request.Material_Name}
                       </div>
+                    </td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200 text-right">
+                      {request.Quantity}
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       {request.Unit_Name}
@@ -248,7 +253,7 @@ const ApproveRequired = () => {
                       </div>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      {request.Require_Date}
+                      {request.Require_Days} {/* Display Require_Days */}
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       <div className="max-w-[120px] truncate" title={request.Remark}>
@@ -293,6 +298,17 @@ const ApproveRequired = () => {
               </div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+                <FaTimes className="text-red-600 mr-3 flex-shrink-0" />
+                <div>
+                  <p className="text-red-800 font-medium">Error</p>
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              </div>
+            )}
+
             {/* Success Message */}
             {showSuccess && (
               <div className="mx-6 mt-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center">
@@ -319,6 +335,7 @@ const ApproveRequired = () => {
                       onChange={(e) => setStatus2(e.target.value)}
                       className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 bg-white appearance-none cursor-pointer"
                       disabled={isSaving}
+                      required
                     >
                       <option value="APPROVED">✅ APPROVED</option>
                       <option value="PENDING">⏳ PENDING</option>
@@ -342,7 +359,7 @@ const ApproveRequired = () => {
                     value={revisedQuantity2}
                     onChange={(e) => setRevisedQuantity2(e.target.value)}
                     className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
-                    placeholder="Enter revised quantity"
+                    placeholder="Enter revised quantity (optional)"
                     disabled={isSaving}
                   />
                 </div>
@@ -357,7 +374,7 @@ const ApproveRequired = () => {
                     value={decidedBrandCompanyName2}
                     onChange={(e) => setDecidedBrandCompanyName2(e.target.value)}
                     className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200"
-                    placeholder="Enter brand/company name"
+                    placeholder="Enter brand/company name (optional)"
                     disabled={isSaving}
                   />
                 </div>
@@ -365,13 +382,13 @@ const ApproveRequired = () => {
                 {/* Remarks Field */}
                 <div className="group">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Remarks
+                    Remarks (Optional)
                   </label>
                   <textarea
                     value={remarks2}
                     onChange={(e) => setRemarks2(e.target.value)}
                     className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 resize-none"
-                    placeholder="Enter remarks"
+                    placeholder="Enter remarks (optional)"
                     rows={3}
                     disabled={isSaving}
                   />

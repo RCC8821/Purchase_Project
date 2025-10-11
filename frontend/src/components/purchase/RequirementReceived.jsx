@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState } from "react";
 import { Plus, Trash2, Send } from "lucide-react";
 import axios from "axios";
@@ -111,8 +109,9 @@ const RequirementReceived = () => {
 
   const [materialMap, setMaterialMap] = useState({});
   const [unitMap, setUnitMap] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -133,24 +132,24 @@ const RequirementReceived = () => {
           skuCodes = [],
         } = response.data;
 
-        // Ensure unique values
         const uniqueSiteNames = [...new Set(siteNames)];
         const uniqueSupervisorNames = [...new Set(supervisorNames)];
         const uniqueMaterialTypes = [...new Set(materialTypes)];
 
-        // Create materialMap for materialType -> materialNames
         const newMaterialMap = {};
         materialTypes.forEach((type, index) => {
           const normalizedType = type.toLowerCase();
           if (!newMaterialMap[normalizedType]) {
             newMaterialMap[normalizedType] = [];
           }
-          if (materialNames[index] && !newMaterialMap[normalizedType].includes(materialNames[index])) {
+          if (
+            materialNames[index] &&
+            !newMaterialMap[normalizedType].includes(materialNames[index])
+          ) {
             newMaterialMap[normalizedType].push(materialNames[index]);
           }
         });
 
-        // Create unitMap for materialName -> { unit, skuCode }
         const newUnitMap = {};
         materialNames.forEach((name, index) => {
           if (name && units[index]) {
@@ -256,7 +255,6 @@ const RequirementReceived = () => {
       }
     }
 
-    // Prepare submission data, including skuCode in items
     const submissionData = {
       ...formData,
       items: items.map((item) => ({
@@ -266,14 +264,15 @@ const RequirementReceived = () => {
         units: item.units,
         reqDays: item.reqDays,
         reason: item.reason,
-        skuCode: item.skuCode, // Explicitly include skuCode
+        skuCode: item.skuCode,
       })),
     };
 
+    setLoading(true);
+    setSuccessMessage("");
+
     try {
-      const fullUrl = `${
-        import.meta.env.VITE_BACKEND_URL
-      }/api/submit-requirement`;
+      const fullUrl = `${import.meta.env.VITE_BACKEND_URL}/api/submit-requirement`;
       console.log("Submitting to:", fullUrl);
       console.log("Submission Data (including SKU codes):", submissionData);
       const response = await axios.post(fullUrl, submissionData, {
@@ -283,14 +282,21 @@ const RequirementReceived = () => {
       });
 
       console.log("Submission Response:", response.data);
-      alert("Requirement submitted successfully!");
+      setSuccessMessage("Requirement submitted successfully!"); // Updated message
       resetForm();
+
+      // Optional: Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 5000);
     } catch (error) {
       console.error("Error submitting requirement:", error);
       alert(
         error.response?.data?.error ||
           "Failed to submit requirement. Please try again."
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -375,15 +381,6 @@ const RequirementReceived = () => {
             <h4 className="text-lg font-medium text-gray-800 border-b pb-2">
               Material Items
             </h4>
-            <button
-              type="button"
-              onClick={addItem}
-              className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
-              disabled={dropdownOptions.materialTypes.length === 0}
-            >
-              <Plus className="w-4 h-4" />
-              Add Item
-            </button>
           </div>
 
           {items.map((item, index) => {
@@ -528,6 +525,15 @@ const RequirementReceived = () => {
                       placeholder="Enter reason for this item"
                     />
                   </div>
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className="flex items-center gap-2 bg-blue-500 text-white px-2 py-2 mt-5 rounded-md hover:bg-blue-600 transition-colors"
+                    disabled={dropdownOptions.materialTypes.length === 0}
+                  >
+                    <Plus className="w-2 h-2" />
+                    Add Item
+                  </button>
                 </div>
               </div>
             );
@@ -564,12 +570,46 @@ const RequirementReceived = () => {
             type="button"
             onClick={handleSubmit}
             className="flex items-center gap-2 bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
-            disabled={dropdownOptions.materialTypes.length === 0}
+            disabled={dropdownOptions.materialTypes.length === 0 || loading}
           >
-            <Send className="w-4 h-4" />
-            Submit Requirement
+            {loading ? (
+              <svg
+                className="animate-spin h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
+              </svg>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                Submit Requirement
+              </>
+            )}
           </button>
         </div>
+
+        {/* Success Message Box */}
+        {successMessage && (
+          <div className="mt-4 flex justify-center">
+            <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md shadow-md max-w-md w-full">
+              <p className="font-medium">{successMessage}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

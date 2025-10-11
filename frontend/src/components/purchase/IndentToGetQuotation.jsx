@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   FaCheck,
@@ -13,7 +14,7 @@ const IndentToGetQuotation = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedReqNo, setSelectedReqNo] = useState(null);
   const [selectedUIDs, setSelectedUIDs] = useState([]);
-  const [status3, setStatus3] = useState("Indent");
+  const [status3, setStatus3] = useState("");
   const [indentNumber3, setIndentNumber3] = useState("");
   const [remark3, setRemark3] = useState("");
   const [nextIndentNumber, setNextIndentNumber] = useState(1);
@@ -36,7 +37,7 @@ const IndentToGetQuotation = () => {
             // If data is empty, set requests to empty array and no error
             setRequests([]);
           } else {
-            // Transform data as before
+            // Transform data
             const transformedData = data.data.map((item) => ({
               UID: item.UID || "N/A",
               PLANNED_3: item.PLANNED_3 || "N/A",
@@ -94,7 +95,7 @@ const IndentToGetQuotation = () => {
     setIsModalOpen(true);
     setShowSuccess(false);
     setError(null);
-  }
+  };
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -119,9 +120,11 @@ const IndentToGetQuotation = () => {
   };
 
   const handleSave = async () => {
+    // Validate required fields: selectedUIDs, selectedReqNo, and status3
     if (
       selectedUIDs.length === 0 ||
       !selectedReqNo ||
+      status3 === "" ||
       status3 === "Select Status"
     ) {
       setError("Please select a request number, at least one UID, and a valid status.");
@@ -134,7 +137,7 @@ const IndentToGetQuotation = () => {
         UIDs: selectedUIDs,
         STATUS_3: status3,
         INDENT_NUMBER_3: indentNumber3,
-        REMARK_3: remark3,
+        REMARK_3: remark3 || "N/A", // Send "N/A" if remark3 is empty
       };
 
       const response = await fetch(
@@ -262,10 +265,7 @@ const IndentToGetQuotation = () => {
                       {request.Req_No}
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div
-                        // className="max-w-[120px] truncate"
-                        title={request.Site_Name}
-                      >
+                      <div title={request.Site_Name}>
                         {request.Site_Name}
                       </div>
                     </td>
@@ -279,10 +279,7 @@ const IndentToGetQuotation = () => {
                       {request.SKU_Code}
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div
-                        // className="max-w-[120px] truncate"
-                        title={request.Material_Name}
-                      >
+                      <div title={request.Material_Name}>
                         {request.Material_Name}
                       </div>
                     </td>
@@ -290,10 +287,7 @@ const IndentToGetQuotation = () => {
                       {request.Unit_Name}
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div
-                        className="max-w-[100px] truncate"
-                        title={request.Purpose}
-                      >
+                      <div className="max-w-[100px] truncate" title={request.Purpose}>
                         {request.Purpose}
                       </div>
                     </td>
@@ -307,18 +301,12 @@ const IndentToGetQuotation = () => {
                       {request.REVISED_QUANTITY_2}
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div
-                        className="max-w-[120px] truncate"
-                        title={request.DECIDED_BRAND_COMPANY_NAME_2}
-                      >
+                      <div className="max-w-[120px] truncate" title={request.DECIDED_BRAND_COMPANY_NAME_2}>
                         {request.DECIDED_BRAND_COMPANY_NAME_2 || "N/A"}
                       </div>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div
-                        className="max-w-[120px] truncate"
-                        title={request.REMARKS_2}
-                      >
+                      <div className="max-w-[120px] truncate" title={request.REMARKS_2}>
                         {request.REMARKS_2}
                       </div>
                     </td>
@@ -472,7 +460,7 @@ const IndentToGetQuotation = () => {
                         className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 bg-white appearance-none cursor-pointer"
                         disabled={isSaving}
                       >
-                         <option value="">-------- Select Status ---------</option>
+                        <option value="">-------- Select Status ---------</option>
                         <option value="Indent">Indent</option>
                         <option value="No Indent">No Indent</option>
                         <option value="Shifting">Shifting</option>
@@ -499,13 +487,13 @@ const IndentToGetQuotation = () => {
                   {/* Remark 3 Field */}
                   <div className="group">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Remark
+                      Remark (Optional)
                     </label>
                     <textarea
                       value={remark3}
                       onChange={(e) => setRemark3(e.target.value)}
                       className="w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 resize-none"
-                      placeholder="Enter remark"
+                      placeholder="Enter remark (optional)"
                       rows={3}
                       disabled={isSaving}
                     />

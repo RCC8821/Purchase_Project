@@ -228,30 +228,503 @@ router.get("/get-indent-data", async (req, res) => {
 
 
 // Explicitly apply the autoTable plugin to jsPDF
-router.post("/update-indent-data", async (req, res) => {
-  const { UIDs, STATUS_3, INDENT_NUMBER_3, REMARK_3 } = req.body;
+// router.post("/update-indent-data", async (req, res) => {
+//   const { UIDs, STATUS_3, INDENT_NUMBER_3, REMARK_3 } = req.body;
 
-  // Step 1: Input validation
+//   // Step 1: Input validation
+//   if (
+//     !UIDs?.length ||
+//     !Array.isArray(UIDs) ||
+//     UIDs.some((uid) => typeof uid !== "string" || !uid.trim()) ||
+//     typeof STATUS_3 !== "string" ||
+//     !STATUS_3.trim() ||
+//     typeof INDENT_NUMBER_3 !== "string" ||
+//     !INDENT_NUMBER_3.trim() ||
+//     typeof REMARK_3 !== "string" ||
+//     !REMARK_3.trim()
+//   ) {
+//     console.log("Validation failed:", { UIDs, STATUS_3, INDENT_NUMBER_3, REMARK_3 });
+//     return res.status(400).json({
+//       error: "Invalid input",
+//       details:
+//         "UIDs (non-empty string array), STATUS_3, INDENT_NUMBER_3, and REMARK_3 (non-empty strings) are required",
+//     });
+//   }
+
+//   let pdfUrl = "";
+//   try {
+//     // Step 2: Fetch data from Google Sheets
+//     console.log("Fetching data from Google Sheets...");
+//     const response = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: "Purchase_FMS!A7:AC",
+//     }).catch((err) => {
+//       console.error("Google Sheets fetch error:", err.message);
+//       throw new Error(`Failed to fetch data: ${err.message}`);
+//     });
+
+//     const rows = response.data.values || [];
+//     if (!rows.length) {
+//       console.log("No data found in sheet");
+//       return res.status(404).json({ error: "No data found in the sheet" });
+//     }
+
+//     const headerRow = rows[0].map((cell) => (cell || "").trim());
+//     const uidIndex = headerRow.indexOf("UID");
+//     if (uidIndex === -1) {
+//       console.log("UID column not found");
+//       return res.status(400).json({ error: "UID column not found in sheet" });
+//     }
+
+//     // Define column indices
+//     const columnIndices = {
+//       "STATUS 3": headerRow.indexOf("STATUS 3"),
+//       "INDENT NUMBER 3": headerRow.indexOf("INDENT NUMBER 3"),
+//       "PDF URL 3": headerRow.indexOf("PDF URL 3"),
+//       "REMARK 3": headerRow.indexOf("REMARK 3"),
+//       "Site Name": headerRow.indexOf("Site Name"),
+//       "Supervisor Name": headerRow.indexOf("Supervisor Name"),
+//       "Require Date": headerRow.indexOf("Require Date"),
+//       "Material Type": headerRow.indexOf("Material Type"),
+//       "SKU Code": headerRow.indexOf("SKU Code"),
+//       "Material Name": headerRow.indexOf("Material Name"),
+//       "REVISED QUANTITY 2": headerRow.indexOf("REVISED QUANTITY 2"),
+//       Quantity: headerRow.indexOf("Quantity"),
+//       "Unit Name": headerRow.indexOf("Unit Name"),
+//       "DECIDED BRAND/COMPANY NAME 2": headerRow.indexOf("DECIDED BRAND/COMPANY NAME 2"),
+//       "Req No": headerRow.indexOf("Req No"),
+//       UID: uidIndex,
+//     };
+
+//     // Validate critical columns
+//     const criticalColumns = ["UID", "STATUS 3", "INDENT NUMBER 3", "PDF URL 3", "REMARK 3"];
+//     const missingCriticalColumns = criticalColumns.filter((key) => headerRow.indexOf(key) === -1);
+//     if (missingCriticalColumns.length) {
+//       console.log("Missing critical columns:", missingCriticalColumns);
+//       return res.status(400).json({
+//         error: `Missing columns: ${missingCriticalColumns.join(", ")}`,
+//       });
+//     }
+
+//     const dataRows = rows.slice(1);
+//     const selectedItems = [];
+//     const rowIndices = [];
+
+//     // Find rows for provided UIDs and log for debugging
+//     for (const uid of UIDs) {
+//       const rowIndex = dataRows.findIndex((row) => row[uidIndex]?.toString().trim() === uid.trim());
+//       if (rowIndex === -1) {
+//         console.log(`No matching row for UID: ${uid}`);
+//         return res.status(404).json({ error: `No matching row for UID: ${uid}` });
+//       }
+//       rowIndices.push(rowIndex + 8);
+
+//       selectedItems.push({
+//         UID: dataRows[rowIndex][columnIndices.UID] || "N/A",
+//         Site_Name: dataRows[rowIndex][columnIndices["Site Name"]] || "N/A",
+//         Supervisor_Name: dataRows[rowIndex][columnIndices["Supervisor Name"]] || "N/A",
+//         Require_Date: dataRows[rowIndex][columnIndices["Require Date"]] || "N/A",
+//         Material_Type: dataRows[rowIndex][columnIndices["Material Type"]] || "N/A",
+//         SKU_Code: dataRows[rowIndex][columnIndices["SKU Code"]] || "N/A",
+//         Material_Name: dataRows[rowIndex][columnIndices["Material Name"]] || "N/A",
+//         REVISED_QUANTITY_2: dataRows[rowIndex][columnIndices["REVISED QUANTITY 2"]] || "",
+//         Quantity: dataRows[rowIndex][columnIndices["Quantity"]] || "N/A",
+//         Unit_Name: dataRows[rowIndex][columnIndices["Unit Name"]] || "N/A",
+//         DECIDED_BRAND_COMPANY_NAME_2: dataRows[rowIndex][columnIndices["DECIDED BRAND/COMPANY NAME 2"]] || "",
+//         Req_No: dataRows[rowIndex][columnIndices["Req No"]] || "N/A",
+//       });
+//     }
+//     console.log("Selected Items:", selectedItems); // Debug log
+
+//     // Step 3: Generate PDF
+//     console.log("Generating PDF...");
+//     console.log("selectedItems length:", selectedItems.length);
+//     if (selectedItems.length === 0) {
+//       throw new Error("No items to generate PDF for");
+//     }
+
+//     const generatePDF = () => {
+//       try {
+//         const doc = new jsPDF();
+//         if (typeof doc.autoTable !== "function") {
+//           console.error("autoTable not found on jsPDF instance");
+//           throw new Error("autoTable plugin not properly loaded");
+//         }
+
+//         const pageWidth = doc.internal.pageSize.getWidth();
+//         const pageHeight = doc.internal.pageSize.getHeight();
+        
+//         // Header Section with Better Styling (no background color)
+        
+//         // Company Name - Black text
+//         doc.setTextColor(0, 0, 0);
+//         doc.setFontSize(18);
+//         doc.setFont("helvetica", "bold");
+//         doc.text("R.C.C Infrastructures", pageWidth / 2, 15, { align: "center" });
+        
+//         // Address and Contact Info
+//         doc.setFontSize(10);
+//         doc.setFont("helvetica", "normal");
+//         doc.text("310 Saket Nagar, 9B Near Sagar Public School, Bhopal, 462026", pageWidth / 2, 22, { align: "center" });
+//         doc.text("Contact: 7869962504 | Email: mayank@rcinfrastructure.com", pageWidth / 2, 28, { align: "center" });
+//         doc.text("GST: 23ABHFR3130L1ZA", pageWidth / 2, 34, { align: "center" });
+        
+//         // Title Section with underline
+//         doc.setFontSize(16);
+//         doc.setFont("helvetica", "bold");
+//         doc.setTextColor(220, 53, 69); // Red color
+//         doc.text("MATERIAL INDENT REPORT", pageWidth / 2, 60, { align: "center" });
+        
+//         // Decorative line under title
+//         doc.setDrawColor(220, 53, 69);
+//         doc.setLineWidth(1);
+//         doc.line(60, 63, pageWidth - 60, 63);
+        
+//         // Reset color for content
+//         doc.setTextColor(0, 0, 0);
+        
+//         // Info Section with better layout
+//         const { Site_Name, Supervisor_Name, Require_Date, Req_No } = selectedItems[0];
+//         const indentDate = new Date()
+//           .toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+//           .replace(/ /g, "-");
+
+//         // Enhanced cleaning function to remove special characters
+//         const cleanText = (text) => {
+//           return (text || "N/A").toString().trim().replace(/[^a-zA-Z0-9\s\-\/.,]/g, "");
+//         };
+
+//         const cleanSiteName = cleanText(Site_Name);
+//         const cleanSupervisorName = cleanText(Supervisor_Name);
+//         const cleanReqNo = cleanText(Req_No);
+//         const cleanRequireDate = cleanText(Require_Date);
+
+//         // Left Column Info (reduced gaps)
+//         doc.setFontSize(10);
+//         doc.setFont("helvetica", "bold");
+//         doc.text("Site Name:", 15, 80);
+//         doc.setFont("helvetica", "normal");
+//         doc.text(cleanSiteName, 40, 80);
+
+//         doc.setFont("helvetica", "bold");
+//         doc.text("Supervisor:", 15, 88);
+//         doc.setFont("helvetica", "normal");
+//         doc.text(cleanSupervisorName, 40, 88);
+
+//         doc.setFont("helvetica", "bold");
+//         doc.text("Indent Date:", 15, 96);
+//         doc.setFont("helvetica", "normal");
+//         doc.text(indentDate, 40, 96);
+
+//         // Right Column Info (reduced gaps to 25 units)
+//         doc.setFont("helvetica", "bold");
+//         doc.text("Request No:", 120, 80);
+//         doc.setFont("helvetica", "normal");
+//         doc.text(`${cleanReqNo}`, 145, 80); // Gap of 25 units
+
+//         doc.setFont("helvetica", "bold");
+//         doc.text("Required Date:", 120, 88);
+//         doc.setFont("helvetica", "normal");
+//         doc.text(cleanRequireDate, 145, 88); // Gap of 25 units
+
+//         // Indent Number below Required Date (dynamic and reduced gap to 25 units)
+//         doc.setFont("helvetica", "bold");
+//         doc.text("Indent No:", 120, 96);
+//         doc.setFont("helvetica", "normal");
+//         doc.text(INDENT_NUMBER_3, 145, 96); // Gap of 25 units
+
+//         // Indent Details Section Header (no background color, bold text only)
+//         doc.setFontSize(12);
+//         doc.setFont("helvetica", "bold");
+//         doc.setTextColor(220, 53, 69); // Red color
+//         doc.text("Indent Details", 15, 110);
+
+//         // Table Data with cleaned values and added UID
+//         const tableBody = selectedItems.map((item, index) => [
+//           index + 1,
+//           cleanText(item.UID), // Cleaned UID
+//           cleanText(item.Material_Type),
+//           cleanText(item.SKU_Code),
+//           cleanText(item.Material_Name),
+//           cleanText(item.REVISED_QUANTITY_2 || item.Quantity),
+//           cleanText(item.Unit_Name),
+//           cleanText(item.DECIDED_BRAND_COMPANY_NAME_2),
+//         ]);
+
+//         // Calculate dynamic table properties based on data
+//         const totalItems = tableBody.length;
+//         const availableWidth = pageWidth - 30; // Total width minus margins
+        
+//         // Dynamic font size based on data amount
+//         let tableFontSize = 8; // Reduced font size to prevent overflow
+//         let headerFontSize = 9;
+//         let cellPadding = 3; // Reduced padding
+        
+//         if (totalItems > 15) {
+//           tableFontSize = 7;
+//           headerFontSize = 8;
+//           cellPadding = 2;
+//         } else if (totalItems > 10) {
+//           tableFontSize = 7.5;
+//           headerFontSize = 8.5;
+//           cellPadding = 2.5;
+//         }
+        
+//         // Enhanced Table with responsive styling and fixed widths
+//         doc.autoTable({
+//           head: [
+//             [
+//               "Sr. No.",
+//               "UID",
+//               "Material Type",
+//               "SKU Code", 
+//               "Material Name",
+//               "Quantity",
+//               "Unit",
+//               "Brand/Company",
+//             ],
+//           ],
+//           body: tableBody,
+//           startY: 115,
+//           theme: "grid",
+//           styles: { 
+//             fontSize: tableFontSize,
+//             cellPadding: cellPadding,
+//             font: "helvetica",
+//             textColor: [0, 0, 0],
+//             lineColor: [200, 200, 200],
+//             lineWidth: 0.1,
+//             overflow: 'linebreak',
+//             cellWidth: 'wrap',
+//             fontStyle: "normal", // Ensure table body text is normal
+//           },
+//           headStyles: {
+//             fillColor: [255, 255, 255], // White (no background)
+//             textColor: [0, 0, 0], // Black text for header
+//             fontStyle: "bold", // Bold header text
+//             fontSize: headerFontSize,
+//             halign: "center",
+//             cellPadding: cellPadding + 1,
+//             overflow: 'linebreak',
+//           },
+//           columnStyles: {
+//             0: { halign: "center", cellWidth: 15 }, // Sr. No - Fixed
+//             1: { halign: "center", cellWidth: 18 }, // UID - Fixed
+//             2: {halign: "center", cellWidth: 30 }, // Material Type - Fixed
+//             3: { halign: "center", cellWidth: 22 }, // SKU Code - Fixed
+//             4: { cellWidth: 40 }, // Material Name - Fixed
+//             5: { halign: "center", cellWidth: 18 }, // Quantity - Fixed
+//             6: { halign: "center", cellWidth: 15 }, // Unit - Fixed
+//             7: { halign: "center",cellWidth: 30 }, // Brand/Company - Fixed
+//           },
+//           alternateRowStyles: {
+//             fillColor: [245, 245, 245], // Light gray for alternate rows
+//           },
+//           margin: { top: 115, left: 15, right: 15 },
+//           tableWidth: 'auto',
+//           pageBreak: 'auto', // Allow page break for large tables
+//           showHead: 'everyPage', // Show header on every page
+//         });
+
+//         // Get the Y position after table
+//         const tableEndY = doc.lastAutoTable?.finalY || 150;
+        
+//         // Footer Section
+//         const footerY = Math.max(tableEndY + 30, pageHeight - 60);
+        
+//         // Signature section
+//         doc.setFontSize(10);
+//         doc.setFont("helvetica", "bold");
+//         doc.text("Authorized Signature", 15, footerY);
+        
+//         // Signature line
+//         doc.setDrawColor(0, 0, 0);
+//         doc.setLineWidth(0.5);
+//         doc.line(15, footerY + 15, 80, footerY + 15);
+        
+//         // Additional info in footer
+//         doc.setFont("helvetica", "normal");
+//         doc.setFontSize(8);
+//         doc.setTextColor(100, 100, 100);
+//         doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, footerY + 25);
+        
+//         // Page border (optional - makes it look more professional)
+//         doc.setDrawColor(41, 128, 185);
+//         doc.setLineWidth(2);
+//         doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
+
+//         return doc.output("datauristring");
+//       } catch (pdfError) {
+//         console.error("PDF generation error:", pdfError.message, pdfError.stack);
+//         throw new Error(`Failed to generate PDF: ${pdfError.message}`);
+//       }
+//     };
+
+//     const pdfDataUri = generatePDF();
+//     const base64Data = pdfDataUri.replace(/^data:application\/pdf(?:;[^,]+)?;base64,/, "");
+//     if (!base64Data || !/^[A-Za-z0-9+/=]+$/.test(base64Data)) {
+//       console.error("Invalid base64 data");
+//       throw new Error("Invalid base64 data for PDF");
+//     }
+
+//     // Step 4: Upload PDF to Google Drive
+//     console.log("Uploading PDF to Google Drive...");
+//     let folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+//     console.log("Current GOOGLE_DRIVE_FOLDER_ID:", folderId);
+
+//     if (!folderId) {
+//       console.error("Google Drive folder ID is not set in environment variables");
+//       throw new Error("Google Drive folder ID is required");
+//     }
+
+//     let validFolderId = folderId;
+//     let isFolderValid = false;
+
+//     // Verify folder exists
+//     try {
+//       const folderCheck = await drive.files.get({
+//         fileId: folderId,
+//         fields: "id, name",
+//         supportsAllDrives: true,
+//       });
+//       console.log(`Folder found: ${folderCheck.data.name} (ID: ${folderId})`);
+//       isFolderValid = true;
+//     } catch (folderError) {
+//       console.error("Error verifying Google Drive folder:", folderError.message);
+//       console.log("Attempting to create a new folder...");
+
+//       // Create a new folder if the provided one is invalid
+//       try {
+//         const newFolder = await drive.files.create({
+//           resource: {
+//             name: `Indent_PDFs_${Date.now()}`,
+//             mimeType: "application/vnd.google-apps.folder",
+//           },
+//           fields: "id, name",
+//           supportsAllDrives: true,
+//         });
+//         validFolderId = newFolder.data.id;
+//         console.log(`Created new folder: ${newFolder.data.name} (ID: ${validFolderId})`);
+//         isFolderValid = true;
+//       } catch (createError) {
+//         console.error("Failed to create new folder:", createError.message);
+//         console.log("Falling back to root Drive upload (no parent folder)");
+//         validFolderId = null; // Upload to root
+//         isFolderValid = false;
+//       }
+//     }
+
+//     const pdfBuffer = Buffer.from(base64Data, "base64");
+//     const fileMetadata = {
+//       name: `indent_${INDENT_NUMBER_3}_${Date.now()}.pdf`,
+//       parents: isFolderValid && validFolderId ? [validFolderId] : [],
+//       mimeType: "application/pdf",
+//     };
+//     const media = {
+//       mimeType: "application/pdf",
+//       body: Readable.from(pdfBuffer),
+//     };
+
+//     const file = await drive.files.create({
+//       resource: fileMetadata,
+//       media,
+//       fields: "id, webViewLink",
+//       supportsAllDrives: true,
+//     }).catch((err) => {
+//       console.error("Google Drive upload error:", err.message);
+//       throw new Error(`Failed to upload PDF: ${err.message}`);
+//     });
+
+//     pdfUrl = file.data.webViewLink;
+//     await drive.permissions.create({
+//       fileId: file.data.id,
+//       requestBody: { role: "reader", type: "anyone" },
+//       supportsAllDrives: true,
+//     }).catch((err) => {
+//       console.error("Google Drive permissions error:", err.message);
+//       throw new Error(`Failed to set permissions: ${err.message}`);
+//     });
+
+//     // Helper function to get column letter from 0-based index
+//     const getColumnLetter = (index) => {
+//       let letter = '';
+//       let tempIndex = index;
+//       while (tempIndex >= 0) {
+//         letter = String.fromCharCode((tempIndex % 26) + 65) + letter;
+//         tempIndex = Math.floor(tempIndex / 26) - 1;
+//       }
+//       return letter;
+//     };
+
+//     // Step 5: Update Google Sheets (only specific cells to preserve formulas)
+//     console.log("Updating Google Sheets...");
+//     const updateData = [];
+//     for (let i = 0; i < UIDs.length; i++) {
+//       const actualRowIndex = rowIndices[i];
+//       const updates = [
+//         { col: "STATUS 3", value: STATUS_3 },
+//         { col: "INDENT NUMBER 3", value: INDENT_NUMBER_3 },
+//         { col: "PDF URL 3", value: pdfUrl },
+//         { col: "REMARK 3", value: REMARK_3 },
+//       ];
+
+//       for (const update of updates) {
+//         const colIndex = columnIndices[update.col];
+//         if (colIndex !== -1) {
+//           const colLetter = getColumnLetter(colIndex);
+//           const range = `Purchase_FMS!${colLetter}${actualRowIndex}`;
+//           updateData.push({
+//             range,
+//             values: [[update.value]],
+//           });
+//         }
+//       }
+//     }
+
+//     await sheets.spreadsheets.values.batchUpdate({
+//       spreadsheetId,
+//       resource: {
+//         valueInputOption: "RAW",
+//         data: updateData,
+//       },
+//     }).catch((err) => {
+//       console.error("Google Sheets batch update error:", err.message);
+//       throw new Error(`Failed to update sheet: ${err.message}`);
+//     });
+
+//     console.log("Google Sheets updated successfully");
+//     return res.json({ message: "Data updated successfully", pdfUrl });
+//   } catch (error) {
+//     console.error("Error in update-indent-data:", error.message, error.stack);
+//     return res.status(500).json({
+//       error: "Server error",
+//       details: error.message || "An unexpected error occurred",
+//     });
+//   }
+// });
+
+
+router.post("/update-indent-data", async (req, res) => {
+  const { UIDs, STATUS_3, INDENT_NUMBER_3: providedIndentNumber, REMARK_3 } = req.body;
+
+  // Step 1: Input validation (INDENT_NUMBER_3 is now optional, REMARK_3 is optional)
   if (
     !UIDs?.length ||
     !Array.isArray(UIDs) ||
     UIDs.some((uid) => typeof uid !== "string" || !uid.trim()) ||
     typeof STATUS_3 !== "string" ||
-    !STATUS_3.trim() ||
-    typeof INDENT_NUMBER_3 !== "string" ||
-    !INDENT_NUMBER_3.trim() ||
-    typeof REMARK_3 !== "string" ||
-    !REMARK_3.trim()
+    !STATUS_3.trim()
   ) {
-    console.log("Validation failed:", { UIDs, STATUS_3, INDENT_NUMBER_3, REMARK_3 });
+    console.log("Validation failed:", { UIDs, STATUS_3, providedIndentNumber, REMARK_3 });
     return res.status(400).json({
       error: "Invalid input",
       details:
-        "UIDs (non-empty string array), STATUS_3, INDENT_NUMBER_3, and REMARK_3 (non-empty strings) are required",
+        "UIDs (non-empty string array) and STATUS_3 (non-empty string) are required. INDENT_NUMBER_3 and REMARK_3 are optional.",
     });
   }
 
   let pdfUrl = "";
+  let generatedIndentNumber = ""; // Will hold the unique generated Indent Number
   try {
     // Step 2: Fetch data from Google Sheets
     console.log("Fetching data from Google Sheets...");
@@ -335,6 +808,22 @@ router.post("/update-indent-data", async (req, res) => {
       });
     }
     console.log("Selected Items:", selectedItems); // Debug log
+
+    // Generate unique Indent Number for the entire group (all UIDs share the same unique Indent No)
+    const indentColIndex = columnIndices["INDENT NUMBER 3"];
+    const existingIndents = dataRows
+      .map((row) => row[indentColIndex] || "")
+      .filter((val) => val && val.startsWith("IND-"))
+      .map((val) => parseInt(val.replace("IND-", ""), 10))
+      .filter((num) => !isNaN(num));
+    
+    const nextNum = existingIndents.length > 0 ? Math.max(...existingIndents) + 1 : 1;
+    generatedIndentNumber = `IND-${nextNum.toString().padStart(3, "0")}`;
+    console.log("Generated unique Indent Number:", generatedIndentNumber);
+
+    // Use generated Indent Number (ignore provided if any, to ensure uniqueness)
+    const INDENT_NUMBER_3 = generatedIndentNumber;
+    const REMARK_3_final = REMARK_3 || "N/A"; // Ensure "N/A" if empty
 
     // Step 3: Generate PDF
     console.log("Generating PDF...");
@@ -663,9 +1152,9 @@ router.post("/update-indent-data", async (req, res) => {
       const actualRowIndex = rowIndices[i];
       const updates = [
         { col: "STATUS 3", value: STATUS_3 },
-        { col: "INDENT NUMBER 3", value: INDENT_NUMBER_3 },
+        { col: "INDENT NUMBER 3", value: INDENT_NUMBER_3 }, // Use generated unique value
         { col: "PDF URL 3", value: pdfUrl },
-        { col: "REMARK 3", value: REMARK_3 },
+        { col: "REMARK 3", value: REMARK_3_final }, // Use "N/A" if empty
       ];
 
       for (const update of updates) {
@@ -693,7 +1182,11 @@ router.post("/update-indent-data", async (req, res) => {
     });
 
     console.log("Google Sheets updated successfully");
-    return res.json({ message: "Data updated successfully", pdfUrl });
+    return res.json({ 
+      message: "Data updated successfully", 
+      pdfUrl,
+      indentNumber: INDENT_NUMBER_3 // Return the generated Indent Number for frontend sync
+    });
   } catch (error) {
     console.error("Error in update-indent-data:", error.message, error.stack);
     return res.status(500).json({
@@ -702,9 +1195,6 @@ router.post("/update-indent-data", async (req, res) => {
     });
   }
 });
-
-
-
 
 
 module.exports = router;
