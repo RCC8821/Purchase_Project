@@ -181,17 +181,327 @@ router.get('/get-take-Quotation', async (req, res) => {
 ////////////////// ApproveRequied update Api Done //////////////////
 
 
+// router.post('/save-take-Quotation', async (req, res) => {
+//   const { entries } = req.body;
+
+//   console.log('Received payload:', req.body);
+
+//   if (!entries || !Array.isArray(entries) || entries.length === 0) {
+//     console.log('Validation failed - entries:', entries);
+//     return res.status(400).json({ error: 'entries array is required and must not be empty' });
+//   }
+
+//   // Validate UID and REVISED_QUANTITY_2 in each entry
+//   for (let i = 0; i < entries.length; i++) {
+//     const entry = entries[i];
+//     if (!entry.UID || typeof entry.UID !== 'string') {
+//       console.log(`Invalid UID in entry ${i + 1}:`, entry.UID);
+//       return res.status(400).json({ error: `Invalid or missing UID in entry ${i + 1}` });
+//     }
+//     if (!entry.REVISED_QUANTITY_2 || isNaN(parseFloat(entry.REVISED_QUANTITY_2))) {
+//       console.log(`Invalid or missing REVISED_QUANTITY_2 in entry ${i + 1}:`, entry.REVISED_QUANTITY_2);
+//       return res.status(400).json({ error: `Invalid or missing REVISED_QUANTITY_2 in entry ${i + 1}` });
+//     }
+//   }
+
+//   try {
+//     // Get sheet metadata to check current row count
+//     const sheetMetadata = await sheets.spreadsheets.get({
+//       spreadsheetId,
+//       ranges: ['Quotation_Master'],
+//       fields: 'sheets(properties(sheetId,gridProperties,title))',
+//     });
+
+//     const quotationMasterSheet = sheetMetadata.data.sheets?.find(
+//       sheet => sheet.properties?.title === 'Quotation_Master'
+//     );
+
+//     if (!quotationMasterSheet) {
+//       console.error('Quotation_Master sheet not found in spreadsheet');
+//       return res.status(400).json({ error: 'Quotation_Master sheet not found in spreadsheet' });
+//     }
+
+//     const sheetProperties = quotationMasterSheet.properties;
+//     let maxRows = sheetProperties.gridProperties.rowCount;
+//     console.log('Current max rows in Quotation_Master:', maxRows);
+
+//     // Fetch headers from Quotation_Master
+//     const headerResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Quotation_Master!A1:AE1', // Extended range to A:AE
+//     });
+
+//     const headers = headerResponse.data.values ? headerResponse.data.values[0] || [] : [];
+//     console.log('Fetched headers:', headers);
+
+//     // Find existing quotation numbers in column AC (Quotation_No)
+//     const dataResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Quotation_Master!AC2:AC', // Fetch Quotation_No column
+//     });
+
+//     const quoValues = dataResponse.data.values ? dataResponse.data.values.map(row => row[0]).filter(val => val && val.startsWith('QUO_')) : [];
+//     let nextQuoNumber = 1;
+//     if (quoValues.length > 0) {
+//       const numbers = quoValues
+//         .map(val => parseInt(val.replace('QUO_', '')))
+//         .filter(num => !isNaN(num));
+//       nextQuoNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+//     }
+
+//     // Generate new quotation number (e.g., QUO_001)
+//     const newQuoNumber = `QUO_${nextQuoNumber.toString().padStart(3, '0')}`;
+//     console.log('Generated quotation number:', newQuoNumber);
+
+//     // Update headers for Quotation_No (AC1), Total_Quantity (AD1), and Total_Value (AE1) if not already set
+//     const headerUpdates = [];
+//     if (!headers[28]) { // AC is index 28 (0-based)
+//       headerUpdates.push({
+//         range: 'Quotation_Master!AC1',
+//         values: [['Quotation_No']],
+//       });
+//     }
+//     if (!headers[29]) { // AD is index 29
+//       headerUpdates.push({
+//         range: 'Quotation_Master!AD1',
+//         values: [['Total_Quantity']],
+//       });
+//     }
+//     if (!headers[30]) { // AE is index 30
+//       headerUpdates.push({
+//         range: 'Quotation_Master!AE1',
+//         values: [['Total_Value']],
+//       });
+//     }
+
+//     if (headerUpdates.length > 0) {
+//       await sheets.spreadsheets.values.batchUpdate({
+//         spreadsheetId,
+//         resource: {
+//           valueInputOption: 'RAW',
+//           data: headerUpdates,
+//         },
+//       });
+//       console.log('Updated headers:', headerUpdates.map(update => update.range));
+//     }
+
+//     // Fetch Purchase_FMS data to validate Indent_No
+//     const purchaseResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Purchase_FMS!A2:AA', // Extended to A:AA to include INDENT_NUMBER_3
+//     });
+
+//     const purchaseRows = purchaseResponse.data.values || [];
+//     console.log('Fetched Purchase_FMS rows:', purchaseRows);
+
+//     const indentNo = entries[0].Indent_No;
+//     console.log('Indent_No from request:', indentNo);
+
+//     const matchingPurchaseRows = purchaseRows.filter(row => row[24] === indentNo && row[24] !== 'INDENT NUMBER 3'); // Column Y (index 23)
+//     console.log('Matching Purchase_FMS rows for Indent_No:', matchingPurchaseRows);
+
+//     if (matchingPurchaseRows.length === 0) {
+//       const allIndentNos = purchaseRows.map(row => row[24]).filter(val => val && val !== 'INDENT NUMBER 3');
+//       console.warn(`No rows found in Purchase_FMS for Indent_No: ${indentNo}`);
+//       return res.status(400).json({
+//         error: `No data found in Purchase_FMS for Indent_No: ${indentNo}`,
+//         availableIndentNos: allIndentNos,
+//       });
+//     }
+
+//     // Fetch existing rows from Quotation_Master for data appending
+//     const rowsResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Quotation_Master!A2:AE', // Extended range to A:AE
+//     });
+
+//     const rows = rowsResponse.data.values || [];
+//     console.log('Fetched Quotation_Master rows:', rows);
+
+//     let nextRow = 2 + rows.length; // Next available row
+
+//     // Check if nextRow exceeds maxRows and extend sheet if necessary
+//     const rowsNeeded = nextRow + entries.length - 1;
+//     if (rowsNeeded > maxRows) {
+//       const additionalRows = rowsNeeded - maxRows + 100; // Add buffer of 100 rows
+//       await sheets.spreadsheets.batchUpdate({
+//         spreadsheetId,
+//         resource: {
+//           requests: [{
+//             appendDimension: {
+//               sheetId: sheetProperties.sheetId,
+//               dimension: 'ROWS',
+//               length: additionalRows,
+//             },
+//           }],
+//         },
+//       });
+//       maxRows += additionalRows;
+//       console.log(`Extended Quotation_Master by ${additionalRows} rows. New max rows: ${maxRows}`);
+//     }
+
+//     const updateData = [];
+//     entries.forEach((entry, index) => {
+//       console.log(`Entry ${index + 1} UID:`, entry.UID);
+
+//       // Calculate Total_Quantity and Total_Value for this entry
+//       const revisedQuantity = parseFloat(entry.REVISED_QUANTITY_2) || 0;
+//       const finalRate = parseFloat(entry.Final_Rate) || 0;
+//       const totalValue = (revisedQuantity * finalRate).toFixed(2);
+
+//       if (isNaN(revisedQuantity) || isNaN(finalRate) || totalValue <= 0) {
+//         console.warn(`Invalid data in entry ${index + 1}: REVISED_QUANTITY_2=${entry.REVISED_QUANTITY_2}, Final_Rate=${entry.Final_Rate}, Total_Value=${totalValue}`);
+//         return res.status(400).json({
+//           error: `Invalid data in entry ${index + 1}: REVISED_QUANTITY_2 or Final_Rate is invalid`,
+//         });
+//       }
+
+
+//           const now = new Date();
+//     const istOptions = {
+//       timeZone: "Asia/Kolkata",
+//       year: "numeric",
+//       month: "2-digit",
+//       day: "2-digit",
+//       hour: "2-digit",
+//       minute: "2-digit",
+//       second: "2-digit",
+//       hour12: false,
+//     };
+//     const istFormatter = new Intl.DateTimeFormat("en-IN", istOptions);
+//     const parts = istFormatter.formatToParts(now);
+
+//     const year = parts.find((p) => p.type === "year").value;
+//     const month = parts.find((p) => p.type === "month").value;
+//     const day = parts.find((p) => p.type === "day").value;
+//     const hour = parts.find((p) => p.type === "hour").value;
+//     const minute = parts.find((p) => p.type === "minute").value;
+//     const second = parts.find((p) => p.type === "second").value;
+
+//     const timestamp = `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+//       const rowData = [
+//         timestamp || '',
+//         entry.Req_No || '',
+//         entry.UID || 'N/A',
+//         entry.site_name || '',
+//         entry.Indent_No || '',
+//         entry.Material_name || '',
+//         entry.Vendor_Name || '',
+//         entry.Vendor_Ferm_Name || '',
+//         entry.Vendor_Address || '',
+//         entry.Contact_Number || '',
+//         entry.Vendor_GST_No || '',
+//         entry.RATE || 0,
+//         entry.Discount || 0,
+//         entry.CGST || 0,
+//         entry.SGST || 0,
+//         entry.IGST || 0,
+//         entry.Final_Rate || 0,
+//         entry.Delivery_Expected_Date || '',
+//         entry.Payment_Terms_Condistion_Advacne_Credit || '',
+//         entry.Credit_in_Days || 0,
+//         entry.Bill_Type || '',
+//         entry.IS_TRANSPORT_REQUIRED || '',
+//         entry.EXPECTED_TRANSPORT_CHARGES || 0,
+//         entry.FRIGHET_CHARGES || 0,
+//         entry.EXPECTED_FRIGHET_CHARGES || 0,
+//         entry.PLANNED_4 || '',
+//         entry.NO_OF_QUOTATION_4 || '',
+//         entry.REMARK_4 || '',
+//         newQuoNumber, // Quotation_No
+//         revisedQuantity.toFixed(2), // Total_Quantity = REVISED_QUANTITY_2
+//         totalValue, // Total_Value = REVISED_QUANTITY_2 * Final_Rate
+//       ];
+
+//       const updateRange = `Quotation_Master!A${nextRow}:AE${nextRow}`;
+//       updateData.push({
+//         range: updateRange,
+//         values: [rowData],
+//       });
+
+//       nextRow++;
+//     });
+
+//     // If any entry was invalid, updateData might be empty
+//     if (updateData.length === 0) {
+//       return res.status(400).json({ error: 'No valid entries to save' });
+//     }
+
+//     console.log('Update data:', updateData);
+
+//     const batchUpdateRequest = {
+//       spreadsheetId,
+//       resource: {
+//         valueInputOption: 'RAW',
+//         data: updateData,
+//       },
+//     };
+
+//     const updateResponse = await sheets.spreadsheets.values.batchUpdate(batchUpdateRequest);
+//     console.log('Batch update response:', updateResponse.data);
+
+//     // Update Purchase_FMS sheet with status, no of quotation, and remark
+//     const planned4 = entries[0].PLANNED_4;
+//     const noOfQuotation4 = entries[0].NO_OF_QUOTATION_4;
+//     const remark4 = entries[0].REMARK_4;
+
+//     const purchaseUpdates = [];
+//     purchaseRows.forEach((row, i) => {
+//       if (row[23] === indentNo && row[23] !== 'INDENT NUMBER 3') { // Column Y (index 23) is INDENT_NUMBER_3
+//         const rowNumber = i + 2;
+//         purchaseUpdates.push({
+//           range: `Purchase_FMS!Q${rowNumber}`, // Column Q for PLANNED_4
+//           values: [[planned4]],
+//         });
+//         purchaseUpdates.push({
+//           range: `Purchase_FMS!R${rowNumber}`, // Column R for NO_OF_QUOTATION_4
+//           values: [[noOfQuotation4]],
+//         });
+//         purchaseUpdates.push({
+//           range: `Purchase_FMS!S${rowNumber}`, // Column S for REMARK_4
+//           values: [[remark4]],
+//         });
+//       }
+//     });
+
+//     if (purchaseUpdates.length > 0) {
+//       const purchaseBatchUpdateRequest = {
+//         spreadsheetId,
+//         resource: {
+//           valueInputOption: 'RAW',
+//           data: purchaseUpdates,
+//         },
+//       };
+//       await sheets.spreadsheets.values.batchUpdate(purchaseBatchUpdateRequest);
+//       console.log('Purchase_FMS updated successfully');
+//     }
+
+//     return res.json({ 
+//       message: 'Data appended to Google Sheet successfully', 
+//       quotationNumber: newQuoNumber,
+//       totalQuantity: entries[0].REVISED_QUANTITY_2, // Return first entry's quantity for simplicity
+//       totalValue: (parseFloat(entries[0].REVISED_QUANTITY_2) * parseFloat(entries[0].Final_Rate)).toFixed(2) // Return first entry's total value
+//     });
+//   } catch (error) {
+//     console.error('Error appending to Google Sheet:', error.message, error.stack);
+//     return res.status(500).json({
+//       error: 'Server error',
+//       details: error.message,
+//     });
+//   }
+// });
+
 router.post('/save-take-Quotation', async (req, res) => {
   const { entries } = req.body;
 
-  console.log('Received payload:', req.body);
+  console.log('Received payload:', JSON.stringify(req.body, null, 2));
 
   if (!entries || !Array.isArray(entries) || entries.length === 0) {
     console.log('Validation failed - entries:', entries);
-    return res.status(400).json({ error: 'entries array is required and must not be empty' });
+    return res.status(400).json({ error: 'Entries array is required and must not be empty' });
   }
 
-  // Validate UID and REVISED_QUANTITY_2 in each entry
+  // Validate UID, REVISED_QUANTITY_2, Indent_No, and Final_Rate in each entry
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
     if (!entry.UID || typeof entry.UID !== 'string') {
@@ -202,42 +512,60 @@ router.post('/save-take-Quotation', async (req, res) => {
       console.log(`Invalid or missing REVISED_QUANTITY_2 in entry ${i + 1}:`, entry.REVISED_QUANTITY_2);
       return res.status(400).json({ error: `Invalid or missing REVISED_QUANTITY_2 in entry ${i + 1}` });
     }
+    if (!entry.Indent_No || typeof entry.Indent_No !== 'string') {
+      console.log(`Invalid Indent_No in entry ${i + 1}:`, entry.Indent_No);
+      return res.status(400).json({ error: `Invalid or missing Indent_No in entry ${i + 1}` });
+    }
+    if (!entry.Final_Rate || isNaN(parseFloat(entry.Final_Rate))) {
+      console.log(`Invalid or missing Final_Rate in entry ${i + 1}:`, entry.Final_Rate);
+      return res.status(400).json({ error: `Invalid or missing Final_Rate in entry ${i + 1}` });
+    }
   }
 
   try {
-    // Get sheet metadata to check current row count
+    // Get sheet metadata for both sheets
     const sheetMetadata = await sheets.spreadsheets.get({
       spreadsheetId,
-      ranges: ['Quotation_Master'],
+      ranges: ['Quotation_Master', 'Purchase_FMS'],
       fields: 'sheets(properties(sheetId,gridProperties,title))',
     });
 
     const quotationMasterSheet = sheetMetadata.data.sheets?.find(
       sheet => sheet.properties?.title === 'Quotation_Master'
     );
+    const purchaseFMSSheet = sheetMetadata.data.sheets?.find(
+      sheet => sheet.properties?.title === 'Purchase_FMS'
+    );
 
     if (!quotationMasterSheet) {
       console.error('Quotation_Master sheet not found in spreadsheet');
       return res.status(400).json({ error: 'Quotation_Master sheet not found in spreadsheet' });
     }
+    if (!purchaseFMSSheet) {
+      console.error('Purchase_FMS sheet not found in spreadsheet');
+      return res.status(400).json({ error: 'Purchase_FMS sheet not found in spreadsheet' });
+    }
 
-    const sheetProperties = quotationMasterSheet.properties;
-    let maxRows = sheetProperties.gridProperties.rowCount;
-    console.log('Current max rows in Quotation_Master:', maxRows);
+    const quotationSheetProperties = quotationMasterSheet.properties;
+    const purchaseSheetProperties = purchaseFMSSheet.properties;
+    let maxRowsQuotation = quotationSheetProperties.gridProperties.rowCount;
+    let maxRowsPurchase = purchaseSheetProperties.gridProperties.rowCount;
+    console.log('Current max rows in Quotation_Master:', maxRowsQuotation);
+    console.log('Current max rows in Purchase_FMS:', maxRowsPurchase);
 
     // Fetch headers from Quotation_Master
     const headerResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Quotation_Master!A1:AE1', // Extended range to A:AE
+      range: 'Quotation_Master!A1:AE1',
     });
 
     const headers = headerResponse.data.values ? headerResponse.data.values[0] || [] : [];
-    console.log('Fetched headers:', headers);
+    console.log('Fetched Quotation_Master headers:', headers);
 
     // Find existing quotation numbers in column AC (Quotation_No)
     const dataResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Quotation_Master!AC2:AC', // Fetch Quotation_No column
+      range: 'Quotation_Master!AC2:AC',
     });
 
     const quoValues = dataResponse.data.values ? dataResponse.data.values.map(row => row[0]).filter(val => val && val.startsWith('QUO_')) : [];
@@ -253,21 +581,21 @@ router.post('/save-take-Quotation', async (req, res) => {
     const newQuoNumber = `QUO_${nextQuoNumber.toString().padStart(3, '0')}`;
     console.log('Generated quotation number:', newQuoNumber);
 
-    // Update headers for Quotation_No (AC1), Total_Quantity (AD1), and Total_Value (AE1) if not already set
+    // Update headers for Quotation_Master
     const headerUpdates = [];
-    if (!headers[28]) { // AC is index 28 (0-based)
+    if (!headers[28]) {
       headerUpdates.push({
         range: 'Quotation_Master!AC1',
         values: [['Quotation_No']],
       });
     }
-    if (!headers[29]) { // AD is index 29
+    if (!headers[29]) {
       headerUpdates.push({
         range: 'Quotation_Master!AD1',
         values: [['Total_Quantity']],
       });
     }
-    if (!headers[30]) { // AE is index 30
+    if (!headers[30]) {
       headerUpdates.push({
         range: 'Quotation_Master!AE1',
         values: [['Total_Value']],
@@ -282,135 +610,190 @@ router.post('/save-take-Quotation', async (req, res) => {
           data: headerUpdates,
         },
       });
-      console.log('Updated headers:', headerUpdates.map(update => update.range));
+      console.log('Updated Quotation_Master headers:', headerUpdates.map(update => update.range));
     }
 
-    // Fetch Purchase_FMS data to validate Indent_No
+    // Function to convert column index to letter
+    function getColumnLetter(index) {
+      let column = '';
+      let num = index + 1; // 1-based
+      while (num > 0) {
+        const mod = (num - 1) % 26;
+        column = String.fromCharCode(65 + mod) + column;
+        num = Math.floor((num - 1) / 26);
+      }
+      return column;
+    }
+
+    // Fetch headers from Purchase_FMS
+    const purchaseHeaderResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Purchase_FMS!A7:AF7',
+    });
+
+    const purchaseHeaders = purchaseHeaderResponse.data.values ? purchaseHeaderResponse.data.values[0] || [] : [];
+    console.log('Fetched Purchase_FMS headers:', purchaseHeaders);
+
+    // Find column indices
+    const uidColumnIndex = purchaseHeaders.findIndex(header => header && header.toLowerCase().trim() === 'uid');
+    if (uidColumnIndex === -1) {
+      console.error('UID column not found in Purchase_FMS');
+      return res.status(400).json({ error: 'UID column not found in Purchase_FMS' });
+    }
+
+    const indentColumnIndex = purchaseHeaders.findIndex(header => header && header.trim() === 'INDENT NUMBER 3');
+    if (indentColumnIndex === -1) {
+      console.error('INDENT NUMBER 3 column not found in Purchase_FMS');
+      return res.status(400).json({ error: 'INDENT NUMBER 3 column not found in Purchase_FMS' });
+    }
+
+    const status4ColumnIndex = purchaseHeaders.findIndex(header => header && header.trim() === 'STATUS 4');
+    if (status4ColumnIndex === -1) {
+      console.error('STATUS 4 column not found in Purchase_FMS');
+      return res.status(400).json({ error: 'STATUS 4 column not found in Purchase_FMS' });
+    }
+
+    const noOfQuotationColumnIndex = purchaseHeaders.findIndex(header => header && header.trim() === 'No. Of Quotation 4');
+    if (noOfQuotationColumnIndex === -1) {
+      console.error('No. Of Quotation 4 column not found in Purchase_FMS');
+      return res.status(400).json({ error: 'No. Of Quotation 4 column not found in Purchase_FMS' });
+    }
+
+    console.log(`UID at column ${getColumnLetter(uidColumnIndex)} (index ${uidColumnIndex})`);
+    console.log(`INDENT NUMBER 3 at column ${getColumnLetter(indentColumnIndex)} (index ${indentColumnIndex})`);
+    console.log(`STATUS 4 at column ${getColumnLetter(status4ColumnIndex)} (index ${status4ColumnIndex})`);
+    console.log(`No. Of Quotation 4 at column ${getColumnLetter(noOfQuotationColumnIndex)} (index ${noOfQuotationColumnIndex})`);
+
+    // Fetch Purchase_FMS data
     const purchaseResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Purchase_FMS!A2:AA', // Extended to A:AA to include INDENT_NUMBER_3
+      range: 'Purchase_FMS!A8:AF',
     });
 
     const purchaseRows = purchaseResponse.data.values || [];
-    console.log('Fetched Purchase_FMS rows:', purchaseRows);
+    console.log('Fetched Purchase_FMS rows (first 5 for brevity):', purchaseRows.slice(0, 5));
 
+    // Create UID to row map, accounting for data starting at row 8
+    const uidToRowMap = new Map();
+    purchaseRows.forEach((row, i) => {
+      const uid = row[uidColumnIndex];
+      if (uid) {
+        uidToRowMap.set(uid, i + 8); // Data starts at row 8
+      }
+    });
+    console.log('UID to row map:', Object.fromEntries(uidToRowMap));
+
+    // Validate all entries: same Indent_No, UID exists, and matches Indent_No in row
     const indentNo = entries[0].Indent_No;
-    console.log('Indent_No from request:', indentNo);
-
-    const matchingPurchaseRows = purchaseRows.filter(row => row[24] === indentNo && row[24] !== 'INDENT NUMBER 3'); // Column Y (index 23)
-    console.log('Matching Purchase_FMS rows for Indent_No:', matchingPurchaseRows);
-
-    if (matchingPurchaseRows.length === 0) {
-      const allIndentNos = purchaseRows.map(row => row[24]).filter(val => val && val !== 'INDENT NUMBER 3');
-      console.warn(`No rows found in Purchase_FMS for Indent_No: ${indentNo}`);
-      return res.status(400).json({
-        error: `No data found in Purchase_FMS for Indent_No: ${indentNo}`,
-        availableIndentNos: allIndentNos,
-      });
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      if (entry.Indent_No !== indentNo) {
+        return res.status(400).json({ error: `All entries must have the same Indent_No (${indentNo})` });
+      }
+      const rowNumber = uidToRowMap.get(entry.UID);
+      if (!rowNumber) {
+        return res.status(400).json({ error: `UID ${entry.UID} not found in Purchase_FMS` });
+      }
+      const rowIndex = rowNumber - 8; // Adjust for data starting at row 8
+      const row = purchaseRows[rowIndex];
+      if (!row || row[indentColumnIndex] !== indentNo) {
+        return res.status(400).json({ error: `UID ${entry.UID} does not match Indent_No ${indentNo} in Purchase_FMS` });
+      }
     }
 
-    // Fetch existing rows from Quotation_Master for data appending
+    // Proceed with Quotation_Master updates
     const rowsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Quotation_Master!A2:AE', // Extended range to A:AE
+      range: 'Quotation_Master!A2:AE',
     });
 
     const rows = rowsResponse.data.values || [];
-    console.log('Fetched Quotation_Master rows:', rows);
+    let nextRow = 2 + rows.length;
 
-    let nextRow = 2 + rows.length; // Next available row
-
-    // Check if nextRow exceeds maxRows and extend sheet if necessary
     const rowsNeeded = nextRow + entries.length - 1;
-    if (rowsNeeded > maxRows) {
-      const additionalRows = rowsNeeded - maxRows + 100; // Add buffer of 100 rows
+    if (rowsNeeded > maxRowsQuotation) {
+      const additionalRows = rowsNeeded - maxRowsQuotation + 100;
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         resource: {
           requests: [{
             appendDimension: {
-              sheetId: sheetProperties.sheetId,
+              sheetId: quotationSheetProperties.sheetId,
               dimension: 'ROWS',
               length: additionalRows,
             },
           }],
         },
       });
-      maxRows += additionalRows;
-      console.log(`Extended Quotation_Master by ${additionalRows} rows. New max rows: ${maxRows}`);
+      maxRowsQuotation += additionalRows;
+      console.log(`Extended Quotation_Master by ${additionalRows} rows. New max rows: ${maxRowsQuotation}`);
     }
 
     const updateData = [];
     entries.forEach((entry, index) => {
-      console.log(`Entry ${index + 1} UID:`, entry.UID);
-
-      // Calculate Total_Quantity and Total_Value for this entry
-      const revisedQuantity = parseFloat(entry.REVISED_QUANTITY_2) || 0;
-      const finalRate = parseFloat(entry.Final_Rate) || 0;
+      const revisedQuantity = parseFloat(entry.REVISED_QUANTITY_2);
+      const finalRate = parseFloat(entry.Final_Rate);
       const totalValue = (revisedQuantity * finalRate).toFixed(2);
 
-      if (isNaN(revisedQuantity) || isNaN(finalRate) || totalValue <= 0) {
-        console.warn(`Invalid data in entry ${index + 1}: REVISED_QUANTITY_2=${entry.REVISED_QUANTITY_2}, Final_Rate=${entry.Final_Rate}, Total_Value=${totalValue}`);
+      if (isNaN(revisedQuantity) || isNaN(finalRate) || parseFloat(totalValue) <= 0) {
         return res.status(400).json({
-          error: `Invalid data in entry ${index + 1}: REVISED_QUANTITY_2 or Final_Rate is invalid`,
+          error: `Invalid data in entry ${index + 1}`,
         });
       }
 
+      const now = new Date();
+      const istOptions = {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      };
+      const istFormatter = new Intl.DateTimeFormat("en-IN", istOptions);
+      const parts = istFormatter.formatToParts(now);
+      const year = parts.find(p => p.type === "year").value;
+      const month = parts.find(p => p.type === "month").value;
+      const day = parts.find(p => p.type === "day").value;
+      const hour = parts.find(p => p.type === "hour").value;
+      const minute = parts.find(p => p.type === "minute").value;
+      const second = parts.find(p => p.type === "second").value;
+      const timestamp = `${day}/${month}/${year} ${hour}:${minute}:${second}`;
 
-          const now = new Date();
-    const istOptions = {
-      timeZone: "Asia/Kolkata",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    };
-    const istFormatter = new Intl.DateTimeFormat("en-IN", istOptions);
-    const parts = istFormatter.formatToParts(now);
-
-    const year = parts.find((p) => p.type === "year").value;
-    const month = parts.find((p) => p.type === "month").value;
-    const day = parts.find((p) => p.type === "day").value;
-    const hour = parts.find((p) => p.type === "hour").value;
-    const minute = parts.find((p) => p.type === "minute").value;
-    const second = parts.find((p) => p.type === "second").value;
-
-    const timestamp = `${day}/${month}/${year} ${hour}:${minute}:${second}`;
       const rowData = [
-        timestamp || '',
+        timestamp,
         entry.Req_No || '',
-        entry.UID || 'N/A',
+        entry.UID,
         entry.site_name || '',
-        entry.Indent_No || '',
+        entry.Indent_No,
         entry.Material_name || '',
         entry.Vendor_Name || '',
         entry.Vendor_Ferm_Name || '',
         entry.Vendor_Address || '',
         entry.Contact_Number || '',
         entry.Vendor_GST_No || '',
-        entry.RATE || 0,
-        entry.Discount || 0,
-        entry.CGST || 0,
-        entry.SGST || 0,
-        entry.IGST || 0,
-        entry.Final_Rate || 0,
+        parseFloat(entry.RATE) || 0,
+        parseFloat(entry.Discount) || 0,
+        parseFloat(entry.CGST) || 0,
+        parseFloat(entry.SGST) || 0,
+        parseFloat(entry.IGST) || 0,
+        finalRate,
         entry.Delivery_Expected_Date || '',
         entry.Payment_Terms_Condistion_Advacne_Credit || '',
-        entry.Credit_in_Days || 0,
+        parseInt(entry.Credit_in_Days) || 0,
         entry.Bill_Type || '',
         entry.IS_TRANSPORT_REQUIRED || '',
-        entry.EXPECTED_TRANSPORT_CHARGES || 0,
-        entry.FRIGHET_CHARGES || 0,
-        entry.EXPECTED_FRIGHET_CHARGES || 0,
+        parseFloat(entry.EXPECTED_TRANSPORT_CHARGES) || 0,
+        parseFloat(entry.FRIGHET_CHARGES) || 0,
+        parseFloat(entry.EXPECTED_FRIGHET_CHARGES) || 0,
         entry.PLANNED_4 || '',
         entry.NO_OF_QUOTATION_4 || '',
         entry.REMARK_4 || '',
-        newQuoNumber, // Quotation_No
-        revisedQuantity.toFixed(2), // Total_Quantity = REVISED_QUANTITY_2
-        totalValue, // Total_Value = REVISED_QUANTITY_2 * Final_Rate
+        newQuoNumber,
+        revisedQuantity.toFixed(2),
+        totalValue,
       ];
 
       const updateRange = `Quotation_Master!A${nextRow}:AE${nextRow}`;
@@ -422,12 +805,9 @@ router.post('/save-take-Quotation', async (req, res) => {
       nextRow++;
     });
 
-    // If any entry was invalid, updateData might be empty
     if (updateData.length === 0) {
       return res.status(400).json({ error: 'No valid entries to save' });
     }
-
-    console.log('Update data:', updateData);
 
     const batchUpdateRequest = {
       spreadsheetId,
@@ -438,33 +818,60 @@ router.post('/save-take-Quotation', async (req, res) => {
     };
 
     const updateResponse = await sheets.spreadsheets.values.batchUpdate(batchUpdateRequest);
-    console.log('Batch update response:', updateResponse.data);
+    console.log('Quotation_Master updated:', JSON.stringify(updateResponse.data, null, 2));
 
-    // Update Purchase_FMS sheet with status, no of quotation, and remark
-    const planned4 = entries[0].PLANNED_4;
-    const noOfQuotation4 = entries[0].NO_OF_QUOTATION_4;
-    const remark4 = entries[0].REMARK_4;
-
+    // Update Purchase_FMS: STATUS 4 to 'Done' and No. Of Quotation 4 to frontend value, per UID
     const purchaseUpdates = [];
-    purchaseRows.forEach((row, i) => {
-      if (row[23] === indentNo && row[23] !== 'INDENT NUMBER 3') { // Column Y (index 23) is INDENT_NUMBER_3
-        const rowNumber = i + 2;
+    const statusCol = getColumnLetter(status4ColumnIndex);
+    const noQuotCol = getColumnLetter(noOfQuotationColumnIndex);
+
+    entries.forEach((entry) => {
+      const rowNumber = uidToRowMap.get(entry.UID);
+      if (rowNumber) {
+        console.log(`Updating row ${rowNumber} for UID ${entry.UID}: STATUS 4 to 'Done', No. Of Quotation 4 to '${entry.NO_OF_QUOTATION_4 || ''}'`);
+        // Update STATUS 4 to 'Done'
         purchaseUpdates.push({
-          range: `Purchase_FMS!Q${rowNumber}`, // Column Q for PLANNED_4
-          values: [[planned4]],
+          range: `Purchase_FMS!${statusCol}${rowNumber}`,
+          values: [['Done']],
         });
+        // Update No. Of Quotation 4
         purchaseUpdates.push({
-          range: `Purchase_FMS!R${rowNumber}`, // Column R for NO_OF_QUOTATION_4
-          values: [[noOfQuotation4]],
+          range: `Purchase_FMS!${noQuotCol}${rowNumber}`,
+          values: [[entry.NO_OF_QUOTATION_4 || '']],
         });
-        purchaseUpdates.push({
-          range: `Purchase_FMS!S${rowNumber}`, // Column S for REMARK_4
-          values: [[remark4]],
-        });
+      } else {
+        console.warn(`No row found in Purchase_FMS for UID: ${entry.UID}`);
       }
     });
 
+    // Check if Purchase_FMS has enough rows
+    let maxRowNeededPurchase = maxRowsPurchase;
     if (purchaseUpdates.length > 0) {
+      maxRowNeededPurchase = Math.max(
+        ...Array.from(uidToRowMap.values()),
+        ...purchaseUpdates.map(u => parseInt(u.range.match(/\d+$/)[0]) || 0)
+      );
+    }
+    if (maxRowNeededPurchase > maxRowsPurchase) {
+      const additionalRows = maxRowNeededPurchase - maxRowsPurchase + 100;
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        resource: {
+          requests: [{
+            appendDimension: {
+              sheetId: purchaseSheetProperties.sheetId,
+              dimension: 'ROWS',
+              length: additionalRows,
+            },
+          }],
+        },
+      });
+      maxRowsPurchase += additionalRows;
+      console.log(`Extended Purchase_FMS by ${additionalRows} rows. New max rows: ${maxRowsPurchase}`);
+    }
+
+    if (purchaseUpdates.length > 0) {
+      console.log('Purchase_FMS updates:', JSON.stringify(purchaseUpdates, null, 2));
       const purchaseBatchUpdateRequest = {
         spreadsheetId,
         resource: {
@@ -472,18 +879,23 @@ router.post('/save-take-Quotation', async (req, res) => {
           data: purchaseUpdates,
         },
       };
-      await sheets.spreadsheets.values.batchUpdate(purchaseBatchUpdateRequest);
-      console.log('Purchase_FMS updated successfully');
+      const purchaseUpdateResponse = await sheets.spreadsheets.values.batchUpdate(purchaseBatchUpdateRequest);
+      console.log('Purchase_FMS batch update response:', JSON.stringify(purchaseUpdateResponse.data, null, 2));
+      if (purchaseUpdateResponse.data.totalUpdatedCells === 0) {
+        console.error('No cells updated in Purchase_FMS despite successful API call');
+      }
+    } else {
+      console.warn('No updates prepared for Purchase_FMS');
     }
 
-    return res.json({ 
-      message: 'Data appended to Google Sheet successfully', 
+    return res.json({
+      message: 'Data appended to Google Sheet successfully',
       quotationNumber: newQuoNumber,
-      totalQuantity: entries[0].REVISED_QUANTITY_2, // Return first entry's quantity for simplicity
-      totalValue: (parseFloat(entries[0].REVISED_QUANTITY_2) * parseFloat(entries[0].Final_Rate)).toFixed(2) // Return first entry's total value
+      totalQuantity: entries.reduce((sum, e) => sum + parseFloat(e.REVISED_QUANTITY_2 || 0), 0),
+      totalValue: entries.reduce((sum, e) => sum + (parseFloat(e.REVISED_QUANTITY_2 || 0) * parseFloat(e.Final_Rate || 0)), 0).toFixed(2)
     });
   } catch (error) {
-    console.error('Error appending to Google Sheet:', error.message, error.stack);
+    console.error('Error:', error.message, error.stack);
     return res.status(500).json({
       error: 'Server error',
       details: error.message,

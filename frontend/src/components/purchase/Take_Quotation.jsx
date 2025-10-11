@@ -77,12 +77,15 @@ const Take_Quotation = () => {
 
     const fetchVendorOptions = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/vendors`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/vendors`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch vendor data");
         }
@@ -188,66 +191,71 @@ const Take_Quotation = () => {
   };
 
   const handleMaterialChange = (vendorIndex, materialIndex, field, value) => {
-  console.log("handleMaterialChange called:", {
-    vendorIndex,
-    materialIndex,
-    field,
-    value,
-    selectedIndent,
-  });
+    console.log("handleMaterialChange called:", {
+      vendorIndex,
+      materialIndex,
+      field,
+      value,
+      selectedIndent,
+    });
 
-  const newVendors = [...vendors];
-  const newMaterials = [...newVendors[vendorIndex].materials];
-  newMaterials[materialIndex][field] = value;
+    const newVendors = [...vendors];
+    const newMaterials = [...newVendors[vendorIndex].materials];
+    newMaterials[materialIndex][field] = value;
 
-  // Update Revised_Quantity and Unit_Name when Material_Name is selected
-  if (field === "Material_Name" && value) {
-    console.log("Filtering requests for INDENT_NUMBER_3:", selectedIndent);
-    console.log("Available requests:", requests);
+    // Update Revised_Quantity and Unit_Name when Material_Name is selected
+    if (field === "Material_Name" && value) {
+      console.log("Filtering requests for INDENT_NUMBER_3:", selectedIndent);
+      console.log("Available requests:", requests);
 
-    const selectedRequest = requests.find(
-      (req) =>
-        req.INDENT_NUMBER_3 === selectedIndent && req.Material_Name === value
-    );
+      const selectedRequest = requests.find(
+        (req) =>
+          req.INDENT_NUMBER_3 === selectedIndent && req.Material_Name === value
+      );
 
-    console.log("Selected request:", selectedRequest);
+      console.log("Selected request:", selectedRequest);
 
-    if (selectedRequest) {
-      newMaterials[materialIndex].Revised_Quantity =
-        selectedRequest.REVISED_QUANTITY_2 || "";
-      newMaterials[materialIndex].Unit_Name = selectedRequest.Unit_Name || "Unit not found";
-    } else {
-      console.log("No matching request found for Material_Name:", value);
-      newMaterials[materialIndex].Revised_Quantity = "";
-      newMaterials[materialIndex].Unit_Name = "Select a material to fetch unit";
+      if (selectedRequest) {
+        newMaterials[materialIndex].Revised_Quantity =
+          selectedRequest.REVISED_QUANTITY_2 || "";
+        newMaterials[materialIndex].Unit_Name =
+          selectedRequest.Unit_Name || "Unit not found";
+      } else {
+        console.log("No matching request found for Material_Name:", value);
+        newMaterials[materialIndex].Revised_Quantity = "";
+        newMaterials[materialIndex].Unit_Name =
+          "Select a material to fetch unit";
+      }
     }
-  }
 
-  // Calculate Total and Total_Value
-  if (
-    ["Rate", "Discount (%)", "CGST (%)", "SGST (%)", "IGST (%)"].includes(field)
-  ) {
-    const rate = parseFloat(newMaterials[materialIndex].Rate) || 0;
-    const discount = parseFloat(newMaterials[materialIndex]["Discount (%)"]) || 0;
-    const cgst = parseFloat(newMaterials[materialIndex]["CGST (%)"]) || 0;
-    const sgst = parseFloat(newMaterials[materialIndex]["SGST (%)"]) || 0;
-    const igst = parseFloat(newMaterials[materialIndex]["IGST (%)"]) || 0;
-    const baseAmount = rate * (1 - discount / 100);
-    const taxAmount = baseAmount * ((cgst + sgst + igst) / 100);
-    newMaterials[materialIndex].Total = (baseAmount + taxAmount).toFixed(2);
+    // Calculate Total and Total_Value
+    if (
+      ["Rate", "Discount (%)", "CGST (%)", "SGST (%)", "IGST (%)"].includes(
+        field
+      )
+    ) {
+      const rate = parseFloat(newMaterials[materialIndex].Rate) || 0;
+      const discount =
+        parseFloat(newMaterials[materialIndex]["Discount (%)"]) || 0;
+      const cgst = parseFloat(newMaterials[materialIndex]["CGST (%)"]) || 0;
+      const sgst = parseFloat(newMaterials[materialIndex]["SGST (%)"]) || 0;
+      const igst = parseFloat(newMaterials[materialIndex]["IGST (%)"]) || 0;
+      const baseAmount = rate * (1 - discount / 100);
+      const taxAmount = baseAmount * ((cgst + sgst + igst) / 100);
+      newMaterials[materialIndex].Total = (baseAmount + taxAmount).toFixed(2);
 
-    // Calculate Total_Value
-    const revisedQuantity =
-      parseFloat(newMaterials[materialIndex].Revised_Quantity) || 0;
-    const totalRate = parseFloat(newMaterials[materialIndex].Total) || 0;
-    newMaterials[materialIndex].Total_Value = (
-      revisedQuantity * totalRate
-    ).toFixed(2);
-  }
+      // Calculate Total_Value
+      const revisedQuantity =
+        parseFloat(newMaterials[materialIndex].Revised_Quantity) || 0;
+      const totalRate = parseFloat(newMaterials[materialIndex].Total) || 0;
+      newMaterials[materialIndex].Total_Value = (
+        revisedQuantity * totalRate
+      ).toFixed(2);
+    }
 
-  newVendors[vendorIndex].materials = newMaterials;
-  setVendors(newVendors);
-};
+    newVendors[vendorIndex].materials = newMaterials;
+    setVendors(newVendors);
+  };
 
   const removeMaterialFromVendor = (vendorIndex, materialIndex) => {
     const newVendors = [...vendors];
@@ -296,122 +304,134 @@ const Take_Quotation = () => {
     return true;
   };
 
-
-
-
-  
-
-
-  
-
   const handleSave = async () => {
-    if (!selectedIndent) {
-      setError("Please select an indent number.");
-      return;
-    }
+  if (!selectedIndent) {
+    setError("Please select an indent number.");
+    return;
+  }
 
-    const selectedRequests = requests.filter(
-      (req) => req.INDENT_NUMBER_3 === selectedIndent
-    );
-    if (selectedRequests.length === 0) {
-      setError("No requests found for the selected indent.");
-      return;
-    }
+  const selectedRequests = requests.filter(
+    (req) => req.INDENT_NUMBER_3 === selectedIndent
+  );
+  if (selectedRequests.length === 0) {
+    setError("No requests found for the selected indent.");
+    return;
+  }
 
-    const common = {
-      Req_No: selectedRequests[0].Req_No,
-      site_name: selectedRequests[0].Site_Name,
-      Indent_No: selectedIndent,
-    };
-
-    const entries = [];
-
-    for (const vendor of vendors) {
-      for (const material of vendor.materials) {
-        const req = selectedRequests.find(
-          (r) => r.Material_Name === material.Material_Name
-        );
-        if (!req) {
-          setError(
-            `Material ${material.Material_Name} not found in selected indent.`
-          );
-          return;
-        }
-
-        const revisedQuantity = parseFloat(material.Revised_Quantity) || 0;
-        const finalRate = parseFloat(material.Total) || 0;
-        const totalValue = parseFloat(material.Total_Value) || 0;
-
-        if (isNaN(totalValue) || totalValue <= 0) {
-          setError(
-            `Invalid total value for material ${material.Material_Name}. Please check the Rate and Revised Quantity.`
-          );
-          return;
-        }
-
-        const entry = {
-          Req_No: common.Req_No,
-          UID: req.UID,
-          site_name: common.site_name,
-          Indent_No: common.Indent_No,
-          Material_name: material.Material_Name,
-          Vendor_Name: vendor.name,
-          Vendor_Ferm_Name: vendor.firm,
-          Vendor_Address: vendor.address,
-          Contact_Number: vendor.contact,
-          Vendor_GST_No: vendor.gst,
-          RATE: material.Rate,
-          Discount: material["Discount (%)"],
-          CGST: material["CGST (%)"],
-          SGST: material["SGST (%)"],
-          IGST: material["IGST (%)"],
-          Final_Rate: material.Total,
-          Delivery_Expected_Date: vendor.deliveryDate,
-          Payment_Terms_Condistion_Advacne_Credit: vendor.paymentTerms,
-          Credit_in_Days: vendor.creditInDays,
-          Bill_Type: vendor.billType,
-          IS_TRANSPORT_REQUIRED: vendor.transportRequired,
-          EXPECTED_TRANSPORT_CHARGES: vendor.expectedTransportCharges,
-          FRIGHET_CHARGES: vendor.freightCharges,
-          EXPECTED_FRIGHET_CHARGES: vendor.expectedFreightCharges,
-          PLANNED_4: status4,
-          NO_OF_QUOTATION_4: noOfQuotation4,
-          REMARK_4: remark4,
-          REVISED_QUANTITY_2: revisedQuantity.toString(),
-          Total_Value: totalValue,
-        };
-        entries.push(entry);
-      }
-    }
-
-    try {
-      setIsSaving(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/save-take-Quotation`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ entries }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to save data");
-      }
-
-      setShowSuccess(true);
-      setTimeout(() => {
-        closeCreateModal();
-      }, 1500);
-    } catch (error) {
-      console.error("Error saving to sheet:", error);
-      setError("Failed to save due to a network error or invalid data.");
-    } finally {
-      setIsSaving(false);
-    }
+  const common = {
+    Req_No: selectedRequests[0].Req_No,
+    site_name: selectedRequests[0].Site_Name,
+    Indent_No: selectedIndent,
   };
+
+  const entries = [];
+
+  for (const vendor of vendors) {
+    for (const material of vendor.materials) {
+      const req = selectedRequests.find(
+        (r) => r.Material_Name === material.Material_Name
+      );
+      if (!req) {
+        setError(
+          `Material ${material.Material_Name} not found in selected indent.`
+        );
+        return;
+      }
+
+      const revisedQuantity = parseFloat(material.Revised_Quantity) || 0;
+      const finalRate = parseFloat(material.Total) || 0;
+      const totalValue = parseFloat(material.Total_Value) || 0;
+
+      if (isNaN(totalValue) || totalValue <= 0) {
+        setError(
+          `Invalid total value for material ${material.Material_Name}. Please check the Rate and Revised Quantity.`
+        );
+        return;
+      }
+
+      const entry = {
+        Req_No: common.Req_No,
+        UID: req.UID,
+        site_name: common.site_name,
+        Indent_No: common.Indent_No,
+        Material_name: material.Material_Name,
+        Vendor_Name: vendor.name,
+        Vendor_Ferm_Name: vendor.firm,
+        Vendor_Address: vendor.address,
+        Contact_Number: vendor.contact,
+        Vendor_GST_No: vendor.gst,
+        RATE: material.Rate,
+        Discount: material["Discount (%)"],
+        CGST: material["CGST (%)"],
+        SGST: material["SGST (%)"],
+        IGST: material["IGST (%)"],
+        Final_Rate: material.Total,
+        Delivery_Expected_Date: vendor.deliveryDate,
+        Payment_Terms_Condistion_Advacne_Credit: vendor.paymentTerms,
+        Credit_in_Days: vendor.creditInDays,
+        Bill_Type: vendor.billType,
+        IS_TRANSPORT_REQUIRED: vendor.transportRequired,
+        EXPECTED_TRANSPORT_CHARGES: vendor.expectedTransportCharges,
+        FRIGHET_CHARGES: vendor.freightCharges,
+        EXPECTED_FRIGHET_CHARGES: vendor.expectedFreightCharges,
+        PLANNED_4: status4,
+        NO_OF_QUOTATION_4: noOfQuotation4,
+        REMARK_4: remark4,
+        REVISED_QUANTITY_2: revisedQuantity.toString(),
+        Total_Value: totalValue,
+      };
+      entries.push(entry);
+    }
+  }
+
+  try {
+    setIsSaving(true);
+    const response = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/save-take-Quotation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ entries }),
+      }
+    );
+
+    const responseData = await response.json(); // Parse the response body
+    console.log("API Response:", responseData); // Debug log
+
+    if (!response.ok) {
+      throw new Error(responseData.error || "Failed to save data");
+    }
+
+    if (responseData.message !== "Data appended to Google Sheet successfully") {
+      throw new Error(responseData.error || "Unexpected response from server");
+    }
+
+    // Success case: Show success message and reload page or fetch data
+    setShowSuccess(true);
+    setTimeout(() => {
+      // Option 1: Reload the page
+      window.location.reload();
+
+      // Option 2: Call GET API to fetch updated data (uncomment and adjust as needed)
+      // fetch(`http://localhost:5000/api/get-quotations`) // Replace with your GET endpoint
+      //   .then((res) => res.json())
+      //   .then((data) => {
+      //     // Update state with new data (e.g., setRequests(data))
+      //     console.log("Updated data:", data);
+      //     closeCreateModal();
+      //   })
+      //   .catch((err) => console.error("Error fetching updated data:", err))
+      //   .finally(() => setIsSaving(false));
+    }, 1500);
+  } catch (error) {
+    console.error("Error saving to sheet:", error);
+    setError(error.message || "Failed to save due to a network error or invalid data.");
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
@@ -696,7 +716,7 @@ const Take_Quotation = () => {
                   </div>
                 )}
 
-              {currentStep === 3 && (
+                {currentStep === 3 && (
   <div className="space-y-6">
     <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
       <h5 className="font-semibold text-purple-800 mb-2">
@@ -708,16 +728,9 @@ const Take_Quotation = () => {
     </div>
 
     <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-      <div className="flex justify-between items-center mb-4">
-        <h5 className="text-lg font-semibold text-gray-800">Vendors</h5>
-        <button
-          onClick={addVendor}
-          className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-          disabled={isSaving}
-        >
-          Add Vendor
-        </button>
-      </div>
+      <h5 className="text-lg font-semibold text-gray-800 mb-4">
+        Vendors
+      </h5>
 
       <div className="space-y-6 max-h-[600px] overflow-y-auto">
         {vendors.map((vendor, vIndex) => (
@@ -1129,7 +1142,9 @@ const Take_Quotation = () => {
                         </label>
                         <input
                           type="text"
-                          value={material.Unit_Name || "Select a material to fetch unit"}
+                          value={
+                            material.Unit_Name || "Select a material to fetch unit"
+                          }
                           readOnly
                           className="w-full p-2 border border-gray-200 rounded-lg bg-gray-100 font-semibold text-orange-600 text-sm"
                           placeholder="Auto fetched"
@@ -1270,6 +1285,20 @@ const Take_Quotation = () => {
             </div>
           </div>
         ))}
+        {vendors.length === 0 && (
+          <p className="text-sm text-gray-500 text-center py-4">
+            No vendors added. Add a vendor below.
+          </p>
+        )}
+        <div className="mt-6">
+          <button
+            onClick={addVendor}
+            className="w-full px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            disabled={isSaving}
+          >
+            Add Vendor
+          </button>
+        </div>
       </div>
     </div>
   </div>

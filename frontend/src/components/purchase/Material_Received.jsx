@@ -82,7 +82,7 @@ const Material_Received = () => {
   // Open modal
   const openModal = (request) => {
     setSelectedRequest(request);
-    setReceivedQuantity(request.totalReceivedQuantity || '');
+    setReceivedQuantity('');
     setMaterialStatus('');
     setQualityCheck('');
     setChallanNo('');
@@ -584,3 +584,6 @@ const Material_Received = () => {
 };
 
 export default Material_Received;
+
+
+

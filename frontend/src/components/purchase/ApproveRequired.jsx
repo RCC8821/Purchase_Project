@@ -30,7 +30,6 @@ const ApproveRequired = () => {
           const transformedData = data.data.map(item => ({
             UID: item.UID || 'N/A',
             PLANNED_2: item.PLANNED_2 || 'N/A',
-            Quantity: item.Quantity || 'N/A',
             Req_No: item.Req_No || 'N/A',
             Site_Name: item.Site_Name || 'N/A',
             Supervisor_Name: item.Supervisor_Name || 'N/A',
@@ -38,6 +37,7 @@ const ApproveRequired = () => {
             SKU_Code: item.SKU_Code || 'N/A',
             Material_Name: item.Material_Name || 'N/A',
             Unit_Name: item.Unit_Name || 'N/A',
+            Quantity: item.Quantity || 'N/A',
             Purpose: item.Purpose || 'N/A',
             Require_Days: item.Require_Days || 'N/A', // Map Require_Days instead of Require_Date
             Remark: item.Remark || 'N/A',
@@ -191,10 +191,10 @@ const ApproveRequired = () => {
                     Material Name
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Quantity
+                    Unit
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Unit
+                    Quantity
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Purpose
@@ -241,11 +241,12 @@ const ApproveRequired = () => {
                         {request.Material_Name}
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200 text-right">
-                      {request.Quantity}
-                    </td>
+                  
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       {request.Unit_Name}
+                    </td>
+                      <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200 text-right">
+                      {request.Quantity}
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       <div className="max-w-[100px] truncate" title={request.Purpose}>

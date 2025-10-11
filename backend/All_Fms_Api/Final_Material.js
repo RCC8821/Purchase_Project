@@ -7,7 +7,7 @@ router.get('/get-Final-material-received', async (req, res) => {
     // Fetch data from the first sheet (Material_Received)
     const response1 = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Material_Received!A2:BW', // Adjust range as needed
+      range: 'Material_Received!A2:T', // Adjust range as needed
     });
 
     let data1 = response1.data.values || [];
@@ -19,7 +19,7 @@ router.get('/get-Final-material-received', async (req, res) => {
     // Fetch data from Purchase_FMS sheet, including PLANNED_9 and ACTUAL_9
     const response3 = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Purchase_FMS!A8:BQ', // Extended range to include BP (PLANNED_9) and BQ (ACTUAL_9)
+      range: 'Purchase_FMS!A8:BV', // Extended range to include BP (PLANNED_9) and BQ (ACTUAL_9)
     });
 
     let data3 = response3.data.values || [];
@@ -32,8 +32,8 @@ router.get('/get-Final-material-received', async (req, res) => {
     const headers = [
       { key: 'Req_No', column: 2 }, // C
       { key: 'REVISED_QUANTITY_2', column: 16 }, // Q
-      { key: 'PLANNED_9', column: 67 }, // BP (adjust column index if different)
-      { key: 'ACTUAL_9', column: 68 }, // BQ (adjust column index if different)
+      { key: 'PLANNED_9', column: 72 }, 
+      { key: 'ACTUAL_9', column: 73 }, 
     ];
 
     // Create a map for Purchase_FMS data using reqNo as the key
@@ -43,8 +43,8 @@ router.get('/get-Final-material-received', async (req, res) => {
     data3.forEach((row, index) => {
       const reqNo = row[2]?.trim() || ''; // Column C for Req_No
       const revisedQuantity = row[16]?.trim() || ''; // Column Q for REVISED_QUANTITY_2
-      const planned9 = row[67]?.trim() || ''; // Column BP for PLANNED_9 (adjust if needed)
-      const actual9 = row[68]?.trim() || ''; // Column BQ for ACTUAL_9 (adjust if needed)
+      const planned9 = row[72]?.trim() || ''; // Column BP for PLANNED_9 (adjust if needed)
+      const actual9 = row[73]?.trim() || ''; // Column BQ for ACTUAL_9 (adjust if needed)
 
       // Skip empty rows
       if (!row || row.every(cell => !cell || cell.trim() === '')) {
