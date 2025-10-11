@@ -21,7 +21,7 @@ const PO = () => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/get-po-data`);
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/get-po-data`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -42,7 +42,7 @@ const PO = () => {
 
     const fetchSupervisors = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/get-othersheet-data`);
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/get-othersheet-data`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -126,7 +126,7 @@ const PO = () => {
     console.log('PO Data being sent:', JSON.stringify(poData, null, 2));
 
     try {
-      const response = await fetch(`http://localhost:5000/api/create-po`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/create-po`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(poData),
