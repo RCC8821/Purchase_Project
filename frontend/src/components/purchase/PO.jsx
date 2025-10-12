@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 
 const PO = () => {
@@ -47,7 +45,7 @@ const PO = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        console.log(data)
+        console.log(data);
         setSupervisors(data);
       } catch (error) {
         console.error('Error fetching supervisors:', error);
@@ -100,14 +98,14 @@ const PO = () => {
       items: selectedItems.map(item => ({
         uid: item.UID,
         materialName: item.Material_Name,
-        vendorFirm: item.Vendor_Firm_Name_5 || 'N/A', // Fixed typo
+        vendorFirm: item.Vendor_Firm_Name_5 || 'N/A',
         rate: item.Rate_5,
         cgst: item.CGST_5,
         sgst: item.SGST_5,
         igst: item.IGST_5,
         finalRate: item.FINAL_RATE_5,
         quantity: item.REVISED_QUANTITY_2,
-        unit: item.Unit_Name, // Added unit
+        unit: item.Unit_Name,
         totalValue: item.TOTAL_VALUE_5,
         transportRequired: item.IS_TRANSPORT_REQUIRED,
         expectedTransport: item.EXPECTED_TRANSPORT_CHARGES,
@@ -120,7 +118,7 @@ const PO = () => {
       vendorName: selectedItems[0]?.Vendor_Firm_Name_5 || 'N/A',
       vendorAddress: selectedItems[0]?.Vendor_Address_5 || 'N/A',
       vendorGST: selectedItems[0]?.Vendor_GST_No_5 || 'N/A',
-      vendorContact: selectedItems[0]?.Vendor_Contact_5 || 'N/A', // Added if available
+      vendorContact: selectedItems[0]?.Vendor_Contact_5 || 'N/A',
     };
 
     console.log('PO Data being sent:', JSON.stringify(poData, null, 2));
@@ -141,6 +139,29 @@ const PO = () => {
         setPdfUrl(result.pdfUrl);
         alert('PO generated successfully!');
         setShowModal(false);
+        // Fetch updated data from the backend
+        const fetchUpdatedRequests = async () => {
+          try {
+            setLoading(true);
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/get-po-data`);
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data && Array.isArray(data.data)) {
+              setRequests(data.data);
+            } else {
+              throw new Error('API data is not in the expected format');
+            }
+          } catch (error) {
+            console.error('Error fetching updated requests:', error);
+            setError('Failed to fetch updated data');
+            setRequests([]);
+          } finally {
+            setLoading(false);
+          }
+        };
+        await fetchUpdatedRequests();
       }
     } catch (error) {
       console.error('Error generating PO:', error);
@@ -152,13 +173,6 @@ const PO = () => {
 
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
-      {/* Header Section */}
-      {/* <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Purchase Order Data</h2>
-        <p className="text-gray-600 text-sm">Display of purchase order requests.</p>
-      </div> */}
-
-      {/* Create PO Button */}
       <div className="mb-4">
         <button
           onClick={() => {
@@ -176,7 +190,6 @@ const PO = () => {
         </button>
       </div>
 
-      {/* Table Container */}
       <div className="bg-white border border-gray-300 rounded shadow-sm">
         {loading ? (
           <div className="p-4 text-center text-gray-500">Loading...</div>
@@ -203,7 +216,7 @@ const PO = () => {
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Supervisor
-                  </th> {/* Added */}
+                  </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Material Type
                   </th>
@@ -228,7 +241,6 @@ const PO = () => {
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Indent Number
                   </th>
-                  
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Quotation No
                   </th>
@@ -243,7 +255,7 @@ const PO = () => {
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Vendor Contact
-                  </th> {/* Added */}
+                  </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Vendor GST
                   </th>
@@ -276,10 +288,10 @@ const PO = () => {
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Freight Charges
-                  </th> {/* Fixed typo */}
+                  </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     Expected Freight
-                  </th> {/* Fixed typo */}
+                  </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
                     PDF URL 3
                   </th>
@@ -295,15 +307,15 @@ const PO = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.UID}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Req_No}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div  title={request.Site_Name}>
+                      <div title={request.Site_Name}>
                         {request.Site_Name}
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Site_Location}</td> {/* Added */}
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Site_Location}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Material_Type}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.SKU_Code}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div  title={request.Material_Name}>
+                      <div title={request.Material_Name}>
                         {request.Material_Name}
                       </div>
                     </td>
@@ -312,16 +324,15 @@ const PO = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Unit_Name}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request['DECIDED_BRAND/COMPANY_NAME_2']}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.INDENT_NUMBER_3}</td>
-                   
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.QUOTATION_NO_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Name_5}</td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Firm_Name_5}</td> {/* Fixed typo */}
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Firm_Name_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       <div className="max-w-[120px] truncate" title={request.Vendor_Address_5}>
                         {request.Vendor_Address_5}
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Contact_5}</td> {/* Added */}
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Contact_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_GST_No_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Rate_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.CGST_5}</td>
@@ -332,9 +343,9 @@ const PO = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.APPROVAL_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.IS_TRANSPORT_REQUIRED}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.EXPECTED_TRANSPORT_CHARGES}</td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.FREIGHT_CHARGES}</td> {/* Fixed typo */}
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.EXPECTED_FREIGHT_CHARGES}</td> {/* Fixed typo */}
-                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.FREIGHT_CHARGES}</td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.EXPECTED_FREIGHT_CHARGES}</td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
                       <a href={request.PDF_URL_3} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         View
                       </a>
@@ -352,12 +363,11 @@ const PO = () => {
         )}
       </div>
 
-      {/* Modal for Create PO */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-            <button 
-              onClick={() => setShowModal(false)} 
+            <button
+              onClick={() => setShowModal(false)}
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
             >
               ×
@@ -429,7 +439,7 @@ const PO = () => {
                         </thead>
                         <tbody>
                           <tr className="bg-white">
-                            <td className="p-1">{item.Vendor_Firm_Name_5}</td> {/* Fixed typo */}
+                            <td className="p-1">{item.Vendor_Firm_Name_5}</td>
                             <td className="p-1">{item.Rate_5}</td>
                             <td className="p-1">{item.CGST_5}%</td>
                             <td className="p-1">{item.SGST_5}%</td>

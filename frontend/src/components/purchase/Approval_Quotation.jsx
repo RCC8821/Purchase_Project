@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from "react";
 import {
   FaPencilAlt,
@@ -66,7 +67,7 @@ const Approval_Quotation = () => {
             PDF_URL_3: item.PDF_URL_3 || "N/A",
             PLANNED_5: item.PLANNED_5 || "N/A",
             No_Of_Quotation_4:
-              item.No_Of_Quotation_4 || item["No._Of_Quotation_4"] || "N/A", // Handle both key formats
+              item.No_Of_Quotation_4 || item["No._Of_Quotation_4"] || "N/A",
             REMARK_4: item.REMARK_4 || "N/A",
           };
         });
@@ -143,6 +144,7 @@ const Approval_Quotation = () => {
           FRIGHET_CHARGES: item.FRIGHET_CHARGES || "N/A",
           EXPECTED_FRIGHET_CHARGES: item.EXPECTED_FRIGHET_CHARGES || "N/A",
           Status: item.Status || "N/A",
+          Approval_Status: item.Approval_Status || "N/A",
           No_Of_Quotation_4: item.No_Of_Quotation_4 || "N/A",
           Remark_4: item.Remark_4 || "N/A",
           Quotation_No: item.Quotation_No || "N/A",
@@ -152,12 +154,19 @@ const Approval_Quotation = () => {
 
         setQuotationData(transformedQuotationData);
 
-        // Extract unique indent numbers from Indent_No
+        // Extract unique indent numbers where Approval_Status is empty
         const uniqueIndents = [
           ...new Set(
             transformedQuotationData
+              .filter(
+                (item) =>
+                  item.Indent_No !== "N/A" &&
+                  (item.Approval_Status === "N/A" ||
+                    item.Approval_Status === "" ||
+                    item.Approval_Status === null ||
+                    item.Approval_Status === undefined)
+              )
               .map((item) => item.Indent_No)
-              .filter((indent) => indent !== "N/A")
           ),
         ];
         setIndentNumbers(uniqueIndents);
@@ -209,6 +218,7 @@ const Approval_Quotation = () => {
         FRIGHET_CHARGES: item.FRIGHET_CHARGES || "N/A",
         EXPECTED_FRIGHET_CHARGES: item.EXPECTED_FRIGHET_CHARGES || "N/A",
         Status: item.Status || "N/A",
+        Approval_Status: item.Approval_Status || "N/A",
         No_Of_Quotation_4: item.No_Of_Quotation_4 || "N/A",
         Remark_4: item.Remark_4 || "N/A",
         Quotation_No: item.Quotation_No || "N/A",
