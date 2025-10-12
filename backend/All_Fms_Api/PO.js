@@ -1,4 +1,5 @@
 
+
 // const express = require('express');
 // const { sheets, spreadsheetId, drive } = require('../config/googleSheet');
 // const router = express.Router();
@@ -44,11 +45,6 @@
 //   throw new Error('jsPDF instance initialization with autoTable failed');
 // }
 
-
-
-
-// // /////// TRY //////////////////////////
-
 // router.get('/get-othersheet-data', async (req, res) => {
 //   try {
 //     const range = 'Site_Supervisor!A2:E';
@@ -88,8 +84,6 @@
 //   }
 // });
 
-
-
 // router.get('/get-po-data', async (req, res) => {
 //   try {
 //     const range = 'Purchase_FMS!B7:BJ';
@@ -112,7 +106,7 @@
 //       { key: 'UID', column: 0 },
 //       { key: 'Req_No', column: 1 },
 //       { key: 'Site_Name', column: 2 },
-//       { key: 'Site_Location', column: 3 }, // Added assuming column 3 for Site_Location
+//       { key: 'Site_Location', column: 3 },
 //       { key: 'Material_Type', column: 4 },
 //       { key: 'SKU_Code', column: 5 },
 //       { key: 'Material_Name', column: 6 },
@@ -124,9 +118,9 @@
 //       { key: 'PDF_URL_3', column: 24 },
 //       { key: 'QUOTATION_NO_5', column: 36 },
 //       { key: 'Vendor_Name_5', column: 37 },
-//       { key: 'Vendor_Firm_Name_5', column: 38 }, // Fixed typo from Vendor_Ferm_Name_5
+//       { key: 'Vendor_Firm_Name_5', column: 38 },
 //       { key: 'Vendor_Address_5', column: 39 },
-//       { key: 'Vendor_Contact_5', column: 40 }, // Added assuming column 40 for Vendor_Contact_5
+//       { key: 'Vendor_Contact_5', column: 40 },
 //       { key: 'Vendor_GST_No_5', column: 41 },
 //       { key: 'Rate_5', column: 42 },
 //       { key: 'CGST_5', column: 44 },
@@ -214,7 +208,6 @@
 //   }
 // });
 
-
 // async function generatePONumber(spreadsheetId, sheetName) {
 //   try {
 //     const response = await sheets.spreadsheets.values.get({
@@ -224,7 +217,6 @@
 //     const rows = response.data.values || [];
 //     let lastPONumber = 0;
 //     if (rows.length > 0) {
-//       // Start from the end and find the last valid PO number
 //       for (let i = rows.length - 1; i >= 0; i--) {
 //         const row = rows[i][0];
 //         if (row && row.startsWith('PO_')) {
@@ -242,8 +234,6 @@
 //   }
 // }
 
-// // PDF Generation Function with PO Number parameter
-
 // const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDeliveryDate, poNumber, siteName, siteLocation, supervisorName, supervisorContact, vendorName, vendorAddress, vendorGST, vendorContact, companyLogoBase64 = null) => {
 //   console.log('Current working directory:', process.cwd());
 //   console.log(`Generating PDF: PO ${poNumber}, Quotation ${quotationNo}, Indent ${indentNo}, Items: ${approvedItems.length}, Delivery Date: ${expectedDeliveryDate}`);
@@ -260,9 +250,6 @@
 //     const notoSansDevanagariRegularBase64 = fs.readFileSync(fontPathRegular).toString('base64');
 //     const notoSansDevanagariBoldBase64 = fs.readFileSync(fontPathBold).toString('base64');
 
-//     console.log('Regular Font Base64 Length:', notoSansDevanagariRegularBase64.length);
-//     console.log('Bold Font Base64 Length:', notoSansDevanagariBoldBase64.length);
-
 //     doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', notoSansDevanagariRegularBase64);
 //     doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
 //     doc.addFileToVFS('NotoSansDevanagari-Bold.ttf', notoSansDevanagariBoldBase64);
@@ -277,23 +264,20 @@
 
 //   const pageWidth = doc.internal.pageSize.getWidth();
 //   const pageHeight = doc.internal.pageSize.getHeight();
-//   const bottomMargin = 30; // Reserve space at bottom for page numbers
+//   const bottomMargin = 30;
 
-//   const cleanText = (text) => (text || 'N/A').toString().trim();
+//   const cleanText = (text) => text || 'N/A'; // Preserve original text including Hindi
 
-//   // Helper function to check if we need a new page
 //   const checkPageBreak = (currentY, requiredSpace) => {
 //     if (currentY + requiredSpace > pageHeight - bottomMargin) {
 //       doc.addPage();
-//       return 20; // Return to top margin of new page
+//       return 20;
 //     }
 //     return currentY;
 //   };
 
-//   // Company Header Section
 //   const headerY = 15;
 
-//   // Company Logo Area
 //   if (companyLogoBase64) {
 //     try {
 //       doc.addImage(companyLogoBase64, 'PNG', 15, headerY, 35, 25);
@@ -319,7 +303,6 @@
 //     doc.text('INFRASTRUCTURES', 18, headerY + 15);
 //   }
 
-//   // Company Details (Right side)
 //   doc.setFontSize(8);
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   doc.setTextColor(0, 0, 0);
@@ -332,12 +315,10 @@
 //   doc.text('Email: mayank@rccinfrastructure.com', pageWidth - 15, headerY + 12, { align: 'right' });
 //   doc.text('GST: 23ABHFR3130L1ZA', pageWidth - 15, headerY + 16, { align: 'right' });
 
-//   // Red line after header
 //   doc.setDrawColor(220, 53, 69);
 //   doc.setLineWidth(0.5);
 //   doc.line(15, headerY + 27, pageWidth - 15, headerY + 27);
 
-//   // Title Section
 //   doc.setFontSize(16);
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   doc.setTextColor(220, 53, 69);
@@ -347,7 +328,6 @@
 //   doc.setLineWidth(0.5);
 //   doc.line(15, headerY + 37, pageWidth - 15, headerY + 37);
 
-//   // PO Information
 //   doc.setFontSize(9);
 //   const infoY = headerY + 43;
 //   const currentDate = new Date().toLocaleDateString('en-GB', {
@@ -367,7 +347,6 @@
 //   const finalSupervisorName = cleanText(supervisorName || firstItem.Supervisor_Name || 'N/A');
 //   const finalSupervisorContact = cleanText(supervisorContact || firstItem.Supervisor_Contact || 'N/A');
 
-//   // Dynamic gap positioning
 //   const keyLeft = 15;
 //   const keyRight = pageWidth / 2 + 10;
 //   const gap = 2;
@@ -377,7 +356,6 @@
 
 //   doc.setTextColor(0, 0, 0);
   
-//   // Row 1: PO Number and PO Date
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   const poNumberKeyWidth = doc.getTextWidth('PO Number:');
 //   doc.text('PO Number:', keyLeft, currentY);
@@ -392,7 +370,6 @@
 
 //   currentY += lineHeight;
 
-//   // Row 2: Indent No and Quotation No
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   const indentKeyWidth = doc.getTextWidth('Indent No:');
 //   doc.text('Indent No:', keyLeft, currentY);
@@ -407,7 +384,6 @@
 
 //   currentY += lineHeight;
 
-//   // Row 3: Vendor and GST No
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   const vendorKeyWidth = doc.getTextWidth('Vendor:');
 //   doc.text('Vendor:', keyLeft, currentY);
@@ -422,7 +398,6 @@
 
 //   currentY += lineHeight;
 
-//   // Row 4: Vendor Address and Vendor Contact
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   const addressKeyWidth = doc.getTextWidth('Vendor Address:');
 //   doc.text('Vendor Address:', keyLeft, currentY);
@@ -438,29 +413,28 @@
 
 //   currentY += lineHeight;
 
-//   // Row 5: Site Name and Site Location
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   const siteKeyWidth = doc.getTextWidth('Site Name:');
 //   doc.text('Site Name:', keyLeft, currentY);
 //   doc.setFont('NotoSansDevanagari', 'normal');
 //   const siteLines = doc.splitTextToSize(finalSiteName, pageWidth / 2 - keyLeft - siteKeyWidth - gap - 10);
-//   doc.text(siteLines[0] || finalSiteName, keyLeft + siteKeyWidth + gap, currentY);
+//   doc.text(siteLines.join('\n'), keyLeft + siteKeyWidth + gap, currentY); // Join lines to preserve Hindi
 
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   const locationKeyWidth = doc.getTextWidth('Site Location:');
 //   doc.text('Site Location:', keyRight, currentY);
 //   doc.setFont('NotoSansDevanagari', 'normal');
 //   const locationLines = doc.splitTextToSize(finalSiteLocation, pageWidth - keyRight - locationKeyWidth - gap - 15);
-//   doc.text(locationLines[0] || finalSiteLocation, keyRight + locationKeyWidth + gap, currentY);
+//   doc.text(locationLines.join('\n'), keyRight + locationKeyWidth + gap, currentY); // Join lines to preserve Hindi
 
 //   currentY += lineHeight;
 
-//   // Row 6: Supervisor Name and Supervisor Contact
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   const supervisorKeyWidth = doc.getTextWidth('Supervisor Name:');
 //   doc.text('Supervisor Name:', keyLeft, currentY);
 //   doc.setFont('NotoSansDevanagari', 'normal');
-//   doc.text(finalSupervisorName, keyLeft + supervisorKeyWidth + gap, currentY);
+//   const supervisorLines = doc.splitTextToSize(finalSupervisorName, pageWidth / 2 - keyLeft - supervisorKeyWidth - gap - 10);
+//   doc.text(supervisorLines.join('\n'), keyLeft + supervisorKeyWidth + gap, currentY); // Join lines to preserve Hindi
 
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   const supervisorContactKeyWidth = doc.getTextWidth('Supervisor Contact:');
@@ -470,7 +444,6 @@
 
 //   currentY += lineHeight;
 
-//   // Row 7: Expected Delivery
 //   doc.setFont('NotoSansDevanagari', 'bold');
 //   const deliveryKeyWidth = doc.getTextWidth('Expected Delivery:');
 //   doc.text('Expected Delivery:', keyLeft, currentY);
@@ -479,11 +452,9 @@
 
 //   currentY += 5;
 
-//   // Yellow line after PO info
 //   doc.setDrawColor(255, 193, 7);
 //   doc.line(15, currentY, pageWidth - 15, currentY);
 
-//   // Order Details Header
 //   currentY += 7;
 //   doc.setFontSize(11);
 //   doc.setFont('NotoSansDevanagari', 'bold');
@@ -492,7 +463,6 @@
 
 //   currentY += 3;
 
-//   // Prepare table data
 //   const tableBody = approvedItems && approvedItems.length > 0 ? approvedItems.map((item, index) => [
 //     index + 1,
 //     cleanText(item.UID || item.uid || ''),
@@ -507,7 +477,6 @@
 //     cleanText(item.TOTAL_VALUE_5 || item.totalValue || ''),
 //   ]) : [];
 
-//   // Calculate grand total
 //   const grandTotal = approvedItems && approvedItems.length > 0 
 //     ? approvedItems.reduce((acc, item) => {
 //         const value = parseFloat(item.TOTAL_VALUE_5 || item.totalValue || 0);
@@ -515,7 +484,6 @@
 //       }, 0)
 //     : 0;
 
-//   // Table configuration
 //   doc.autoTable({
 //     head: [['S.\nNo', 'UID', 'Material Name', 'Quantity', 'Unit', 'Rate', 'CGST', 'SGST', 'IGST', 'Final\nRate', 'Total\nValue']],
 //     body: tableBody,
@@ -558,7 +526,6 @@
 //     rowPageBreak: 'avoid',
 //   });
 
-//   // Grand Total
 //   let tableEndY = doc.lastAutoTable.finalY;
 //   tableEndY = checkPageBreak(tableEndY, 15);
   
@@ -567,11 +534,9 @@
 //   doc.setTextColor(0, 0, 0);
 //   doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, pageWidth - 15, tableEndY + 7, { align: 'right' });
 
-//   // Yellow line after grand total
 //   doc.setDrawColor(255, 193, 7);
 //   doc.line(15, tableEndY + 11, pageWidth - 15, tableEndY + 11);
 
-//   // Transport Details
 //   let transportY = tableEndY + 17;
 //   transportY = checkPageBreak(transportY, 25);
   
@@ -606,11 +571,9 @@
 
 //   transY += 5;
 
-//   // Yellow line after transport
 //   doc.setDrawColor(255, 193, 7);
 //   doc.line(15, transY, pageWidth - 15, transY);
 
-//   // Payment Details
 //   let paymentY = transY + 7;
 //   paymentY = checkPageBreak(paymentY, 25);
   
@@ -645,11 +608,9 @@
 
 //   payY += 5;
 
-//   // Yellow line after payment
 //   doc.setDrawColor(255, 193, 7);
 //   doc.line(15, payY, pageWidth - 15, payY);
 
-//   // Signature section - dynamically placed, not fixed
 //   let signatureY = payY + 15;
 //   signatureY = checkPageBreak(signatureY, 20);
   
@@ -663,12 +624,9 @@
 //   doc.line(pageWidth - 90, signatureY + 5, pageWidth - 30, signatureY + 5);
 //   doc.setLineDash();
 
-//   // Add page numbers on every page at the bottom
 //   const totalPages = doc.internal.getNumberOfPages();
 //   for (let i = 1; i <= totalPages; i++) {
 //     doc.setPage(i);
-
-//     // Page indicator at bottom center
 //     doc.setFillColor(0, 0, 0);
 //     doc.roundedRect(pageWidth / 2 - 25, pageHeight - 15, 50, 10, 5, 5, 'F');
 //     doc.setTextColor(255, 255, 255);
@@ -682,10 +640,6 @@
 //   return `data:application/pdf;base64,${base64Data}`;
 // };
 
-
-
-
-// // POST: Create PO
 // router.post('/create-po', async (req, res) => {
 //   console.log('=== CREATE PO START ===');
 //   console.log('Received request:', req.body);
@@ -707,11 +661,9 @@
 //       throw new Error('SPREADSHEET_ID not set in environment variables');
 //     }
 
-//     // Generate PO number ONCE at the beginning
 //     const poNumber = await generatePONumber(process.env.SPREADSHEET_ID, 'Purchase_FMS');
 //     console.log(`✅ Generated PO Number ONCE: ${poNumber}`);
 
-//     // Fetch supervisor data to match siteLocation and supervisorContact
 //     const supervisorResponse = await sheets.spreadsheets.values.get({
 //       spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
 //       range: 'Site_Supervisor!A2:E',
@@ -724,11 +676,8 @@
 //       Site_Location: row[4] || null,
 //     }));
 
-//     // Match site location based on site name
 //     const matchedSite = supervisors.find(s => s.Site_Name === siteName);
 //     const finalSiteLocation = matchedSite ? matchedSite.Site_Location : siteLocation || 'N/A';
-
-//     // Use matched supervisor name and contact from the site match, as supervisor is associated with site
 //     const finalSupervisorName = matchedSite ? matchedSite.Supervisor : supervisorName || 'N/A';
 //     const finalSupervisorContact = matchedSite ? matchedSite.Contact_No : supervisorContact || 'N/A';
 
@@ -742,8 +691,6 @@
 //     });
 //     const rows = sheetResponse.data.values || [];
 
-//     // Instead of grouping by indent, generate one PDF for all items under the quotation
-//     // Use first indentNo or combine if multiple
 //     const allIndents = [...new Set(items.map(item => item.indentNo))].join(', ');
 //     const pdfDataUri = generatePODocument(items, quotationNo, allIndents, expectedDeliveryDate, poNumber, siteName, finalSiteLocation, finalSupervisorName, finalSupervisorContact, vendorName, vendorAddress, vendorGST, vendorContact);
 //     console.log(`PDF data URI length: ${pdfDataUri.length}`);
@@ -770,7 +717,6 @@
 //       body: Readable.from(pdfBuffer),
 //     };
 
-//     // Upload PDF to Google Drive
 //     const file = await drive.files.create({
 //       resource: fileMetadata,
 //       media,
@@ -786,19 +732,13 @@
 //     });
 //     console.log(`✅ Upload success: ${pdfUrl}`);
 
-//     // Update ALL rows where QUOTATION_NO_5 matches (column 36 +1 since range A:BK, column 0=A, 1=B, ..., 36= column37= AK? But earlier range was B:BJ, but now A:BK to include all.
-//     // But to match, since headers column is relative to range, but now range A:BK, so adjust if needed, but since we changed range to A, row[0] is A, so to fix, add offset or keep.
-//     // For simplicity, since UID is column 0 (was B), but if range A, then UID is column1 =B
-//     // So adjust all column +1
-//     // To avoid complexity, keep original range, assume added columns are within.
-//     // For update, we find by QUOTATION_NO_5
-//     const quotationColumnIndex = 36 +1; // Assume adjusted for A=0
+//     const quotationColumnIndex = 36 + 1;
 
 //     let updatedCount = 0;
 //     for (let i = 0; i < rows.length; i++) {
 //       const row = rows[i];
 //       if (row && row[quotationColumnIndex] && row[quotationColumnIndex].trim() === quotationNo.trim()) {
-//         const rowNumber = i +1; // 1-indexed
+//         const rowNumber = i + 1;
 //         const values = [[poNumber, pdfUrl, expectedDeliveryDate]];
 
 //         await sheets.spreadsheets.values.update({
@@ -832,6 +772,23 @@
 // });
 
 // module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1078,9 +1035,9 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
     throw new Error('autoTable plugin not loaded');
   }
 
-  // Load fonts with correct relative path
-  const fontPathRegular = 'C:\\Users\\HP 840 G7\\Desktop\\RCC All FMS Project\\backend\\fonts\\NotoSansDevanagari-Regular.ttf';
-  const fontPathBold = 'C:\\Users\\HP 840 G7\\Desktop\\RCC All FMS Project\\backend\\fonts\\NotoSansDevanagari-Bold.ttf';
+  // Load fonts with relative path
+  const fontPathRegular = './fonts/NotoSansDevanagari-Regular.ttf';
+  const fontPathBold = './fonts/NotoSansDevanagari-Bold.ttf';
 
   try {
     const notoSansDevanagariRegularBase64 = fs.readFileSync(fontPathRegular).toString('base64');
@@ -1111,6 +1068,9 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
     }
     return currentY;
   };
+
+  // बाकी कोड वही रहेगा...
+
 
   const headerY = 15;
 
