@@ -798,6 +798,7 @@ const { sheets, spreadsheetId, drive } = require('../config/googleSheet');
 const router = express.Router();
 require('dotenv').config();
 const fs = require('fs');
+const path = require('path');
 const fontkit = require('fontkit');
 // Load jsPDF and jspdf-autotable
 const { jsPDF } = require('jspdf');
@@ -1028,20 +1029,18 @@ async function generatePONumber(spreadsheetId, sheetName) {
 }
 
 const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDeliveryDate, poNumber, siteName, siteLocation, supervisorName, supervisorContact, vendorName, vendorAddress, vendorGST, vendorContact, companyLogoBase64 = null) => {
-  console.log('Current working directory:', process.cwd());
+  console.log('Current working directory:', process.cwd());  // यह Vercel logs में दिखेगा
   console.log(`Generating PDF: PO ${poNumber}, Quotation ${quotationNo}, Indent ${indentNo}, Items: ${approvedItems.length}, Delivery Date: ${expectedDeliveryDate}`);
   const doc = new jsPDF();
   if (typeof doc.autoTable !== 'function') {
     throw new Error('autoTable plugin not loaded');
   }
 
-  // Define font paths
-  const fontPathRegular = './fonts/NotoSansDevanagari-Regular.ttf';
-  const fontPathBold = './fonts/NotoSansDevanagari-Bold.ttf';
+  // Vercel के लिए डायनामिक पथ: process.cwd() + relative path
+  const fontPathRegular = path.join(process.cwd(), 'backend', 'fonts', 'NotoSansDevanagari-Regular.ttf');
+  const fontPathBold = path.join(process.cwd(), 'backend', 'fonts', 'NotoSansDevanagari-Bold.ttf');
 
-  // Log the working directory and font paths
-  console.log('Current working directory:', process.cwd());
-  console.log('Font paths:', { fontPathRegular, fontPathBold });
+  console.log('Resolved font paths:', { fontPathRegular, fontPathBold });  // Logs में चेक करें
 
   try {
     const notoSansDevanagariRegularBase64 = fs.readFileSync(fontPathRegular).toString('base64');
@@ -1054,10 +1053,13 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
     doc.setFont('NotoSansDevanagari', 'normal');
     console.log('NotoSansDevanagari font registered successfully');
   } catch (error) {
-    console.error('Error loading NotoSansDevanagari font:', error.message);
+    console.error('Error loading NotoSansDevanagari font:', error.message);  // Vercel logs में यह दिखेगा
     doc.setFont('helvetica', 'normal');
     console.warn('Falling back to Helvetica font');
   }
+
+  
+
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
