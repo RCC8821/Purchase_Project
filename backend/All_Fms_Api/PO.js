@@ -1036,24 +1036,26 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   }
 
   // Load fonts with relative path
-  const fontPathRegular = './fonts/NotoSansDevanagari-Regular.ttf';
-  const fontPathBold = './fonts/NotoSansDevanagari-Bold.ttf';
+const fontPathRegular = './fonts/NotoSansDevanagari-Regular.ttf';
+const fontPathBold = './fonts/NotoSansDevanagari-Bold.ttf';
 
-  try {
-    const notoSansDevanagariRegularBase64 = fs.readFileSync(fontPathRegular).toString('base64');
-    const notoSansDevanagariBoldBase64 = fs.readFileSync(fontPathBold).toString('base64');
+console.log('Checking font paths:', { fontPathRegular, fontPathBold });
 
-    doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', notoSansDevanagariRegularBase64);
-    doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
-    doc.addFileToVFS('NotoSansDevanagari-Bold.ttf', notoSansDevanagariBoldBase64);
-    doc.addFont('NotoSansDevanagari-Bold.ttf', 'NotoSansDevanagari', 'bold');
-    doc.setFont('NotoSansDevanagari', 'normal');
-    console.log('NotoSansDevanagari font registered successfully');
-  } catch (error) {
-    console.error('Error loading NotoSansDevanagari font:', error.message);
-    doc.setFont('helvetica', 'normal');
-    console.warn('Falling back to Helvetica font');
-  }
+try {
+  const notoSansDevanagariRegularBase64 = fs.readFileSync(fontPathRegular).toString('base64');
+  const notoSansDevanagariBoldBase64 = fs.readFileSync(fontPathBold).toString('base64');
+
+  doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', notoSansDevanagariRegularBase64);
+  doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
+  doc.addFileToVFS('NotoSansDevanagari-Bold.ttf', notoSansDevanagariBoldBase64);
+  doc.addFont('NotoSansDevanagari-Bold.ttf', 'NotoSansDevanagari', 'bold');
+  doc.setFont('NotoSansDevanagari', 'normal');
+  console.log('NotoSansDevanagari font registered successfully');
+} catch (error) {
+  console.error('Error loading NotoSansDevanagari font:', error.message);
+  doc.setFont('helvetica', 'normal');
+  console.warn('Falling back to Helvetica font');
+}
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -1070,7 +1072,6 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   };
 
   // बाकी कोड वही रहेगा...
-
 
   const headerY = 15;
 
