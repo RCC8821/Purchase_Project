@@ -617,20 +617,20 @@ router.post('/update-approval', async (req, res) => {
     }
 
     // Get current approval counter from sheet
-    const counterResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
-      range: 'Quotation_Master!AM1',
-    });
-    let approvalCounter = parseInt(counterResponse.data.values?.[0]?.[0] || '0', 10) || 0;
+   const counterResponse = await sheets.spreadsheets.values.get({
+  spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
+  range: 'Quotation_Master!AM1',
+});
+let approvalCounter = parseInt(counterResponse.data.values?.[0]?.[0] || '0', 10) || 0;
 
-    // Helper functions
-    function padNumber(num, size) {
-      return num.toString().padStart(size, '0');
-    }
+// Helper functions
+function padNumber(num, size) {
+  return num.toString().padStart(size, '0');
+}
 
-    function generateApprovedQuotationNo(counter) {
-      return `FQUOT_${padNumber(counter, 4)}`;
-    }
+function generateApprovedQuotationNo(counter) {
+  return `FQUOT_${padNumber(counter, 2)}`; // Changed padding size to 2
+}
 
     // Get sheet data
     console.log('Fetching sheet data...');

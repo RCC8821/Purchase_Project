@@ -163,8 +163,8 @@ async function flattenDataForSheet(submissionData) {
       siteName, // Column A: Site Name
       supervisorName, // Column B: Supervisor Name
       item.materialType, // Column D: Material Type
-      item.materialName, // Column E: Material Name
       item.skuCode, // Column F: SKU Code
+      item.materialName, // Column E: Material Name
       item.quantity, // Column G: Quantity
       item.units, // Column H: Units
       item.reason, // Column I: Reason

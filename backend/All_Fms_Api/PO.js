@@ -779,16 +779,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
+// ///////////////////////////////////  TRY hindi name ko hataya ha  /////////////////////////////////////
 
 
 
@@ -798,7 +789,6 @@ const { sheets, spreadsheetId, drive } = require('../config/googleSheet');
 const router = express.Router();
 require('dotenv').config();
 const fs = require('fs');
-const path = require('path');
 const fontkit = require('fontkit');
 // Load jsPDF and jspdf-autotable
 const { jsPDF } = require('jspdf');
@@ -1028,44 +1018,29 @@ async function generatePONumber(spreadsheetId, sheetName) {
   }
 }
 
+
+
 const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDeliveryDate, poNumber, siteName, siteLocation, supervisorName, supervisorContact, vendorName, vendorAddress, vendorGST, vendorContact, companyLogoBase64 = null) => {
-  console.log('Current working directory:', process.cwd());  // यह Vercel logs में दिखेगा
+  console.log('Current working directory:', process.cwd());
   console.log(`Generating PDF: PO ${poNumber}, Quotation ${quotationNo}, Indent ${indentNo}, Items: ${approvedItems.length}, Delivery Date: ${expectedDeliveryDate}`);
   const doc = new jsPDF();
   if (typeof doc.autoTable !== 'function') {
     throw new Error('autoTable plugin not loaded');
   }
 
-  // Vercel के लिए डायनामिक पथ: process.cwd() + relative path
-  const fontPathRegular = path.join(process.cwd(), 'backend', 'fonts', 'NotoSansDevanagari-Regular.ttf');
-  const fontPathBold = path.join(process.cwd(), 'backend', 'fonts', 'NotoSansDevanagari-Bold.ttf');
-
-  console.log('Resolved font paths:', { fontPathRegular, fontPathBold });  // Logs में चेक करें
-
-  try {
-    const notoSansDevanagariRegularBase64 = fs.readFileSync(fontPathRegular).toString('base64');
-    const notoSansDevanagariBoldBase64 = fs.readFileSync(fontPathBold).toString('base64');
-
-    doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', notoSansDevanagariRegularBase64);
-    doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
-    doc.addFileToVFS('NotoSansDevanagari-Bold.ttf', notoSansDevanagariBoldBase64);
-    doc.addFont('NotoSansDevanagari-Bold.ttf', 'NotoSansDevanagari', 'bold');
-    doc.setFont('NotoSansDevanagari', 'normal');
-    console.log('NotoSansDevanagari font registered successfully');
-  } catch (error) {
-    console.error('Error loading NotoSansDevanagari font:', error.message);  // Vercel logs में यह दिखेगा
-    doc.setFont('helvetica', 'normal');
-    console.warn('Falling back to Helvetica font');
-  }
-
-  
-
+  // Use helvetica font by default, removing Hindi font support
+  doc.setFont('helvetica', 'normal');
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const bottomMargin = 30;
 
-  const cleanText = (text) => text || 'N/A'; // Preserve original text including Hindi
+  // Function to extract only English text up to the first Hindi character or delimiter
+  const extractEnglish = (text) => {
+    if (!text) return 'N/A';
+    const englishOnly = text.split(/[/\p{Script=Devanagari}\p{So}\p{S}]/u)[0].trim();
+    return englishOnly || 'N/A';
+  };
 
   const checkPageBreak = (currentY, requiredSpace) => {
     if (currentY + requiredSpace > pageHeight - bottomMargin) {
@@ -1074,11 +1049,6 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
     }
     return currentY;
   };
-
-
-
-
-  // बाकी कोड वही रहेगा...
 
   const headerY = 15;
 
@@ -1090,7 +1060,7 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
       doc.setFillColor(245, 222, 179);
       doc.rect(15, headerY, 35, 25, 'F');
       doc.setFontSize(10);
-      doc.setFont('NotoSansDevanagari', 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.setTextColor(139, 69, 19);
       doc.text('RCC', 25, headerY + 10);
       doc.setFontSize(7);
@@ -1100,7 +1070,7 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
     doc.setFillColor(245, 222, 179);
     doc.rect(15, headerY, 35, 25, 'F');
     doc.setFontSize(10);
-    doc.setFont('NotoSansDevanagari', 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(139, 69, 19);
     doc.text('RCC', 25, headerY + 10);
     doc.setFontSize(7);
@@ -1108,12 +1078,12 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   }
 
   doc.setFontSize(8);
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
   doc.text('R. C. C. Infrastructures', pageWidth - 15, headerY, { align: 'right' });
   
   doc.setFontSize(7);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text('310 Saket Nagar, 9B Near Sagar Public School, Bhopal, 462026', pageWidth - 15, headerY + 4, { align: 'right' });
   doc.text('Contact: 7869962504', pageWidth - 15, headerY + 8, { align: 'right' });
   doc.text('Email: mayank@rccinfrastructure.com', pageWidth - 15, headerY + 12, { align: 'right' });
@@ -1124,7 +1094,7 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   doc.line(15, headerY + 27, pageWidth - 15, headerY + 27);
 
   doc.setFontSize(16);
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(220, 53, 69);
   doc.text('Purchase Order', 15, headerY + 35);
 
@@ -1142,14 +1112,14 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
 
   const firstItem = approvedItems && approvedItems.length > 0 ? approvedItems[0] : {};
 
-  const finalVendorName = cleanText(vendorName || firstItem.Vendor_Firm_Name_5 || 'N/A');
-  const finalVendorGST = cleanText(vendorGST || firstItem.Vendor_GST_No_5 || 'N/A');
-  const finalVendorAddress = cleanText(vendorAddress || firstItem.Vendor_Address_5 || 'N/A');
-  const finalVendorContact = cleanText(vendorContact || firstItem.Vendor_Contact_5 || 'N/A');
-  const finalSiteName = cleanText(siteName || firstItem.Site_Name || 'N/A');
-  const finalSiteLocation = cleanText(siteLocation || firstItem.Site_Location || 'N/A');
-  const finalSupervisorName = cleanText(supervisorName || firstItem.Supervisor_Name || 'N/A');
-  const finalSupervisorContact = cleanText(supervisorContact || firstItem.Supervisor_Contact || 'N/A');
+  const finalVendorName = extractEnglish(vendorName || firstItem.Vendor_Firm_Name_5 || 'N/A');
+  const finalVendorGST = extractEnglish(vendorGST || firstItem.Vendor_GST_No_5 || 'N/A');
+  const finalVendorAddress = extractEnglish(vendorAddress || firstItem.Vendor_Address_5 || 'N/A');
+  const finalVendorContact = extractEnglish(vendorContact || firstItem.Vendor_Contact_5 || 'N/A');
+  const finalSiteName = extractEnglish(siteName || firstItem.Site_Name || 'N/A');
+  const finalSiteLocation = extractEnglish(siteLocation || firstItem.Site_Location || 'N/A');
+  const finalSupervisorName = extractEnglish(supervisorName || firstItem.Supervisor_Name || 'N/A');
+  const finalSupervisorContact = extractEnglish(supervisorContact || firstItem.Supervisor_Contact || 'N/A');
 
   const keyLeft = 15;
   const keyRight = pageWidth / 2 + 10;
@@ -1160,99 +1130,97 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
 
   doc.setTextColor(0, 0, 0);
   
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const poNumberKeyWidth = doc.getTextWidth('PO Number:');
   doc.text('PO Number:', keyLeft, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(poNumber), keyLeft + poNumberKeyWidth + gap, currentY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(poNumber), keyLeft + poNumberKeyWidth + gap, currentY);
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const poDateKeyWidth = doc.getTextWidth('PO Date:');
   doc.text('PO Date:', keyRight, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(currentDate, keyRight + poDateKeyWidth + gap, currentY);
 
   currentY += lineHeight;
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const indentKeyWidth = doc.getTextWidth('Indent No:');
   doc.text('Indent No:', keyLeft, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(indentNo), keyLeft + indentKeyWidth + gap, currentY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(indentNo), keyLeft + indentKeyWidth + gap, currentY);
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const quotationKeyWidth = doc.getTextWidth('Quotation No:');
   doc.text('Quotation No:', keyRight, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(quotationNo), keyRight + quotationKeyWidth + gap, currentY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(quotationNo), keyRight + quotationKeyWidth + gap, currentY);
 
   currentY += lineHeight;
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const vendorKeyWidth = doc.getTextWidth('Vendor:');
   doc.text('Vendor:', keyLeft, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(finalVendorName, keyLeft + vendorKeyWidth + gap, currentY);
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const gstKeyWidth = doc.getTextWidth('GST No:');
   doc.text('GST No:', keyRight, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(finalVendorGST, keyRight + gstKeyWidth + gap, currentY);
 
   currentY += lineHeight;
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const addressKeyWidth = doc.getTextWidth('Vendor Address:');
   doc.text('Vendor Address:', keyLeft, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   const addressLines = doc.splitTextToSize(finalVendorAddress, pageWidth / 2 - keyLeft - addressKeyWidth - gap - 10);
   doc.text(addressLines[0] || finalVendorAddress, keyLeft + addressKeyWidth + gap, currentY);
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const contactKeyWidth = doc.getTextWidth('Vendor Contact:');
   doc.text('Vendor Contact:', keyRight, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(finalVendorContact, keyRight + contactKeyWidth + gap, currentY);
 
   currentY += lineHeight;
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const siteKeyWidth = doc.getTextWidth('Site Name:');
   doc.text('Site Name:', keyLeft, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  const siteLines = doc.splitTextToSize(finalSiteName, pageWidth / 2 - keyLeft - siteKeyWidth - gap - 10);
-  doc.text(siteLines.join('\n'), keyLeft + siteKeyWidth + gap, currentY); // Join lines to preserve Hindi
+  doc.setFont('helvetica', 'normal');
+  doc.text(finalSiteName, keyLeft + siteKeyWidth + gap, currentY);
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const locationKeyWidth = doc.getTextWidth('Site Location:');
   doc.text('Site Location:', keyRight, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   const locationLines = doc.splitTextToSize(finalSiteLocation, pageWidth - keyRight - locationKeyWidth - gap - 15);
-  doc.text(locationLines.join('\n'), keyRight + locationKeyWidth + gap, currentY); // Join lines to preserve Hindi
+  doc.text(locationLines[0] || finalSiteLocation, keyRight + locationKeyWidth + gap, currentY);
 
   currentY += lineHeight;
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const supervisorKeyWidth = doc.getTextWidth('Supervisor Name:');
   doc.text('Supervisor Name:', keyLeft, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  const supervisorLines = doc.splitTextToSize(finalSupervisorName, pageWidth / 2 - keyLeft - supervisorKeyWidth - gap - 10);
-  doc.text(supervisorLines.join('\n'), keyLeft + supervisorKeyWidth + gap, currentY); // Join lines to preserve Hindi
+  doc.setFont('helvetica', 'normal');
+  doc.text(finalSupervisorName, keyLeft + supervisorKeyWidth + gap, currentY);
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const supervisorContactKeyWidth = doc.getTextWidth('Supervisor Contact:');
   doc.text('Supervisor Contact:', keyRight, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(finalSupervisorContact, keyRight + supervisorContactKeyWidth + gap, currentY);
 
   currentY += lineHeight;
 
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const deliveryKeyWidth = doc.getTextWidth('Expected Delivery:');
   doc.text('Expected Delivery:', keyLeft, currentY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(expectedDeliveryDate), keyLeft + deliveryKeyWidth + gap, currentY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(expectedDeliveryDate), keyLeft + deliveryKeyWidth + gap, currentY);
 
   currentY += 5;
 
@@ -1261,7 +1229,7 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
 
   currentY += 7;
   doc.setFontSize(11);
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(220, 53, 69);
   doc.text('Order Details', 15, currentY);
 
@@ -1269,21 +1237,21 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
 
   const tableBody = approvedItems && approvedItems.length > 0 ? approvedItems.map((item, index) => [
     index + 1,
-    cleanText(item.UID || item.uid || ''),
-    cleanText(item.Material_Name || item.materialName || ''),
-    cleanText(item.REVISED_QUANTITY_2 || item.quantity || ''),
-    cleanText(item.Unit_Name || item.unit || ''),
-    cleanText(item.Rate_5 || item.rate || ''),
-    cleanText(item.CGST_5 || item.cgst || ''),
-    cleanText(item.SGST_5 || item.sgst || ''),
-    cleanText(item.IGST_5 || item.igst || ''),
-    cleanText(item.FINAL_RATE_5 || item.finalRate || ''),
-    cleanText(item.TOTAL_VALUE_5 || item.totalValue || ''),
+    extractEnglish(item.UID || item.uid || ''),
+    extractEnglish(item.Material_Name || item.materialName || ''),
+    extractEnglish(item.REVISED_QUANTITY_2 || item.quantity || ''),
+    extractEnglish(item.Unit_Name || item.unit || ''),
+    extractEnglish(item.Rate_5 || item.rate || ''),
+    extractEnglish(item.CGST_5 || item.cgst || ''),
+    extractEnglish(item.SGST_5 || item.sgst || ''),
+    extractEnglish(item.IGST_5 || item.igst || ''),
+    extractEnglish(item.FINAL_RATE_5 || item.finalRate || ''),
+    extractEnglish(item.TOTAL_VALUE_5 || item.totalValue || ''),
   ]) : [];
 
   const grandTotal = approvedItems && approvedItems.length > 0 
     ? approvedItems.reduce((acc, item) => {
-        const value = parseFloat(item.TOTAL_VALUE_5 || item.totalValue || 0);
+        const value = parseFloat(extractEnglish(item.TOTAL_VALUE_5 || item.totalValue || 0));
         return acc + value;
       }, 0)
     : 0;
@@ -1296,7 +1264,7 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
     styles: { 
       fontSize: 8, 
       cellPadding: 2.5, 
-      font: 'NotoSansDevanagari', 
+      font: 'helvetica', 
       textColor: [0, 0, 0], 
       lineColor: [200, 200, 200], 
       lineWidth: 0.1, 
@@ -1334,7 +1302,7 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   tableEndY = checkPageBreak(tableEndY, 15);
   
   doc.setFontSize(9);
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
   doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, pageWidth - 15, tableEndY + 7, { align: 'right' });
 
@@ -1345,33 +1313,33 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   transportY = checkPageBreak(transportY, 25);
   
   doc.setFontSize(11);
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(220, 53, 69);
   doc.text('Transport Details', 15, transportY);
 
   doc.setFontSize(9);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   
   let transY = transportY + 5;
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const transportReqKeyWidth = doc.getTextWidth('Transport Required:');
   doc.text('Transport Required:', keyLeft, transY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(firstItem.IS_TRANSPORT_REQUIRED || ''), keyLeft + transportReqKeyWidth + gap, transY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(firstItem.IS_TRANSPORT_REQUIRED || ''), keyLeft + transportReqKeyWidth + gap, transY);
   
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const transportChargesKeyWidth = doc.getTextWidth('Expected Transport Charges:');
   doc.text('Expected Transport Charges:', keyRight, transY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(firstItem.EXPECTED_TRANSPORT_CHARGES || ''), keyRight + transportChargesKeyWidth + gap, transY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(firstItem.EXPECTED_TRANSPORT_CHARGES || ''), keyRight + transportChargesKeyWidth + gap, transY);
 
   transY += lineHeight;
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const freightKeyWidth = doc.getTextWidth('Freight Charges:');
   doc.text('Freight Charges:', keyLeft, transY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(firstItem.FREIGHT_CHARGES || ''), keyLeft + freightKeyWidth + gap, transY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(firstItem.FREIGHT_CHARGES || ''), keyLeft + freightKeyWidth + gap, transY);
 
   transY += 5;
 
@@ -1382,33 +1350,33 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   paymentY = checkPageBreak(paymentY, 25);
   
   doc.setFontSize(11);
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(220, 53, 69);
   doc.text('Payment Details', 15, paymentY);
 
   doc.setFontSize(9);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
   
   let payY = paymentY + 5;
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const paymentTermsKeyWidth = doc.getTextWidth('Payment Terms:');
   doc.text('Payment Terms:', keyLeft, payY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(firstItem.paymentTerms || 'Credit'), keyLeft + paymentTermsKeyWidth + gap, payY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(firstItem.paymentTerms || 'Credit'), keyLeft + paymentTermsKeyWidth + gap, payY);
   
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const creditDaysKeyWidth = doc.getTextWidth('Credit Days:');
   doc.text('Credit Days:', keyRight, payY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(firstItem.creditDays || '30'), keyRight + creditDaysKeyWidth + gap, payY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(firstItem.creditDays || '30'), keyRight + creditDaysKeyWidth + gap, payY);
 
   payY += lineHeight;
-  doc.setFont('NotoSansDevanagari', 'bold');
+  doc.setFont('helvetica', 'bold');
   const billTypeKeyWidth = doc.getTextWidth('Bill Type:');
   doc.text('Bill Type:', keyLeft, payY);
-  doc.setFont('NotoSansDevanagari', 'normal');
-  doc.text(cleanText(firstItem.billType || 'Invoice'), keyLeft + billTypeKeyWidth + gap, payY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(extractEnglish(firstItem.billType || 'Invoice'), keyLeft + billTypeKeyWidth + gap, payY);
 
   payY += 5;
 
@@ -1420,7 +1388,7 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(9);
-  doc.setFont('NotoSansDevanagari', 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text('Authorized Signature', pageWidth - 60, signatureY, { align: 'center' });
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.2);
@@ -1435,7 +1403,7 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
     doc.roundedRect(pageWidth / 2 - 25, pageHeight - 15, 50, 10, 5, 5, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
-    doc.setFont('NotoSansDevanagari', 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.text(`Page ${i} / ${totalPages}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
   }
 
@@ -1443,6 +1411,14 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   const base64Data = Buffer.from(pdfBuffer).toString('base64');
   return `data:application/pdf;base64,${base64Data}`;
 };
+
+
+
+
+
+
+
+
 
 router.post('/create-po', async (req, res) => {
   console.log('=== CREATE PO START ===');
@@ -1576,3 +1552,35 @@ router.post('/create-po', async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
