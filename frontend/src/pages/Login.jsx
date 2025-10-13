@@ -71,7 +71,7 @@ const Login = () => {
         const userTypeMap = {
           'Admin': 'admin',
           'Anish': 'Anish',
-          'Ravindra Singh': 'Ravindra Singh',
+          'Aakash Chouhan': 'Aakash Chouhan',
           'Ravi Rajak': 'Ravi Rajak',
           'Anjali Malviya': 'Anjali Malviya',
           'Neha Masani': 'Neha Masani',

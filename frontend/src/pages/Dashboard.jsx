@@ -76,7 +76,7 @@ const Dashboard = () => {
       icon: Package,
       component: ApproveRequired,
       path: '/dashboard/approve-required',
-      allowedUserTypes: ['admin', 'Ravindra Singh'],
+      allowedUserTypes: ['admin', 'Aakash Chouhan'],
     },
     {
       id: 'indent-to-get-quotation',
@@ -132,7 +132,7 @@ const Dashboard = () => {
       icon: Truck,
       component: Final_Material_Received,
       path: '/dashboard/Final_Material_Received',
-      allowedUserTypes: ['admin', 'Ravi Rajak'],
+      allowedUserTypes: ['admin', 'Aakash Chouhan'],
     },
     {
       id: 'MRN',
