@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+// Removed useNavigate since we don't need routing anymore
 
 const PO = () => {
   const [requests, setRequests] = useState([]);
@@ -13,6 +15,7 @@ const PO = () => {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [generateLoading, setGenerateLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
+  const [showSuccessBox, setShowSuccessBox] = useState(false); // New state for success box
 
   // Fetch data from API
   useEffect(() => {
@@ -137,9 +140,14 @@ const PO = () => {
       const result = await response.json();
       if (result.pdfUrl) {
         setPdfUrl(result.pdfUrl);
-        alert('PO generated successfully!');
+        // Updated success handling: Close modal, reset states, and show success box
         setShowModal(false);
-        // Fetch updated data from the backend
+        setSelectedQuotation('');
+        setExpectedDeliveryDate('');
+        setSelectedItems([]);
+        setShowSuccessBox(true); // Show the success box
+
+        // Fetch updated data
         const fetchUpdatedRequests = async () => {
           try {
             setLoading(true);
@@ -171,6 +179,32 @@ const PO = () => {
     }
   };
 
+  // Share function
+  const handleShare = async (url) => {
+    if (!url) return;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Purchase Order PDF',
+          text: 'Here is the generated PO PDF.',
+          url: url,
+        });
+        console.log('Shared natively');
+        return;
+      } catch (err) {
+        console.warn('Native share failed, falling back', err);
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('PDF URL copied to clipboard!');
+    } catch (err) {
+      alert('Could not copy URL. Please copy it manually.');
+    }
+  };
+
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       <div className="mb-4">
@@ -183,12 +217,42 @@ const PO = () => {
             setSelectedItems([]);
             setPdfUrl(null);
             setDetailsLoading(false);
+            setShowSuccessBox(false); // Reset success box on new create
           }}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Create PO
         </button>
       </div>
+
+      {/* Success Box - Shown after successful generation */}
+      {showSuccessBox && pdfUrl && (
+        <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-2">PO Generated Successfully!</h3>
+          <div className="flex items-center space-x-4">
+            <a 
+              href={pdfUrl} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              View PDF
+            </a>
+            <button 
+              onClick={() => handleShare(pdfUrl)} 
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Share
+            </button>
+          </div>
+          <button 
+            onClick={() => setShowSuccessBox(false)} 
+            className="mt-2 text-sm text-gray-600 hover:underline"
+          >
+            Close
+          </button>
+        </div>
+      )}
 
       <div className="bg-white border border-gray-300 rounded shadow-sm">
         {loading ? (
@@ -473,14 +537,6 @@ const PO = () => {
                     {generateLoading ? 'Generating...' : 'Generate PO'}
                   </button>
                 </div>
-
-                {pdfUrl && (
-                  <div className="mt-4 text-center">
-                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                      View Generated PO PDF
-                    </a>
-                  </div>
-                )}
               </>
             )}
           </div>
