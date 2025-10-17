@@ -127,7 +127,7 @@ const Dashboard = () => {
       icon: Truck,
       component: Material_Received,
       path: '/dashboard/Material_Received',
-      allowedUserTypes: ['admin', 'Gourav Singh'],
+      allowedUserTypes: ['admin', 'Gourav Singh','Anish'],
     },
     {
       id: 'Final_Material_Received',
