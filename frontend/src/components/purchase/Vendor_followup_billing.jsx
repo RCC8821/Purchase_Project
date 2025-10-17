@@ -17,7 +17,7 @@ const Vendor_followup_billing = () => {
     try {
       setLoading(true);
       setError(null);
-      const url = `http://localhost:5000/api/vendor-FollowUp-Billing`;
+      const url = `${import.meta.env.VITE_BACKEND_URL}/api/vendor-FollowUp-Billing`;
       console.log('Fetching from URL:', url);
       const response = await fetch(url, {
         method: 'GET',
@@ -93,7 +93,7 @@ const Vendor_followup_billing = () => {
       }
 
       console.log('Sending update data:', updateData); // Debug log
-      const response = await fetch(`http://localhost:5000/api/update-followup-Billing`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/update-followup-Billing`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)

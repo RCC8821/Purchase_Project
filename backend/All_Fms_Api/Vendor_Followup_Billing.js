@@ -50,11 +50,13 @@ router.get('/vendor-FollowUp-Billing', async (req, res) => {
 
 
 // POST endpoint to update follow-up details
+
 router.post('/update-followup-Billing', async (req, res) => {
   try {
     console.log('Raw request body:', req.body); // Log raw body to debug
 
-    const { data } = req.body;
+    // Use req.body directly since it’s the array
+    const data = req.body;
     
     if (!Array.isArray(data) || data.length === 0) {
       return res.status(400).json({ error: 'Invalid data: Expected non-empty array' });
@@ -167,6 +169,5 @@ router.post('/update-followup-Billing', async (req, res) => {
     res.status(500).json({ error: 'Failed to update follow-up details: ' + error.message });
   }
 });
-
 
 module.exports=router

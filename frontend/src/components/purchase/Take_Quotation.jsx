@@ -529,7 +529,7 @@ const Take_Quotation = () => {
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-800 border-r border-gray-200">
                       <div
-                        className="max-w-[120px] truncate"
+                        
                         title={request.Material_Name}
                       >
                         {request.Material_Name}

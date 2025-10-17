@@ -14,10 +14,13 @@ import Vendor_FollowUp_Material from '../components/purchase/Vendor_FollowUp_Mat
 import Material_Received from '../components/purchase/Material_Received';
 import Final_Material_Received from '../components/purchase/Final_Material_Received';
 import MRN from '../components/purchase/MRN';
-
+import BillCheckedData from '../components/purchase/BillCheckedData';
 //  billing components 
 
 import Vendor_followup_billing from '../components/purchase/Vendor_followup_billing';
+import Bill_Processing from '../components/purchase/Bill_Processing';
+import BillTallyData from '../components/purchase/BillTallyData';
+
 
 
 const Dashboard = () => {
@@ -153,6 +156,31 @@ const Dashboard = () => {
       path: '/dashboard/Vendor_followup_billing',
       allowedUserTypes: ['admin', 'Somesh Chadhar'],
     },
+
+      {
+      id: 'Bill_Processing',
+      name: 'Bill_Processing',
+      icon: Truck,
+      component:Bill_Processing,
+      path: '/dashboard/Bill_Processing',
+      allowedUserTypes: ['admin', 'Somesh Chadhar'],
+    },
+       {
+      id: 'BillCheckedData',
+      name: 'BillCheckedData',
+      icon: Truck,
+      component:BillCheckedData,
+      path: '/dashboard/BillCheckedData',
+      allowedUserTypes: ['admin', 'Somesh Chadhar'],
+    },
+    {
+      id: 'BillTallyData',
+      name: 'BillTallyData',
+      icon: Truck,
+      component:BillTallyData,
+      path: '/dashboard/BillTallyData',
+      allowedUserTypes: ['admin', 'Somesh Chadhar'],
+    },
   ];
 
   const getPurchasePages = () => {
@@ -180,6 +208,13 @@ const Dashboard = () => {
         { id: 'financial-reports', name: 'Financial Reports', icon: FileText, component: BillingFMS, path: '/dashboard/financial-reports' },
       ],
     },
+    {
+  id: 'Sheet-Link',
+  name: 'Sheet Link',
+  icon: FileText, // Ya jo icon chahiye, DollarSign se change kar sakte hain
+  url: 'https://docs.google.com/spreadsheets/d/18bmeQLqAOqleKS9628izEnirrRwOqkC0G_pEYGOsO-Y/edit?gid=0#gid=0', // <-- Apna Sheet URL yahan daalein
+  pages: [], // Khali rakhein ya null
+}
   ];
 
   const pageContent = {
@@ -194,6 +229,9 @@ const Dashboard = () => {
     'Final_Material_Received': { title: 'Final Material Received', content: 'Financial analytics, revenue reports, and accounting summaries.' },
     'MRN': { title: 'MRN', content: 'MRN, revenue reports, and accounting summaries.' },
     'Vendor_followup_billing': { title: 'Vendor_followup_billing', content: 'You do not have permission to access any Purchase FMS pages.' },
+    'Bill_Processing': { title: 'Bill_Processing', content: 'You do not have permission to access any Purchase FMS pages.' },
+    'BillCheckedData': { title: 'BillCheckedData', content: 'You do not have permission to access any Purchase FMS pages.' },
+    'BillTallyData': { title: 'BillTallyData', content: 'You do not have permission to access any BillTallyData FMS pages.' },
     'no-access': { title: 'No Access', content: 'You do not have permission to access any Purchase FMS pages.' },
     'invoice-generation': { title: 'Invoice Generation', content: 'Generate and manage invoices.' },
     'payment-tracking': { title: 'Payment Tracking', content: 'Track payment statuses.' },
@@ -280,66 +318,71 @@ const Dashboard = () => {
           <nav className="flex-1 p-4">
             <ul className="space-y-2">
               {menuItems.map((menu) => (
-                <li key={menu.id} className="relative">
-                  <button
-                    onClick={() => {
-                      if (menu.id === 'purchase-fms' && menu.pages.length > 0) {
-                        togglePurchaseDropdown();
-                      } else if (menu.path) {
-                        selectPage(menu.id);
-                      }
-                    }}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${
-                      selectedPage === menu.id || (menu.pages && menu.pages.some(p => p.id === selectedPage))
-                        ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
-                    } ${!isSidebarExpanded ? 'lg:justify-center' : ''}`}
-                    title={!isSidebarExpanded ? menu.name : ''}
-                  >
-                    <menu.icon className="w-5 h-5 flex-shrink-0" />
-                    <span
-                      className={`font-medium transition-all duration-300 whitespace-nowrap ${
-                        isSidebarExpanded
-                          ? 'lg:opacity-100'
-                          : 'lg:opacity-0 lg:w-0 lg:overflow-hidden'
-                      }`}
-                    >
-                      {menu.name}
-                    </span>
-                    {menu.pages && menu.pages.length > 0 && isSidebarExpanded && (
-                      <ChevronDown
-                        className={`w-4 h-4 ml-auto transition-transform duration-200 ${
-                          isPurchaseDropdownOpen && menu.id === 'purchase-fms' ? 'rotate-180' : ''
-                        }`}
-                      />
-                    )}
-                    {!isSidebarExpanded && (
-                      <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 whitespace-nowrap hidden lg:block">
-                        {menu.name}
-                      </div>
-                    )}
-                  </button>
-                  {isSidebarExpanded && menu.pages && menu.pages.length > 0 && isPurchaseDropdownOpen && menu.id === 'purchase-fms' && (
-                    <ul className="ml-6 mt-2 space-y-1 bg-white border border-gray-200 rounded-lg shadow-md">
-                      {menu.pages.map((page) => (
-                        <li key={page.id}>
-                          <button
-                            onClick={() => selectPage(page.id)}
-                            className={`w-full flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${
-                              selectedPage === page.id
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-                            }`}
-                          >
-                            <page.icon className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate">{page.name}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ))}
+  <li key={menu.id} className="relative">
+    <button
+      onClick={() => {
+        if (menu.url) {
+          // External URL open in new tab
+          window.open(menu.url, '_blank', 'noopener,noreferrer');
+        } else if (menu.id === 'purchase-fms' && menu.pages.length > 0) {
+          togglePurchaseDropdown();
+        } else if (menu.path) {
+          selectPage(menu.id);
+        }
+      }}
+      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${
+        selectedPage === menu.id || (menu.pages && menu.pages.some(p => p.id === selectedPage))
+          ? 'bg-blue-50 text-blue-600 border border-blue-200'
+          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+      } ${!isSidebarExpanded ? 'lg:justify-center' : ''}`}
+      title={!isSidebarExpanded ? menu.name : ''}
+    >
+      <menu.icon className="w-5 h-5 flex-shrink-0" />
+      <span
+        className={`font-medium transition-all duration-300 whitespace-nowrap ${
+          isSidebarExpanded
+            ? 'lg:opacity-100'
+            : 'lg:opacity-0 lg:w-0 lg:overflow-hidden'
+        }`}
+      >
+        {menu.name}
+      </span>
+      {menu.pages && menu.pages.length > 0 && isSidebarExpanded && (
+        <ChevronDown
+          className={`w-4 h-4 ml-auto transition-transform duration-200 ${
+            isPurchaseDropdownOpen && menu.id === 'purchase-fms' ? 'rotate-180' : ''
+          }`}
+        />
+      )}
+      {!isSidebarExpanded && (
+        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 whitespace-nowrap hidden lg:block">
+          {menu.name}
+        </div>
+      )}
+    </button>
+
+    {/* Dropdown sirf purchase-fms ke liye */}
+    {isSidebarExpanded && menu.pages && menu.pages.length > 0 && isPurchaseDropdownOpen && menu.id === 'purchase-fms' && (
+      <ul className="ml-6 mt-2 space-y-1 bg-white border border-gray-200 rounded-lg shadow-md">
+        {menu.pages.map((page) => (
+          <li key={page.id}>
+            <button
+              onClick={() => selectPage(page.id)}
+              className={`w-full flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 ${
+                selectedPage === page.id
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+              }`}
+            >
+              <page.icon className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{page.name}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    )}
+  </li>
+))}
             </ul>
           </nav>
           <div className="p-4 border-t border-gray-100">
