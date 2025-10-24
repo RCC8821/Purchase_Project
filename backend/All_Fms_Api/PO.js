@@ -999,24 +999,26 @@ async function generatePONumber(spreadsheetId, sheetName) {
       range: `${sheetName}!BI:BI`,
     });
     const rows = response.data.values || [];
-    let lastPONumber = 0;
-    if (rows.length > 0) {
-      for (let i = rows.length - 1; i >= 0; i--) {
-        const row = rows[i][0];
-        if (row && row.startsWith('PO_')) {
-          lastPONumber = parseInt(row.replace('PO_', ''), 10) || 0;
-          break;
+    let maxPONumber = 0;
+    rows.forEach((row) => {
+      const value = row[0];
+      if (value && value.startsWith('PO_')) {
+        const num = parseInt(value.replace('PO_', ''), 10) || 0;
+        if (num > maxPONumber) {
+          maxPONumber = num;
         }
       }
-    }
-    const newPONumber = `PO_${String(lastPONumber + 1).padStart(3, '0')}`;
-    console.log(`Generated new PO Number: ${newPONumber} (last was: ${lastPONumber})`);
+    });
+    const newPONumber = `PO_${String(maxPONumber + 1).padStart(3, '0')}`;
+    console.log(`Generated new PO Number: ${newPONumber} (max found: ${maxPONumber})`);
     return newPONumber;
   } catch (error) {
     console.error('Error generating PO number:', error.message);
     throw new Error('Failed to generate PO number');
   }
 }
+
+
 
 
 
@@ -1552,13 +1554,6 @@ router.post('/create-po', async (req, res) => {
 });
 
 module.exports = router;
-
-
-
-
-
-
-
 
 
 

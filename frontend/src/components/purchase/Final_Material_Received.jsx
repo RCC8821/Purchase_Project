@@ -45,58 +45,57 @@ const Final_Material_Received = () => {
 
   const handleNext = () => {
     if (selectedUID) {
-      const selectedRequest = requests.find(r => r.uid === selectedUID);
-      if (selectedRequest) {
-        const reqNo = selectedRequest.reqNo;
-        const filtered = requests.filter(r => r.reqNo === reqNo);
+      const filtered = requests.filter(r => r.uid === selectedUID);
+      if (filtered.length > 0) {
         setSelectedRequests(filtered);
         setStep(2);
       }
     }
   };
 
-const handleSave = async () => {
-  try {
-    if (!selectedUID || !totalReceived || selectedRequests.length === 0) {
-      alert('Please select a valid UID and ensure data is available.');
-      return;
+  const handleSave = async () => {
+    try {
+      if (!selectedUID || !totalReceived || selectedRequests.length === 0) {
+        alert('Please select a valid UID and ensure data is available.');
+        return;
+      }
+
+      const url = `${import.meta.env.VITE_BACKEND_URL}/api/save-final-receipt`;
+      const challan_urls = selectedRequests.map(r => r.Challan_url);
+      const dataToSend = {
+        uid: selectedUID,
+        totalReceivedQuantity: totalReceived,
+        status: 'Done',
+        challan_urls: challan_urls
+      };
+
+      console.log('Sending data:', dataToSend);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSend),
+      });
+
+      console.log('Response status:', response.status);
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
+
+      if (response.ok) {
+        alert('Saved successfully');
+        fetchRequests();
+        setIsModalOpen(false);
+        setStep(1);
+        setSelectedUID('');
+      } else {
+        alert(`Error saving: ${response.status} - ${responseData.message || 'Unknown error'}`);
+      }
+    } catch (e) {
+      console.error('Fetch error:', e);
+      alert('Error saving');
     }
+  };
 
-    const url = `${import.meta.env.VITE_BACKEND_URL}/api/save-final-receipt`;
-    const challan_urls = selectedRequests.map(r => r.Challan_url);
-    const dataToSend = {
-      uid: selectedUID,
-      totalReceivedQuantity: totalReceived,
-      status: 'Done',
-      challan_urls: challan_urls
-    };
-
-    console.log('Sending data:', dataToSend);
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataToSend),
-    });
-
-    console.log('Response status:', response.status);
-    const responseData = await response.json();
-    console.log('Response data:', responseData);
-
-    if (response.ok) {
-      alert('Saved successfully');
-      fetchRequests();
-      setIsModalOpen(false);
-      setStep(1);
-      setSelectedUID('');
-    } else {
-      alert(`Error saving: ${response.status} - ${responseData.message || 'Unknown error'}`);
-    }
-  } catch (e) {
-    console.error('Fetch error:', e);
-    alert('Error saving');
-  }
-};
   const closeModal = () => {
     setIsModalOpen(false);
     setStep(1);
@@ -156,7 +155,7 @@ const handleSave = async () => {
                     <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{request.uid}</td>
                     <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{request.reqNo}</td>
                     <td className="px-5 py-5 text-sm text-gray-800 border-r border-gray-200">
-                      <div className="max-w-[150px]"  title={request.siteName}>{request.siteName}</div>
+                      <div className="max-w-[150px]" title={request.siteName}>{request.siteName}</div>
                     </td>
                     <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{request.supervisorName}</td>
                     <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{request.materialType}</td>
@@ -183,114 +182,114 @@ const handleSave = async () => {
       </div>
 
       {/* Modal */}
-     {isModalOpen && (
-  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-white p-4 rounded-lg shadow-xl relative w-5/10 max-h-[100vh] overflow-y-auto">
-      <button onClick={closeModal} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">×</button>
-      <h2 className="text-lg font-bold text-gray-800 mb-4">Final Done Material</h2>
-      {step === 1 ? (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">UID *</label>
-          <select
-            value={selectedUID}
-            onChange={(e) => setSelectedUID(e.target.value)}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select UID</option>
-            {uniqueUIDs.map((uid) => (
-              <option key={uid} value={uid}>
-                {uid}
-              </option>
-            ))}
-          </select>
-          <div className="mt-6 flex justify-end space-x-4">
-            <button onClick={closeModal} className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition duration-200">
-              Cancel
-            </button>
-            <button onClick={handleNext} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200" disabled={!selectedUID}>
-              Next
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div>
-          {details ? (
-            <>
-              <h3 className="text-base font-semibold text-gray-800 mb-3">Material Details</h3>
-              <div className="grid grid-cols-2 gap-2 mb-4 max-h-[100vh] overflow-y-auto">
-                <div>
-                  <p className="text-xs font-medium text-gray-700">Req No:</p>
-                  <p className="text-xs text-gray-900">{details.reqNo}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-700">Site Name:</p>
-                  <p className="text-xs text-gray-900">{details.siteName}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-700">Supervisor:</p>
-                  <p className="text-xs text-gray-900">{details.supervisorName}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-700">Material Type:</p>
-                  <p className="text-xs text-gray-900">{details.materialType}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-700">SKU:</p>
-                  <p className="text-xs text-gray-900">{details.skuCode}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-700">Material Name:</p>
-                  <p className="text-xs text-gray-900">{details.materialName}</p>
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-lg shadow-xl relative w-5/10 max-h-[100vh] overflow-y-auto">
+            <button onClick={closeModal} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">×</button>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">Final Done Material</h2>
+            {step === 1 ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">UID *</label>
+                <select
+                  value={selectedUID}
+                  onChange={(e) => setSelectedUID(e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select UID</option>
+                  {uniqueUIDs.map((uid) => (
+                    <option key={uid} value={uid}>
+                      {uid}
+                    </option>
+                  ))}
+                </select>
+                <div className="mt-6 flex justify-end space-x-4">
+                  <button onClick={closeModal} className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition duration-200">
+                    Cancel
+                  </button>
+                  <button onClick={handleNext} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200" disabled={!selectedUID}>
+                    Next
+                  </button>
                 </div>
               </div>
+            ) : (
+              <div>
+                {details ? (
+                  <>
+                    <h3 className="text-base font-semibold text-gray-800 mb-3">Material Details</h3>
+                    <div className="grid grid-cols-2 gap-2 mb-4 max-h-[100vh] overflow-y-auto">
+                      <div>
+                        <p className="text-xs font-medium text-gray-700">Req No:</p>
+                        <p className="text-xs text-gray-900">{details.reqNo}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-700">Site Name:</p>
+                        <p className="text-xs text-gray-900">{details.siteName}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-700">Supervisor:</p>
+                        <p className="text-xs text-gray-900">{details.supervisorName}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-700">Material Type:</p>
+                        <p className="text-xs text-gray-900">{details.materialType}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-700">SKU:</p>
+                        <p className="text-xs text-gray-900">{details.skuCode}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-700">Material Name:</p>
+                        <p className="text-xs text-gray-900">{details.materialName}</p>
+                      </div>
+                    </div>
 
-              <h3 className="text-base font-semibold text-gray-800 mb-3">Receipts</h3>
-              <div className="overflow-x-auto max-h-[20vh]">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase">Timestamp</th>
-                      <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase">Received Qty</th>
-                      <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
-                      <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase">Challan URL</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {selectedRequests.map((r, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-3 py-1 text-xs text-gray-800">{r.Timestamp}</td>
-                        <td className="px-3 py-1 text-xs text-gray-800">{r.totalReceivedQuantity}</td>
-                        <td className="px-3 py-1 text-xs text-gray-800">{r.status}</td>
-                        <td className="px-3 py-1 text-xs text-gray-800">
-                          <a href={r.Challan_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            View
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    <h3 className="text-base font-semibold text-gray-800 mb-3">Receipts</h3>
+                    <div className="overflow-x-auto max-h-[20vh]">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead>
+                          <tr className="bg-gray-100">
+                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase">Timestamp</th>
+                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase">Received Qty</th>
+                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
+                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase">Challan URL</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {selectedRequests.map((r, index) => (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="px-3 py-1 text-xs text-gray-800">{r.Timestamp}</td>
+                              <td className="px-3 py-1 text-xs text-gray-800">{r.totalReceivedQuantity}</td>
+                              <td className="px-3 py-1 text-xs text-gray-800">{r.status}</td>
+                              <td className="px-3 py-1 text-xs text-gray-800">
+                                <a href={r.Challan_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                  View
+                                </a>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="mt-3 text-xs font-medium text-gray-700">
+                      Total Received Quantity: <span className="text-xs text-gray-900">{totalReceived.toFixed(2)}</span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500">No data for selected UID.</p>
+                )}
+                <div className="mt-4 flex justify-end space-x-4">
+                  <button onClick={closeModal} className="bg-gray-400 text-white px-3 py-1 rounded-lg hover:bg-gray-500 transition duration-200">
+                    Cancel
+                  </button>
+                  <button onClick={handleSave} className="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition duration-200">
+                    Save Final Receipt
+                  </button>
+                </div>
               </div>
-              <p className="mt-3 text-xs font-medium text-gray-700">
-                Total Received Quantity: <span className="text-xs text-gray-900">{totalReceived.toFixed(2)}</span>
-              </p>
-            </>
-          ) : (
-            <p className="text-sm text-gray-500">No data for selected UID.</p>
-          )}
-          <div className="mt-4 flex justify-end space-x-4">
-            <button onClick={closeModal} className="bg-gray-400 text-white px-3 py-1 rounded-lg hover:bg-gray-500 transition duration-200">
-              Cancel
-            </button>
-            <button onClick={handleSave} className="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition duration-200">
-              Save Final Receipt
-            </button>
+            )}
           </div>
         </div>
       )}
-    </div>
-  </div>
-)}
     </div>
   );
 };

@@ -1,102 +1,109 @@
+
 const express = require('express');
 const { sheets, spreadsheetId } = require('../config/googleSheet');
 const router = express.Router();
 
 router.get('/get-Final-material-received', async (req, res) => {
   try {
-    // Fetch data from the first sheet (Material_Received)
-    const response1 = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'Material_Received!A2:T', // Adjust range as needed
+    // Define range for Purchase_FMS sheet
+    const range = 'Purchase_FMS!A8:CJ';
+    console.log(`Fetching data from sheet: ${process.env.SPREADSHEET_ID || spreadsheetId}, range: ${range}`);
+
+    // Fetch data from Purchase_FMS sheet
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
+      range,
     });
 
-    let data1 = response1.data.values || [];
-    if (!data1.length) {
-      console.log('No data found in Material_Received sheet for range: A2:BW');
-      return res.status(404).json({ error: 'No data found in Material_Received sheet', details: 'Sheet or range is empty' });
-    }
+    const rows = response.data.values || [];
+    console.log(`Raw rows fetched from Purchase_FMS (length: ${rows.length})`);
 
-    // Fetch data from Purchase_FMS sheet, including PLANNED_9 and ACTUAL_9
-    const response3 = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'Purchase_FMS!A8:BV', // Extended range to include BP (PLANNED_9) and BQ (ACTUAL_9)
-    });
-
-    let data3 = response3.data.values || [];
-    if (!data3.length) {
-      console.log('No data found in Purchase_FMS sheet for range: A8:BQ');
+    if (!rows.length) {
+      console.log('No data found in Purchase_FMS sheet for range:', range);
       return res.status(404).json({ error: 'No data found in Purchase_FMS sheet', details: 'Sheet or range is empty' });
     }
 
-    // Define headers for Purchase_FMS with their expected column positions (0-based index relative to A)
-    const headers = [
-      { key: 'Req_No', column: 2 }, // C
-      { key: 'REVISED_QUANTITY_2', column: 16 }, // Q
-      { key: 'PLANNED_9', column: 72 }, 
-      { key: 'ACTUAL_9', column: 73 }, 
-    ];
+    // Filter rows from Purchase_FMS where PLANNED_9 is non-empty and ACTUAL_9 is empty
+    const filteredPurchaseData = rows
+      .slice(1) // Skip header row
+      .filter(row => {
+        const planned9 = row[72]?.trim() || ''; // PLANNED_9 at column BU (index 73)
+        const actual9 = row[73]?.trim() || '';  // ACTUAL_9 at column BV (index 74)
+        console.log(`Row ${rows.indexOf(row) + 8} - PLANNED_9: "${planned9}", ACTUAL_9: "${actual9}"`);
+        return planned9 && !actual9;
+      })
+      .map(row => ({
+        UID: row[1]?.trim() || '', // B
+        reqNo: row[2]?.trim() || '', // C
+        siteName: row[3]?.trim() || '', // D
+        supervisorName: row[4]?.trim() || '', // E
+        materialType: row[5]?.trim() || '', // F
+        skuCode: row[6]?.trim() || '', // G
+        materialName: row[7]?.trim() || '', // H
+        revisedQuantity: row[16]?.trim() || '', // Q
+        unitName: row[9]?.trim() || '', // J
+        purpose: row[10]?.trim() || '', // K
+        pdfUrl3: row[25]?.trim() || '', // Z
+        pdfUrl5: row[55]?.trim() || '', // BD
+        pdfUrl7: row[61]?.trim() || '', // BJ
+        finalReceivedQuantity9: row[75]?.trim() || '', // BW
+        vendorFirmName5: row[39]?.trim() || '', // AN
+        indentNumber3: row[24]?.trim() || '', // Y
+        poNumber7: row[60]?.trim() || '', // BI
+        deliveryDate: row[62]?.trim() || '', // BK
+        planned9: row[72]?.trim() || '', // BU
+        actual9: row[73]?.trim() || '' // BV
+      }));
 
-    // Create a map for Purchase_FMS data using reqNo as the key
-    const purchaseDataMap = new Map();
-    let validRowCount = 0;
-
-    data3.forEach((row, index) => {
-      const reqNo = row[2]?.trim() || ''; // Column C for Req_No
-      const revisedQuantity = row[16]?.trim() || ''; // Column Q for REVISED_QUANTITY_2
-      const planned9 = row[72]?.trim() || ''; // Column BP for PLANNED_9 (adjust if needed)
-      const actual9 = row[73]?.trim() || ''; // Column BQ for ACTUAL_9 (adjust if needed)
-
-      // Skip empty rows
-      if (!row || row.every(cell => !cell || cell.trim() === '')) {
-        console.log(`Skipping empty row ${index + 8} in Purchase_FMS`);
-        return;
-      }
-
-      // Check if ACTUAL_9 is empty and PLANNED_9 is non-empty
-      if (actual9 || !planned9) {
-        console.log(
-          `Skipping row ${index + 8} - Reason: ${actual9 ? `Non-empty ACTUAL_9="${actual9}"` : ''}${
-            actual9 && !planned9 ? ' and ' : ''
-          }${!planned9 ? `Empty PLANNED_9="${planned9}"` : ''}`
-        );
-        return;
-      }
-
-      if (reqNo) {
-        validRowCount++;
-        purchaseDataMap.set(reqNo, { revisedQuantity, planned9, actual9 });
-      }
-    });
-
-    console.log(`Rows with ACTUAL_9 empty and PLANNED_9 non-empty: ${validRowCount}`);
-
-    if (!purchaseDataMap.size) {
+    if (!filteredPurchaseData.length) {
       console.log('No valid data found in Purchase_FMS after filtering');
       return res.status(404).json({
         error: 'No valid data found in Purchase_FMS after filtering',
-        details: 'No rows have ACTUAL_9 empty and PLANNED_9 non-empty in columns BQ and BP'
+        details: 'No rows have PLANNED_9 non-empty and ACTUAL_9 empty in columns BU and BV'
       });
     }
 
-    // Transform and filter data from Material_Received sheet
-    const filteredData = data1
-      .map((row, index) => {
-        const reqNo = row[2]?.trim() || '';
-        const purchaseData = purchaseDataMap.get(reqNo);
+    // Create a map for quick lookup by UID
+    const purchaseDataMap = new Map();
+    filteredPurchaseData.forEach(row => {
+      const uid = row.UID;
+      if (uid) {
+        purchaseDataMap.set(uid, row);
+      }
+    });
+    console.log(`Rows with PLANNED_9 non-empty and ACTUAL_9 empty: ${filteredPurchaseData.length}`);
 
-        // Only include rows where reqNo matches a valid Purchase_FMS row
+    // Fetch data from Material_Received sheet
+    const materialResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Material_Received!A2:T',
+    });
+
+    let materialData = materialResponse.data.values || [];
+    if (!materialData.length) {
+      console.log('No data found in Material_Received sheet for range: A2:T');
+      return res.status(404).json({ error: 'No data found in Material_Received sheet', details: 'Sheet or range is empty' });
+    }
+
+    // Transform and filter data from Material_Received sheet
+    const filteredData = materialData
+      .map((row, index) => {
+        const uid = row[1]?.trim() || '';
+        const purchaseData = purchaseDataMap.get(uid);
+
+        // Only include rows where uid matches a valid Purchase_FMS row
         if (!purchaseData) {
-          console.log(`Skipping row ${index + 2} in Material_Received - No matching reqNo=${reqNo} in Purchase_FMS`);
+          console.log(`Skipping row ${index + 2} in Material_Received - No matching uid=${uid} in Purchase_FMS`);
           return null;
         }
 
         return {
           Timestamp: row[0]?.trim() || '',
-          uid: row[1]?.trim() || '',
-          reqNo: reqNo,
+          uid: uid,
+          reqNo: row[2]?.trim() || '',
           siteName: row[3]?.trim() || '',
           supervisorName: row[4]?.trim() || '',
-          vendorName: row[12]?.trim() || '',
+          vendorName: row[39]?.trim() || purchaseData.vendorFirmName5 || '',
           materialType: row[5]?.trim() || '',
           skuCode: row[6]?.trim() || '',
           materialName: row[7]?.trim() || '',
@@ -106,7 +113,15 @@ router.get('/get-Final-material-received', async (req, res) => {
           Challan_url: row[11]?.trim() || '',
           revisedQuantity: purchaseData.revisedQuantity || '',
           planned9: purchaseData.planned9 || '',
-          actual9: purchaseData.actual9 || ''
+          actual9: purchaseData.actual9 || '',
+          purpose: purchaseData.purpose || '',
+          pdfUrl3: purchaseData.pdfUrl3 || '',
+          pdfUrl5: purchaseData.pdfUrl5 || '',
+          pdfUrl7: purchaseData.pdfUrl7 || '',
+          finalReceivedQuantity9: purchaseData.finalReceivedQuantity9 || '',
+          indentNumber3: purchaseData.indentNumber3 || '',
+          poNumber7: purchaseData.poNumber7 || '',
+          deliveryDate: purchaseData.deliveryDate || ''
         };
       })
       .filter(row => row !== null);
@@ -147,8 +162,8 @@ router.post('/save-final-receipt', async (req, res) => {
     }
 
     const spreadsheetId = process.env.SPREADSHEET_ID;
-    const uidRange = 'Purchase_FMS!B8:B'; // Adjust if UID is in a different column
-    const dataRange = 'Purchase_FMS!BW:BZ'; // STATUS 9, FINAL RECEIVED QUANTITY 9, CHALLAN PHOTO 9
+    const uidRange = 'Purchase_FMS!B8:B';
+    const dataRange = 'Purchase_FMS!BW8:BZ';
 
     // Fetch existing UIDs
     const uidResponse = await sheets.spreadsheets.values.get({
@@ -168,9 +183,9 @@ router.post('/save-final-receipt', async (req, res) => {
 
     // Ensure challan_urls is treated as an array and store URLs directly
     const challanUrls = Array.isArray(challan_urls) ? challan_urls : [challan_urls];
-    const values = [[status, totalReceivedQuantity, '', challanUrls[0]]]; // Store first URL (or modify for multiple URLs)
+    const values = [[status, totalReceivedQuantity, '', challanUrls[0]]];
 
-    const updateRange = `Purchase_FMS!BW${rowIndex + 8}:BZ${rowIndex + 8}`; // +8 for header and 0-based index
+    const updateRange = `Purchase_FMS!BW${rowIndex + 8}:BZ${rowIndex + 8}`;
     console.log('Update range:', updateRange);
     console.log('Values to update:', values);
 
@@ -194,6 +209,4 @@ router.post('/save-final-receipt', async (req, res) => {
   }
 });
 
-
-
-module.exports =  router
+module.exports = router;

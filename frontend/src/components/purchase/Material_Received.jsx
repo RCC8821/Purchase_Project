@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { FaPencilAlt, FaSpinner, FaCheck, FaTimes } from 'react-icons/fa';
 
@@ -157,8 +158,6 @@ const Material_Received = () => {
     }
   };
 
- 
-
   // Validate required fields
   const validate = () => {
     if (!receivedQuantity || !materialStatus || !qualityCheck || !challanNo || !truckDelivery || !photoData) {
@@ -218,6 +217,7 @@ const Material_Received = () => {
           ? {
               ...req,
               totalReceivedQuantity: receivedQuantity,
+              receivedQty: receivedQuantity // Update receivedQty as well
             }
           : req
       );
@@ -310,6 +310,7 @@ const Material_Received = () => {
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Material Name</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Unit Name</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Order Quantity</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Received Quantity</th>
                   <th className="px-3 py-2 text-center text-xs font-semibold text-gray-700 uppercase">Action</th>
                 </tr>
               </thead>
@@ -319,17 +320,18 @@ const Material_Received = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.uid}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.reqNo}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div  title={request.siteName}>{request.siteName}</div>
+                      <div title={request.siteName}>{request.siteName}</div>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.supervisorName}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.vendorName}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.materialType}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.skuCode}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div  title={request.materialName}>{request.materialName}</div>
+                      <div title={request.materialName}>{request.materialName}</div>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.unitName}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200 text-right">{request.totalReceivedQuantity}</td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200 text-right">{request.receivedQty}</td>
                     <td className="px-3 py-2 text-center">
                       <button
                         onClick={() => openModal(request)}
@@ -498,12 +500,10 @@ const Material_Received = () => {
                   >
                     Front Camera
                   </button>
-                
                   <input
                     type="file"
                     ref={fileInputRef}
                     accept="image/*"
-                 
                     className="hidden"
                   />
                 </div>
@@ -584,6 +584,3 @@ const Material_Received = () => {
 };
 
 export default Material_Received;
-
-
-

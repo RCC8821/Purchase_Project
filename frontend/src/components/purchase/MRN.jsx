@@ -18,7 +18,7 @@ const MRN = () => {
     try {
       setLoading(true);
       setError(null);
-      const url = `${import.meta.env.VITE_BACKEND_URL}/api/get-MRN-Data`;
+      const url = `http://localhost:5000/api/get-MRN-Data`;
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -87,7 +87,7 @@ const MRN = () => {
   const handleCreatePDF = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/save-MRN-data`, {
+      const response = await fetch(`http://localhost:5000/api/save-MRN-data`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,7 +244,7 @@ const MRN = () => {
                 <div><strong>Unit Name:</strong> {poDetails.unitName}</div>
                 <div><strong>FINAL RECEIVED QUANTITY 9:</strong> {poDetails.finalReceivedQuantity9}</div>
                 <div><strong>Indent Number:</strong> {poDetails.indentNumber3}</div>
-                <div><strong>Challan Number:</strong> {poDetails.challanNumber9}</div>
+                <div><strong>Challan Number:</strong> {poDetails.Challan_No}</div>
                 <div><strong>Actual Firm Name:</strong> {poDetails.vendorFirmName5}</div>
               </div>
             </div>
