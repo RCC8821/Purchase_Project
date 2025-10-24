@@ -226,90 +226,100 @@ const Bill_Processing = () => {
       )}
 
       {itemModalOpen && poDetails && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[800px]">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">Select Items to Bill</h2>
-              <button
-                onClick={() => {
-                  setItemModalOpen(false);
-                  setSelectedPONumber('');
-                  setPoDetails(null);
-                  setSelectedItems([]);
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">
-                      <input
-                        type="checkbox"
-                        onChange={handleSelectAll}
-                        checked={poDetails.length > 0 && selectedItems.length === poDetails.length}
-                      />
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">UID</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Site Name</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Material Type</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Unit Name</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Revised Qty</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Final Received Qty</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {poDetails.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.includes(item.UID)}
-                          onChange={() => handleItemSelect(item.UID)}
-                        />
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-800">{item.UID}</td>
-                      <td className="px-4 py-2 text-sm text-gray-800">{item.siteName}</td>
-                      <td className="px-4 py-2 text-sm text-gray-800">{item.materialType}</td>
-                      <td className="px-4 py-2 text-sm text-gray-800">{item.unitName}</td>
-                      <td className="px-4 py-2 text-sm text-gray-800 text-right">{item.revisedQuantity}</td>
-                      <td className="px-4 py-2 text-sm text-gray-800 text-right">{item.finalReceivedQuantity}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex justify-between mt-4">
-              <button
-                onClick={() => {
-                  setItemModalOpen(false);
-                  setIsModalOpen(true);
-                }}
-                className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => {
-                  if (selectedItems.length > 0) {
-                    setItemModalOpen(false);
-                    setDetailsModalOpen(true);
-                  } else {
-                    setError('Please select at least one item');
-                  }
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Next
-              </button>
-            </div>
-            {error && <p className="text-red-500 mt-2">{error}</p>}
-          </div>
-        </div>
-      )}
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-[90vw] sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800">Select Items to Bill</h2>
+        <button
+          onClick={() => {
+            setItemModalOpen(false);
+            setSelectedPONumber('');
+            setPoDetails(null);
+            setSelectedItems([]);
+          }}
+          className="text-gray-500 hover:text-gray-700 text-lg"
+        >
+          ×
+        </button>
+      </div>
+      <div className="relative overflow-x-auto">
+        <table className="min-w-[800px] sm:min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-100 sticky top-0 z-10">
+            <tr>
+              <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  onChange={handleSelectAll}
+                  checked={poDetails.length > 0 && selectedItems.length === poDetails.length}
+                />
+              </th>
+              <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">UID</th>
+              <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">Site Name</th>
+              <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">Material Type</th>
+              <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">Unit Name</th>
+              <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">Revised Qty</th>
+              <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">Final Qty</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {poDetails.map((item, index) => (
+              <tr key={index}>
+                <td className="px-2 sm:px-4 py-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.includes(item.UID)}
+                    onChange={() => handleItemSelect(item.UID)}
+                  />
+                </td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 whitespace-nowrap">{item.UID}</td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800">
+                  <span className="sm:hidden font-medium">Site: </span>{item.siteName}
+                </td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800">
+                  <span className="sm:hidden font-medium">Material: </span>{item.materialType}
+                </td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800">
+                  <span className="sm:hidden font-medium">Unit: </span>{item.unitName}
+                </td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 text-right">
+                  <span className="sm:hidden font-medium">Revised: </span>{item.revisedQuantity}
+                </td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 text-right">
+                  <span className="sm:hidden font-medium">Final: </span>{item.finalReceivedQuantity}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-col sm:flex-row justify-between mt-4 gap-2">
+        <button
+          onClick={() => {
+            setItemModalOpen(false);
+            setIsModalOpen(true);
+          }}
+          className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 w-full sm:w-auto"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => {
+            if (selectedItems.length > 0) {
+              setItemModalOpen(false);
+              setDetailsModalOpen(true);
+            } else {
+              setError('Please select at least one item');
+            }
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full sm:w-auto"
+        >
+          Next
+        </button>
+      </div>
+      {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
+    </div>
+  </div>
+)}
 
       {detailsModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">

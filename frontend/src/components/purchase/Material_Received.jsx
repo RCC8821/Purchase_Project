@@ -309,7 +309,7 @@ const Material_Received = () => {
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">SKU Code</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Material Name</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Unit Name</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Total Received Quantity</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Order Quantity</th>
                   <th className="px-3 py-2 text-center text-xs font-semibold text-gray-700 uppercase">Action</th>
                 </tr>
               </thead>
