@@ -33,340 +33,11 @@ router.get('/dropdowns', async (req, res) => {
 
 
 
-// router.get('/get-material-received-filter-data', async (req, res) => {
-//   try {
-//     const { siteName, supervisorName } = req.query;
-
-//     // Fetch all data from the Purchase_FMS sheet
-//     const purchaseResponse = await sheets.spreadsheets.values.get({
-//       spreadsheetId,
-//       range: 'Purchase_FMS!B8:BW', // Adjusted to include all relevant columns
-//     });
-
-//     let data = purchaseResponse.data.values || [];
-
-//     // Filter data based on parameters, PLANNED 9 (BU, index 74) has data, and ACTUAL 9 (BV, index 75) is empty
-//     if (siteName || supervisorName) {
-//       data = data.filter(row => {
-//         const matchesSite = siteName ? row[2] === siteName : true; // Site Name is in column C
-//         const matchesSupervisor = supervisorName ? row[3] === supervisorName : true; // Supervisor Name is in column D
-//         const hasPlanned9 = row[71] && row[71].trim() !== ''; // PLANNED 9 (BU) has data
-//         const noActual9 = !row[72] || row[72].trim() === ''; // ACTUAL 9 (BV) is empty
-//         return matchesSite && matchesSupervisor && hasPlanned9 && noActual9;
-//       });
-//     } else {
-//       // If no query parameters, only filter based on PLANNED 9 and ACTUAL 9
-//       data = data.filter(row => {
-//         const hasPlanned9 = row[71] && row[71].trim() !== ''; // PLANNED 9 (BU) has data
-//         const noActual9 = !row[72] || row[72].trim() === ''; // ACTUAL 9 (BV) is empty
-//         return hasPlanned9 && noActual9;
-//       });
-//     }
-
-//     // Fetch data from Material_Received sheet to get Received_qty
-//     const materialReceivedResponse = await sheets.spreadsheets.values.get({
-//       spreadsheetId,
-//       range: 'Material_Received!A2:J', // Fetch columns A to J (J is Received_qty)
-//     });
-
-//     const materialReceivedData = materialReceivedResponse.data.values || [];
-
-//     // Create a map of UID to Received_qty from Material_Received
-//     const receivedQtyMap = new Map();
-//     materialReceivedData.forEach(row => {
-//       const uid = row[1]; // UID is in column B (index 1)
-//       const receivedQty = row[9] || ''; // Received_qty is in column J (index 9)
-//       if (uid) {
-//         receivedQtyMap.set(uid, receivedQty);
-//       }
-//     });
-
-//     // Transform data into structured format with specified headers, including Received_qty
-//     const filteredData = data.map(row => {
-//       // Log the raw value from row[15] for debugging
-//       console.log(`Row[15] (totalReceivedQuantity) for UID ${row[0]}: ${row[15]}`);
-//       return {
-//         uid: row[0] || '',
-//         reqNo: row[1] || '',
-//         siteName: row[2] || '',
-//         supervisorName: row[3] || '',
-//         vendorName: row[39] || '',
-//         materialType: row[4] || '',
-//         skuCode: row[5] || '',
-//         materialName: row[6] || '',
-//         unitName: row[8] || '',
-//         totalReceivedQuantity: row[15] || '', // Directly use raw value from column P
-//         receivedQty: receivedQtyMap.get(row[0]) || '' // Fetch Received_qty from Material_Received based on UID
-//       };
-//     });
-
-//     res.json({
-//       success: true,
-//       data: filteredData
-//     });
-//   } catch (error) {
-//     console.error('Error fetching filtered data:', error);
-//     res.status(500).json({ error: 'Failed to fetch filtered data' });
-//   }
-// });
-
-
-
-
-
-// router.post('/save-material-receipt', async (req, res) => {
-//   try {
-//     // Check if req.body is defined
-//     if (!req.body) {
-//       console.log('Request body is undefined or empty');
-//       return res.status(400).json({ error: 'Request body is missing or invalid' });
-//     }
-
-//     const {
-//       uid,
-//       reqNo,
-//       siteName,
-//       supervisorName,
-//       materialType,
-//       skuCode,
-//       materialName,
-//       unitName,
-//       receivedQty,
-//       status,
-//       challanNo,
-//       qualityApproved,
-//       truckDelivery,
-//       googleFormCompleted,
-//       photo, // Expecting base64 string
-//       vendorName // Added vendorName
-//     } = req.body;
-
-//     // Validate required fields
-//     if (!uid || !reqNo || !siteName || !materialType || !skuCode || !materialName || !unitName || !receivedQty || !status) {
-//       console.log('Missing required fields:', req.body);
-//       return res.status(400).json({ error: 'Missing required fields' });
-//     }
-
-//     let challanUrl = '';
-
-//     if (photo) {
-//       // Validate base64 format
-//       if (!photo.startsWith('data:image/')) {
-//         console.log('Invalid base64 image format');
-//         return res.status(400).json({ error: 'Invalid base64 image format' });
-//       }
-
-//       // Remove base64 prefix
-//       const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
-//       const buffer = Buffer.from(base64Data, 'base64');
-
-//       // Convert Buffer to readable stream
-//       const bufferStream = new Readable();
-//       bufferStream.push(buffer);
-//       bufferStream.push(null);
-
-//       // Define folder ID (replace with the correct one)
-//       const folderId = '1vma3YPHosdy4SGCI5_sORVCElk85Wflz'; // Your folder ID
-//       console.log('Attempting to upload to folder ID:', folderId);
-
-//       const fileMetadata = {
-//         name: `challan_${uid}_${Date.now()}.jpg`,
-//         parents: [folderId],
-//       };
-
-//       const media = {
-//         mimeType: 'image/jpeg',
-//         body: bufferStream,
-//       };
-
-//       // Upload file with detailed error handling
-//       try {
-//         const file = await drive.files.create({
-//           resource: fileMetadata,
-//           media: media,
-//           fields: 'id, webViewLink',
-//           supportsAllDrives: true,
-//         });
-//         console.log('File created successfully, ID:', file.data.id);
-
-//         // Set permissions
-//         await drive.permissions.create({
-//           fileId: file.data.id,
-//           requestBody: {
-//             role: 'reader',
-//             type: 'anyone',
-//           },
-//           supportsAllDrives: true,
-//         });
-
-//         challanUrl = file.data.webViewLink;
-//         console.log(`Uploaded file to Drive: ${challanUrl}`);
-//       } catch (uploadError) {
-//         console.error('Upload error details:', uploadError.message, uploadError.stack);
-//         throw new Error(`Failed to upload file: ${uploadError.message}`);
-//       }
-//     }
-
-//     // Find or append row in Material_Received sheet
-//     const sheetResponse = await sheets.spreadsheets.values.get({
-//       spreadsheetId,
-//       range: 'Material_Received!A2:AM1000',
-//     });
-
-//     const rows = sheetResponse.data.values || [];
-//     let rowIndex = -1;
-
-//     for (let i = 0; i < rows.length; i++) {
-//       if (rows[i][0] === uid) {
-//         rowIndex = i + 2; // Rows start from 2 (A2)
-//         break;
-//       }
-//     }
-
-//     const now = new Date();
-//     const timestamp = now.toLocaleString('en-GB', {
-//       day: '2-digit',
-//       month: '2-digit',
-//       year: 'numeric',
-//       hour: '2-digit',
-//       minute: '2-digit',
-//       second: '2-digit',
-//       hour12: false,
-//     }).replace(/, /g, ' ');
-
-//     const values = [
-//       timestamp,
-//       uid,
-//       reqNo,
-//       siteName,
-//       supervisorName,
-//       materialType,
-//       skuCode,
-//       materialName,
-//       unitName,
-//       receivedQty,
-//       status,
-//       challanUrl || '',
-//       vendorName || '' ,  
-//       truckDelivery || '',
-//       googleFormCompleted || '',
-//       challanNo || '',
-//       qualityApproved || '',
-//     ];
-
-//     let updateRange;
-//     if (rowIndex !== -1) {
-//       updateRange = `Material_Received!A${rowIndex}:V${rowIndex}`; // Updated range to include vendorName (column V)
-//       await sheets.spreadsheets.values.update({
-//         spreadsheetId,
-//         range: updateRange,
-//         valueInputOption: 'RAW',
-//         resource: { values: [values] },
-//       });
-//       console.log(`Updated row ${rowIndex} in Material_Received sheet`);
-//     } else {
-//       updateRange = 'Material_Received!A' + (rows.length + 2); // Append to next row
-//       await sheets.spreadsheets.values.append({
-//         spreadsheetId,
-//         range: 'Material_Received!A2:V', // Updated range to include vendorName (column V)
-//         valueInputOption: 'RAW',
-//         resource: { values: [values] },
-//       });
-//       console.log(`Appended new row to Material_Received sheet`);
-//     }
-
-//     res.json({ success: true, message: 'Receipt saved successfully', challanUrl });
-//   } catch (error) {
-//     console.error('Error saving material receipt:', error.message, error.stack);
-//     res.status(500).json({ error: 'Failed to save receipt', details: error.message });
-//   }
-// });
-
-
-router.get('/get-material-received-filter-data', async (req, res) => {
-  try {
-    const { siteName, supervisorName } = req.query;
-
-    // Fetch all data from the Purchase_FMS sheet
-    const purchaseResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'Purchase_FMS!B8:BW', // Adjusted to include all relevant columns
-    });
-
-    let data = purchaseResponse.data.values || [];
-
-    // Filter data based on parameters, PLANNED 9 (BU, index 74) has data, and ACTUAL 9 (BV, index 75) is empty
-    if (siteName || supervisorName) {
-      data = data.filter(row => {
-        const matchesSite = siteName ? row[2] === siteName : true; // Site Name is in column C
-        const matchesSupervisor = supervisorName ? row[3] === supervisorName : true; // Supervisor Name is in column D
-        const hasPlanned9 = row[71] && row[71].trim() !== ''; // PLANNED 9 (BU) has data
-        const noActual9 = !row[72] || row[72].trim() === ''; // ACTUAL 9 (BV) is empty
-        return matchesSite && matchesSupervisor && hasPlanned9 && noActual9;
-      });
-    } else {
-      // If no query parameters, only filter based on PLANNED 9 and ACTUAL 9
-      data = data.filter(row => {
-        const hasPlanned9 = row[71] && row[71].trim() !== ''; // PLANNED 9 (BU) has data
-        const noActual9 = !row[72] || row[72].trim() === ''; // ACTUAL 9 (BV) is empty
-        return hasPlanned9 && noActual9;
-      });
-    }
-
-    // Fetch data from Material_Received sheet to get Received_qty
-    const materialReceivedResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'Material_Received!A2:J', // Fetch columns A to J (J is Received_qty)
-    });
-
-    const materialReceivedData = materialReceivedResponse.data.values || [];
-
-    // Create a map of UID to sum of Received_qty from Material_Received
-    const receivedQtyMap = new Map();
-    materialReceivedData.forEach(row => {
-      const uid = row[1]; // UID is in column B (index 1)
-      const receivedQty = parseFloat(row[9]) || 0; // Received_qty is in column J (index 9)
-      if (uid) {
-        if (receivedQtyMap.has(uid)) {
-          receivedQtyMap.set(uid, receivedQtyMap.get(uid) + receivedQty);
-        } else {
-          receivedQtyMap.set(uid, receivedQty);
-        }
-      }
-    });
-
-    // Transform data into structured format with specified headers, including Received_qty
-    const filteredData = data.map(row => {
-      // Log the raw value from row[15] for debugging
-      console.log(`Row[15] (totalReceivedQuantity) for UID ${row[0]}: ${row[15]}`);
-      return {
-        uid: row[0] || '',
-        reqNo: row[1] || '',
-        siteName: row[2] || '',
-        supervisorName: row[3] || '',
-        vendorName: row[39] || '',
-        materialType: row[4] || '',
-        skuCode: row[5] || '',
-        materialName: row[6] || '',
-        unitName: row[8] || '',
-        totalReceivedQuantity: row[15] || '', // Directly use raw value from column P
-        receivedQty: receivedQtyMap.get(row[0]) || '' // Sum of Received_qty from Material_Received based on UID
-      };
-    });
-
-    res.json({
-      success: true,
-      data: filteredData
-    });
-  } catch (error) {
-    console.error('Error fetching filtered data:', error);
-    res.status(500).json({ error: 'Failed to fetch filtered data' });
-  }
-});
 
 router.post('/save-material-receipt', async (req, res) => {
   try {
-    // Check if req.body is defined
+    console.log('Received request body:', req.body);
+
     if (!req.body) {
       console.log('Request body is undefined or empty');
       return res.status(400).json({ error: 'Request body is missing or invalid' });
@@ -387,36 +58,36 @@ router.post('/save-material-receipt', async (req, res) => {
       qualityApproved,
       truckDelivery,
       googleFormCompleted,
-      photo, // Expecting base64 string
-      vendorName // Added vendorName
+      photo,
+      vendorName,
     } = req.body;
 
-    // Validate required fields
     if (!uid || !reqNo || !siteName || !materialType || !skuCode || !materialName || !unitName || !receivedQty || !status) {
       console.log('Missing required fields:', req.body);
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const receivedQtyNum = parseFloat(receivedQty);
+    if (isNaN(receivedQtyNum)) {
+      console.log(`Invalid receivedQty: ${receivedQty}`);
+      return res.status(400).json({ error: 'Invalid receivedQty value' });
+    }
+
     let challanUrl = '';
 
     if (photo) {
-      // Validate base64 format
       if (!photo.startsWith('data:image/')) {
         console.log('Invalid base64 image format');
         return res.status(400).json({ error: 'Invalid base64 image format' });
       }
 
-      // Remove base64 prefix
       const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
-
-      // Convert Buffer to readable stream
       const bufferStream = new Readable();
       bufferStream.push(buffer);
       bufferStream.push(null);
 
-      // Define folder ID (replace with the correct one)
-      const folderId = '1vma3YPHosdy4SGCI5_sORVCElk85Wflz'; // Your folder ID
+      const folderId = '1vma3YPHosdy4SGCI5_sORVCElk85Wflz';
       console.log('Attempting to upload to folder ID:', folderId);
 
       const fileMetadata = {
@@ -429,7 +100,6 @@ router.post('/save-material-receipt', async (req, res) => {
         body: bufferStream,
       };
 
-      // Upload file with detailed error handling
       try {
         const file = await drive.files.create({
           resource: fileMetadata,
@@ -439,7 +109,6 @@ router.post('/save-material-receipt', async (req, res) => {
         });
         console.log('File created successfully, ID:', file.data.id);
 
-        // Set permissions
         await drive.permissions.create({
           fileId: file.data.id,
           requestBody: {
@@ -453,18 +122,17 @@ router.post('/save-material-receipt', async (req, res) => {
         console.log(`Uploaded file to Drive: ${challanUrl}`);
       } catch (uploadError) {
         console.error('Upload error details:', uploadError.message, uploadError.stack);
-        throw new Error(`Failed to upload file: ${uploadError.message}`);
+        return res.status(500).json({ error: 'Failed to upload file', details: uploadError.message });
       }
     }
 
-    // Always append new row in Material_Received sheet
+    console.log('Appending to Material_Received sheet...');
     const sheetResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: 'Material_Received!A2:AM1000',
     });
 
     const rows = sheetResponse.data.values || [];
-
     const now = new Date();
     const timestamp = now.toLocaleString('en-GB', {
       day: '2-digit',
@@ -481,71 +149,119 @@ router.post('/save-material-receipt', async (req, res) => {
       uid,
       reqNo,
       siteName,
-      supervisorName,
+      supervisorName || '',
       materialType,
       skuCode,
       materialName,
       unitName,
-      receivedQty,
+      receivedQtyNum,
       status,
       challanUrl || '',
-      vendorName || '' ,  
+      vendorName || '',
       truckDelivery || '',
       googleFormCompleted || '',
       challanNo || '',
       qualityApproved || '',
     ];
 
-    // Append to next row
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Material_Received!A2:Q', // Updated range to Q
+      range: 'Material_Received!A2:Q',
       valueInputOption: 'RAW',
       resource: { values: [values] },
     });
     console.log(`Appended new row to Material_Received sheet`);
 
-    // Update Purchase_FMS for ACTUAL 9 (add to existing)
-    const purchaseColumnBResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'Purchase_FMS!B8:B1000',
-    });
-
-    const purchaseColumnB = purchaseColumnBResponse.data.values || [];
-    let purchaseRowIndex = -1;
-
-    for (let i = 0; i < purchaseColumnB.length; i++) {
-      if (purchaseColumnB[i][0] === uid) {
-        purchaseRowIndex = i + 8;
-        break;
-      }
-    }
-
-    if (purchaseRowIndex !== -1) {
-      // Get current ACTUAL 9 from column BV
-      const actual9Range = `Purchase_FMS!BV${purchaseRowIndex}`;
-      const actualResponse = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: actual9Range,
-      });
-      const currentActual = parseFloat(actualResponse.data.values[0][0]) || 0;
-      const newActual = currentActual + parseFloat(receivedQty);
-
-      // Update ACTUAL 9
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: actual9Range,
-        valueInputOption: 'RAW',
-        resource: { values: [[newActual]] },
-      });
-
-      console.log(`Updated Purchase_FMS row ${purchaseRowIndex}: ACTUAL 9 to ${newActual}`);
-    }
-
-    res.json({ success: true, message: 'Receipt saved successfully', challanUrl });
+    return res.json({ success: true, message: 'Receipt saved successfully', challanUrl });
   } catch (error) {
     console.error('Error saving material receipt:', error.message, error.stack);
-    res.status(500).json({ error: 'Failed to save receipt', details: error.message });
+    return res.status(500).json({ error: 'Failed to save receipt', details: error.message });
+  }
+});
+
+router.get('/get-material-received-filter-data', async (req, res) => {
+  try {
+    const { siteName, supervisorName } = req.query;
+    console.log('Query parameters:', { siteName, supervisorName });
+
+    // Fetch all data from the Purchase_FMS sheet
+    const purchaseResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Purchase_FMS!B8:BW',
+    });
+
+    let data = purchaseResponse.data.values || [];
+    console.log(`Fetched ${data.length} rows from Purchase_FMS`);
+
+    // Filter data based on parameters, PLANNED 9 (BU, index 74) has data, and ACTUAL 9 (BV, index 75) is empty
+    if (siteName || supervisorName) {
+      data = data.filter(row => {
+        const matchesSite = siteName ? row[2] === siteName : true; // Site Name is in column C
+        const matchesSupervisor = supervisorName ? row[3] === supervisorName : true; // Supervisor Name is in column D
+        const hasPlanned9 = row[71] && row[71].trim() !== ''; // PLANNED 9 (BU) has data
+        const noActual9 = !row[72] || row[72].trim() === ''; // ACTUAL 9 (BV) is empty
+        return matchesSite && matchesSupervisor && hasPlanned9 && noActual9;
+      });
+    } else {
+      data = data.filter(row => {
+        const hasPlanned9 = row[71] && row[71].trim() !== ''; // PLANNED 9 (BU) has data
+        const noActual9 = !row[72] || row[72].trim() === ''; // ACTUAL 9 (BV) is empty
+        return hasPlanned9 && noActual9;
+      });
+    }
+    console.log(`Filtered to ${data.length} rows from Purchase_FMS`);
+
+    // Fetch data from Material_Received sheet to get Received_qty
+    const materialReceivedResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Material_Received!A2:J',
+    });
+
+    const materialReceivedData = materialReceivedResponse.data.values || [];
+    console.log(`Fetched ${materialReceivedData.length} rows from Material_Received`);
+
+    // Create a map of UID to sum of Received_qty from Material_Received
+    const receivedQtyMap = new Map();
+    materialReceivedData.forEach((row, index) => {
+      const uid = row[1]; // UID is in column B (index 1)
+      const receivedQty = parseFloat(row[9]) || 0; // Received_qty is in column J (index 9)
+      if (uid) {
+        console.log(`Row ${index + 2}: UID=${uid}, Received_qty=${receivedQty}`);
+        if (receivedQtyMap.has(uid)) {
+          receivedQtyMap.set(uid, receivedQtyMap.get(uid) + receivedQty);
+        } else {
+          receivedQtyMap.set(uid, receivedQty);
+        }
+      }
+    });
+    console.log('Received_qty map:', Object.fromEntries(receivedQtyMap));
+
+    // Transform data into structured format with specified headers
+    const filteredData = data.map(row => {
+      const uid = row[0] || '';
+      console.log(`Processing UID ${uid}: totalReceivedQuantity=${row[15]}, receivedQty=${receivedQtyMap.get(uid) || 0}`);
+      return {
+        uid,
+        reqNo: row[1] || '',
+        siteName: row[2] || '',
+        supervisorName: row[3] || '',
+        vendorName: row[39] || '',
+        materialType: row[4] || '',
+        skuCode: row[5] || '',
+        materialName: row[6] || '',
+        unitName: row[8] || '',
+        totalReceivedQuantity: row[15] || '',
+        receivedQty: receivedQtyMap.get(uid) || 0
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: filteredData
+    });
+  } catch (error) {
+    console.error('Error fetching filtered data:', error.message, error.stack);
+    return res.status(500).json({ error: 'Failed to fetch filtered data', details: error.message });
   }
 });
 

@@ -243,7 +243,7 @@ const Bill_Processing = () => {
         </button>
       </div>
       <div className="relative overflow-x-auto">
-        <table className="min-w-[800px] sm:min-w-full divide-y divide-gray-200">
+        <table className="w-full min-w-[800px] divide-y divide-gray-200">
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr>
               <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap">
@@ -263,8 +263,8 @@ const Bill_Processing = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {poDetails.map((item, index) => (
-              <tr key={index}>
-                <td className="px-2 sm:px-4 py-2">
+              <tr key={index} className="hover:bg-gray-50">
+                <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedItems.includes(item.UID)}
@@ -272,21 +272,11 @@ const Bill_Processing = () => {
                   />
                 </td>
                 <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 whitespace-nowrap">{item.UID}</td>
-                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800">
-                  <span className="sm:hidden font-medium">Site: </span>{item.siteName}
-                </td>
-                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800">
-                  <span className="sm:hidden font-medium">Material: </span>{item.materialType}
-                </td>
-                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800">
-                  <span className="sm:hidden font-medium">Unit: </span>{item.unitName}
-                </td>
-                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 text-right">
-                  <span className="sm:hidden font-medium">Revised: </span>{item.revisedQuantity}
-                </td>
-                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 text-right">
-                  <span className="sm:hidden font-medium">Final: </span>{item.finalReceivedQuantity}
-                </td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 whitespace-nowrap">{item.siteName}</td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 whitespace-nowrap">{item.materialType}</td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 whitespace-nowrap">{item.unitName}</td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 text-right whitespace-nowrap">{item.revisedQuantity}</td>
+                <td className="px-2 sm:px-4 py-2 text-sm text-gray-800 text-right whitespace-nowrap">{item.finalReceivedQuantity}</td>
               </tr>
             ))}
           </tbody>

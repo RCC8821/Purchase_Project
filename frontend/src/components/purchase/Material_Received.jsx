@@ -169,71 +169,109 @@ const Material_Received = () => {
     return true;
   };
 
-  // Handle save
-  const handleSave = async () => {
-    if (!validate()) {
-      setError('Please fill all required fields.');
-      return;
-    }
+const handleSave = async () => {
+  if (!validate()) {
+    setError('Please fill all required fields.');
+    return;
+  }
 
-    const payload = {
-      uid: selectedRequest.uid,
-      reqNo: selectedRequest.reqNo,
-      siteName: selectedRequest.siteName,
-      supervisorName: selectedRequest.supervisorName || '',
-      materialType: selectedRequest.materialType,
-      skuCode: selectedRequest.skuCode,
-      materialName: selectedRequest.materialName,
-      unitName: selectedRequest.unitName,
-      receivedQty: receivedQuantity,
-      status: materialStatus,
-      challanNo,
-      qualityApproved: qualityCheck,
-      truckDelivery,
-      googleFormCompleted,
-      photo: photoData,
-      vendorName: selectedRequest.vendorName || '' // Added vendorName to payload
-    };
-
-    try {
-      setIsSaving(true);
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/save-material-receipt`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to save receipt');
-      }
-
-      setShowSuccess(true);
-      const updatedRequests = requests.map((req) =>
-        req.uid === selectedRequest.uid
-          ? {
-              ...req,
-              totalReceivedQuantity: receivedQuantity,
-              receivedQty: receivedQuantity // Update receivedQty as well
-            }
-          : req
-      );
-      setRequests(updatedRequests);
-
-      setTimeout(() => {
-        closeModal();
-      }, 1500);
-    } catch (error) {
-      console.error('Error saving data:', error.message);
-      setError(`Data not available`);
-    } finally {
-      setIsSaving(false);
-    }
+  const payload = {
+    uid: selectedRequest.uid,
+    reqNo: selectedRequest.reqNo,
+    siteName: selectedRequest.siteName,
+    supervisorName: selectedRequest.supervisorName || '',
+    materialType: selectedRequest.materialType,
+    skuCode: selectedRequest.skuCode,
+    materialName: selectedRequest.materialName,
+    unitName: selectedRequest.unitName,
+    receivedQty: parseFloat(receivedQuantity), // Ensure number
+    status: materialStatus,
+    challanNo,
+    qualityApproved: qualityCheck,
+    truckDelivery,
+    googleFormCompleted,
+    photo: photoData,
+    vendorName: selectedRequest.vendorName || '',
   };
 
+  try {
+    setIsSaving(true);
+    console.log('Sending payload:', payload);
+    const saveResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/save-material-receipt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    let saveData;
+    try {
+      saveData = await saveResponse.json();
+    } catch (jsonError) {
+      console.error('Failed to parse save response as JSON:', jsonError);
+      const text = await saveResponse.text();
+      console.error('Save response text:', text.slice(0, 100));
+      throw new Error('Invalid server response for save. Please check if the server is running.');
+    }
+    console.log('Save response:', saveResponse.status, saveData);
+
+    if (!saveResponse.ok) {
+      throw new Error(saveData.error || `Failed to save receipt: ${saveResponse.status}`);
+    }
+
+    // Fetch updated data to get cumulative receivedQty
+    const query = new URLSearchParams({
+      siteName: selectedRequest.siteName || '',
+      supervisorName: selectedRequest.supervisorName || '',
+    }).toString();
+    const filterResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/get-material-received-filter-data?${query}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    let filterData;
+    try {
+      filterData = await filterResponse.json();
+    } catch (jsonError) {
+      console.error('Failed to parse filter response as JSON:', jsonError);
+      const text = await filterResponse.text();
+      console.error('Filter response text:', text.slice(0, 100));
+      throw new Error('Invalid server response for filtered data.');
+    }
+    console.log('Filter response:', filterResponse.status, filterData);
+
+    if (!filterResponse.ok) {
+      throw new Error(filterData.error || 'Failed to fetch filtered data');
+    }
+
+    // Find the updated receivedQty for the UID
+    const updatedItem = filterData.data.find(item => item.uid === selectedRequest.uid);
+    const newReceivedQty = updatedItem ? updatedItem.receivedQty : parseFloat(receivedQuantity);
+
+    setShowSuccess(true);
+    const updatedRequests = requests.map((req) =>
+      req.uid === selectedRequest.uid
+        ? {
+            ...req,
+            receivedQty: newReceivedQty // Update with cumulative sum
+          }
+        : req
+    );
+    setRequests(updatedRequests);
+
+    setTimeout(() => {
+      closeModal();
+    }, 1500);
+  } catch (error) {
+    console.error('Error saving data:', error.message);
+    setError(error.message || 'Failed to save receipt. Please try again.');
+  } finally {
+    setIsSaving(false);
+  }
+};
   return (
     <div className="p-4 bg-gray-50 min-h-screen">
       {/* Header and Filter Inputs */}
