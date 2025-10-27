@@ -179,6 +179,7 @@ router.post('/save-material-receipt', async (req, res) => {
   }
 });
 
+
 router.get('/get-material-received-filter-data', async (req, res) => {
   try {
     const { siteName, supervisorName } = req.query;
@@ -187,11 +188,16 @@ router.get('/get-material-received-filter-data', async (req, res) => {
     // Fetch all data from the Purchase_FMS sheet
     const purchaseResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Purchase_FMS!B8:BW',
+      range: 'Purchase_FMS!B8:BW', // Ensure this range includes column AN (Vendor Firm Name 5)
     });
 
     let data = purchaseResponse.data.values || [];
     console.log(`Fetched ${data.length} rows from Purchase_FMS`);
+
+    // Log the Vendor Firm Name 5 (column AN, index 38) for debugging
+    data.forEach((row, index) => {
+      console.log(`Row ${index + 8}: Vendor Firm Name 5 (AN) = ${row[38] || 'Empty'}`);
+    });
 
     // Filter data based on parameters, PLANNED 9 (BU, index 74) has data, and ACTUAL 9 (BV, index 75) is empty
     if (siteName || supervisorName) {
@@ -239,13 +245,13 @@ router.get('/get-material-received-filter-data', async (req, res) => {
     // Transform data into structured format with specified headers
     const filteredData = data.map(row => {
       const uid = row[0] || '';
-      console.log(`Processing UID ${uid}: totalReceivedQuantity=${row[15]}, receivedQty=${receivedQtyMap.get(uid) || 0}`);
+      console.log(`Processing UID ${uid}: totalReceivedQuantity=${row[15]}, receivedQty=${receivedQtyMap.get(uid) || 0}, vendorName=${row[38] || 'Empty'}`);
       return {
         uid,
         reqNo: row[1] || '',
         siteName: row[2] || '',
         supervisorName: row[3] || '',
-        vendorName: row[39] || '',
+        vendorName: row[38] || '', // Corrected to column AN (index 38)
         materialType: row[4] || '',
         skuCode: row[5] || '',
         materialName: row[6] || '',
