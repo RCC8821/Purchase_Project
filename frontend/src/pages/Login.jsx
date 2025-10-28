@@ -76,7 +76,9 @@ const Login = () => {
           'Anjali Malviya': 'Anjali Malviya',
           'Neha Masani': 'Neha Masani',
           'Gourav Singh': 'Gourav Singh',
-          'Somesh Chadhar': 'Somesh Chadhar'
+          'Somesh Chadhar': 'Somesh Chadhar',
+          'Abhishek Sharma':'Abhishek Sharma',
+          'Govind Ram Nagar':'Govind Ram Nagar'
         };
         const frontendUserType = userTypeMap[result.userType] || 'user';
 

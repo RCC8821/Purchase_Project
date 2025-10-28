@@ -154,7 +154,7 @@ const Dashboard = () => {
       icon: Truck,
       component: Vendor_followup_billing,
       path: '/dashboard/Vendor_followup_billing',
-      allowedUserTypes: ['admin', ],
+      allowedUserTypes: ['admin', 'Neha Masani'],
     },
 
       {
@@ -171,7 +171,7 @@ const Dashboard = () => {
       icon: Truck,
       component:BillCheckedData,
       path: '/dashboard/BillCheckedData',
-      allowedUserTypes: ['admin', ],
+      allowedUserTypes: ['admin', 'Abhishek Sharma'],
     },
     {
       id: 'BillTallyData',
@@ -179,7 +179,7 @@ const Dashboard = () => {
       icon: Truck,
       component:BillTallyData,
       path: '/dashboard/BillTallyData',
-      allowedUserTypes: ['admin',],
+      allowedUserTypes: ['admin','Govind Ram Nagar'],
     },
   ];
 
