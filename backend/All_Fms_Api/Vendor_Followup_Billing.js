@@ -1,3 +1,5 @@
+
+
 const express = require('express');
 const { sheets, spreadsheetId } = require('../config/googleSheet');
 const router = express.Router();
@@ -48,126 +50,65 @@ router.get('/vendor-FollowUp-Billing', async (req, res) => {
 });
 
 
-
-// POST endpoint to update follow-up details
-
 router.post('/update-followup-Billing', async (req, res) => {
   try {
-    console.log('Raw request body:', req.body); // Log raw body to debug
-
-    // Use req.body directly since it’s the array
     const data = req.body;
-    
-    if (!Array.isArray(data) || data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0)
       return res.status(400).json({ error: 'Invalid data: Expected non-empty array' });
-    }
 
-    // Validate each item in the array
-    const invalidItems = data.filter(item => 
-      !item.UID || !item.UID.trim() || 
-      !item.status12 || !item.status12.trim() || 
-      !item.remark12 || !item.remark12.trim()
-    );
+    // ---- VALIDATE ----
+    const invalid = data.filter(i => !i.UID?.trim() || !i.status12?.trim() || !i.remark12?.trim());
+    if (invalid.length)
+      return res.status(400).json({ error: 'UID, status12, remark12 required' });
 
-    if (invalidItems.length > 0) {
-      console.warn('Invalid items found:', invalidItems);
-      return res.status(400).json({ error: 'Invalid data: Expected array of objects with UID, status12, and remark12 as non-empty strings' });
-    }
-
-    console.log('Validated data:', data);
-
-    // Initialize Sheets API
-    // const sheets = await initializeSheets(); // Ensure this function is in scope
-    // const spreadsheetId = 'your-spreadsheet-id'; // Replace with your actual Google Sheet ID
-
-    // console.log('Fetching sheet data with spreadsheetId:', spreadsheetId);
-
-    // Fetch current sheet data to find rows by UID
-    const response = await sheets.spreadsheets.values.get({
+    // ---- READ SHEET ----
+    const resp = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Billing_FMS!A8:CK', // Wide range to cover up to CK (index 32+)
+      range: 'Billing_FMS!A8:CK',   // keep wide enough to read the count column
     });
+    const values = resp.data.values || [];
 
-    let values = response.data.values || [];
-    if (values.length === 0) {
-      return res.status(400).json({ error: 'No data found in sheet' });
-    }
-
-    console.log('Found', values.length, 'rows in sheet');
-
-    // Prepare updates: Find rows by UID (column B, index 1) and build update values
     const updates = [];
     let updatedCount = 0;
 
+    // ---- CONFIG ----
+    const COL_STATUS = 'AD';   // <-- adjust
+    const COL_COUNT  = 'AE';   // <-- adjust
+    const COL_REMARK = 'AG';   // <-- adjust
+
     for (const item of data) {
-      const uid = item.UID;
-      const status12 = item.status12;
-      const remark12 = item.remark12;
+      const { UID, status12, remark12 } = item;
+      const rowIdx = values.findIndex(r => r[1] === UID);
+      if (rowIdx === -1) continue;
 
-      if (!uid) {
-        console.warn('Skipping item due to missing UID');
-        continue;
-      }
+      const sheetRow = 8 + rowIdx;
+      const curCount = parseInt(values[rowIdx][30] || '0', 10); // AE = index 30
+      const newCount = curCount + 1;
 
-      // Find the row index (0-based in values array)
-      const rowIndex = values.findIndex(row => row[1] === uid); // row[1] = Column B (UID)
-      
-      if (rowIndex === -1) {
-        console.warn(`UID ${uid} not found in sheet`);
-        continue;
-      }
-
-      const row = values[rowIndex];
-      const fullRowNumber = 8 + rowIndex; // Sheet row number (A8 is row 8)
-
-      // Current Follow-up Count (AE, index 30)
-      let currentFollowUpCount = parseInt(row[30] || '0', 10);
-      const newFollowUpCount = currentFollowUpCount + 1;
-
-      console.log(`Updating row ${fullRowNumber} for UID ${uid}: Status=${status12}, Follow-up Count=${newFollowUpCount}, Remark=${remark12}`);
-
-      // Prepare the full row update (only update columns AD, AE, AG; keep others same)
-      const updatedRow = [...row]; // Copy existing row
-      updatedRow[29] = status12; // AD: Status 12
-      updatedRow[30] = newFollowUpCount; // AE: Follow-up Count 12
-      updatedRow[32] = remark12; // AG: Remark 12
-
-      // Add to batch update
-      updates.push({
-        range: `Billing_FMS!A${fullRowNumber}:CK${fullRowNumber}`,
-        values: [updatedRow],
-      });
-
+      updates.push(
+        { range: `Billing_FMS!${COL_STATUS}${sheetRow}`, values: [[status12]] },
+        { range: `Billing_FMS!${COL_COUNT}${sheetRow}`,  values: [[newCount]] },
+        { range: `Billing_FMS!${COL_REMARK}${sheetRow}`, values: [[remark12]] }
+      );
       updatedCount++;
     }
 
-    if (updates.length === 0) {
-      return res.status(400).json({ error: 'No valid rows to update' });
-    }
+    if (!updates.length)
+      return res.status(400).json({ error: 'No rows to update' });
 
-    console.log('Preparing to update', updates.length, 'rows');
-
-    // Batch update all rows
-    const updateResponse = await sheets.spreadsheets.values.batchUpdate({
+    await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId,
-      requestBody: {
-        valueInputOption: 'RAW', // Use 'USER_ENTERED' if you need formatting
-        data: updates,
-      },
+      requestBody: { valueInputOption: 'RAW', data: updates },
     });
 
-    console.log('Batch update response:', updateResponse.data);
+    res.json({ success: true, updatedRows: updatedCount });
 
-    res.json({
-      success: true,
-      message: `Updated ${updatedCount} rows successfully`,
-      updatedRows: updateResponse.data.totalUpdatedRows || updatedCount,
-    });
-
-  } catch (error) {
-    console.error('Error updating follow-up details:', error.message, error.stack);
-    res.status(500).json({ error: 'Failed to update follow-up details: ' + error.message });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update: ' + err.message });
   }
 });
 
 module.exports=router
+
+
