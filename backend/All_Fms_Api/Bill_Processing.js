@@ -28,7 +28,7 @@ router.get('/BILL-PROCESSING', async (req, res) => {
         return planned13 && !actual13;
       })
       .map(row => ({
-        planned13: row[41] || '',
+        planned13: row[33] || '',
         UID: row[1] || '',
         siteName: row[3] || '',
         materialType: row[5] || '',

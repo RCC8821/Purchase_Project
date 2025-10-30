@@ -311,112 +311,123 @@ const Bill_Processing = () => {
   </div>
 )}
 
-      {detailsModalOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[600px]">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">Enter Invoice Details</h2>
-              <button
-                onClick={() => {
-                  setDetailsModalOpen(false);
-                  setSelectedPONumber('');
-                  setPoDetails(null);
-                  setSelectedItems([]);
-                  setInvoiceFile(null);
-                  setPreviewUrl(null);
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
-            </div>
-            <form onSubmit={handleSubmitBill} className="bg-white p-6 border border-gray-200 rounded">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Invoice Number *</label>
-                <input
-                  type="text"
-                  value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Invoice Photo / PDF *</label>
-                <div className="flex space-x-2">
-                  <input
-                    type="file"
-                    accept=".pdf,image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="upload-photo"
-                  />
-                  <label htmlFor="upload-photo" className="px-4 py-2 bg-gray-200 text-gray-700 rounded cursor-pointer">
-                    Upload File
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="capture-photo"
-                  />
-                  <label htmlFor="capture-photo" className="px-4 py-2 bg-gray-200 text-gray-700 rounded cursor-pointer">
-                    Capture Photo
-                  </label>
-                </div>
-                {invoiceFile && <p className="text-sm text-gray-600 mt-2">Selected: {invoiceFile.name}</p>}
-                {previewUrl && (
-                  <img src={previewUrl} alt="Preview" className="mt-2 max-w-full h-32 object-contain" />
-                )}
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Status *</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
-                  required
-                >
-                  <option value="Done">Done</option>
-                  <option value="Hold">Hold</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Remark *</label>
-                <textarea
-                  value={remark}
-                  onChange={(e) => setRemark(e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
-                  rows="4"
-                  required
-                ></textarea>
-              </div>
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDetailsModalOpen(false);
-                    setItemModalOpen(true);
-                  }}
-                  className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
-                >
-                  Previous
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading || uploading}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                >
-                  {loading || uploading ? 'Submitting...' : 'Submit'}
-                </button>
-              </div>
-              {error && <p className="text-red-500 mt-2">{error}</p>}
-            </form>
-          </div>
+     {detailsModalOpen && (
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-[600px] max-h-[90vh] overflow-y-auto my-4">
+      <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pb-2 border-b">
+        <h2 className="text-xl font-bold text-gray-800">Enter Invoice Details</h2>
+        <button
+          onClick={() => {
+            setDetailsModalOpen(false);
+            setSelectedPONumber('');
+            setPoDetails(null);
+            setSelectedItems([]);
+            setInvoiceFile(null);
+            setPreviewUrl(null);
+            setInvoiceNumber('');
+            setRemark('');
+          }}
+          className="text-gray-500 hover:text-gray-700 text-2xl"
+        >
+          ×
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmitBill} className="mt-4">
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">Invoice Number *</label>
+          <input
+            type="text"
+            value={invoiceNumber}
+            onChange={(e) => setInvoiceNumber(e.target.value)}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
+            required
+          />
         </div>
-      )}
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">Invoice Photo / PDF *</label>
+          <div className="flex flex-wrap gap-2">
+            <input type="file" accept=".pdf,image/*" onChange={handleFileChange} className="hidden" id="upload-photo" />
+            <label htmlFor="upload-photo" className="px-4 py-2 bg-gray-200 text-gray-700 rounded cursor-pointer text-sm">
+              Upload File
+            </label>
+            <input type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" id="capture-photo" />
+            <label htmlFor="capture-photo" className="px-4 py-2 bg-gray-200 text-gray-700 rounded cursor-pointer text-sm">
+              Capture Photo
+            </label>
+          </div>
+          {invoiceFile && <p className="text-sm text-gray-600 mt-2">Selected: {invoiceFile.name}</p>}
+
+          {/* Responsive Preview with Scroll */}
+          {previewUrl && (
+            <div className="mt-3 p-2 border border-gray-300 rounded bg-gray-50 max-h-[200px] overflow-auto">
+              {invoiceFile.type === 'application/pdf' ? (
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-96"
+                  title="PDF Preview"
+                />
+              ) : (
+                <img
+                  src={previewUrl}
+                  alt="Invoice Preview"
+                  className="max-w-full h-auto max-h-[300px] object-contain mx-auto block"
+                />
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">Status *</label>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
+            required
+          >
+            <option value="Done">Done</option>
+            <option value="Hold">Hold</option>
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">Remark *</label>
+          <textarea
+            value={remark}
+            onChange={(e) => setRemark(e.target.value)}
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
+            rows="4"
+            required
+          />
+        </div>
+
+        <div className="flex justify-between mt-6">
+          <button
+            type="button"
+            onClick={() => {
+              setDetailsModalOpen(false);
+              setItemModalOpen(true);
+            }}
+            className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+          >
+            Previous
+          </button>
+          <button
+            type="submit"
+            disabled={uploading}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+          >
+            {uploading ? 'Submitting...' : 'Submit'}
+          </button>
+        </div>
+
+        {error && <p className="text-red-500 mt-3 text-center">{error}</p>}
+      </form>
+    </div>
+  </div>
+)}
 
       <div className="bg-white border border-gray-300 rounded-lg shadow-md mt-4">
         {loading ? (
