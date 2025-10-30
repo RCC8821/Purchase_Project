@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect } from 'react';
-// Removed useNavigate since we don't need routing anymore
 
 const PO = () => {
   const [requests, setRequests] = useState([]);
@@ -15,22 +13,20 @@ const PO = () => {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [generateLoading, setGenerateLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
-  const [showSuccessBox, setShowSuccessBox] = useState(false); // New state for success box
+  const [showSuccessBox, setShowSuccessBox] = useState(false);
 
-  // Fetch data from API
+  // Fetch data
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/get-po-data`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         if (data && Array.isArray(data.data)) {
           setRequests(data.data);
         } else {
-          throw new Error('API data is not in the expected format');
+          throw new Error('Invalid data format');
         }
       } catch (error) {
         console.error('Error fetching requests:', error);
@@ -43,12 +39,9 @@ const PO = () => {
 
     const fetchSupervisors = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/get-othersheet-data`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/get-othersheet-data`);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
-        console.log(data);
         setSupervisors(data);
       } catch (error) {
         console.error('Error fetching supervisors:', error);
@@ -60,7 +53,7 @@ const PO = () => {
     fetchSupervisors();
   }, []);
 
-  // Get unique quotation numbers
+  // Unique Quotations
   const uniqueQuotations = [...new Set(requests.map(r => r.QUOTATION_NO_5).filter(Boolean))];
 
   const handleNext = () => {
@@ -81,19 +74,17 @@ const PO = () => {
 
     setGenerateLoading(true);
 
-    // Log selectedItems to debug available fields
-    console.log('Selected Items:', JSON.stringify(selectedItems, null, 2));
-
     const siteName = selectedItems[0]?.Site_Name || 'N/A';
-    const supervisorName = selectedItems[0]?.Supervisor_Name || 'N/A';
+    const supervisorNameFromExcel = selectedItems[0]?.Site_Location || 'N/A';
 
-    // Match site location based on site name
-    const matchedSite = supervisors.find(s => s.Site_Name === siteName);
-    const siteLocation = matchedSite ? matchedSite.Site_Location : 'N/A';
+    const matchedSupervisor = supervisors.find(s =>
+      String(s.Site_Name || '').trim() === String(siteName).trim()
+    );
 
-    // Match supervisor contact based on supervisor name
-    const matchedSupervisor = supervisors.find(s => s.Supervisor === supervisorName);
-    const supervisorContact = matchedSupervisor ? matchedSupervisor.Contact_No : 'N/A';
+    const supervisorName = matchedSupervisor?.Supervisor || supervisorNameFromExcel;
+    const supervisorContact = matchedSupervisor?.Contact_No || '-';
+    const siteLocation = matchedSupervisor?.Site_Location || '-';
+    const finalSiteLocation = siteLocation !== '-' ? siteLocation : 'Not Available';
 
     const poData = {
       quotationNo: selectedQuotation,
@@ -103,6 +94,7 @@ const PO = () => {
         materialName: item.Material_Name,
         vendorFirm: item.Vendor_Firm_Name_5 || 'N/A',
         rate: item.Rate_5,
+        discount: item.DISCOUNT_5 || '0', // Sent to backend for PDF
         cgst: item.CGST_5,
         sgst: item.SGST_5,
         igst: item.IGST_5,
@@ -114,17 +106,15 @@ const PO = () => {
         expectedTransport: item.EXPECTED_TRANSPORT_CHARGES,
         indentNo: item.INDENT_NUMBER_3,
       })),
-      siteName: siteName,
-      siteLocation: siteLocation,
-      supervisorName: selectedItems[0]?.Supervisor_Name || 'N/A',
-      supervisorContact: supervisorContact,
+      siteName,
+      siteLocation: finalSiteLocation,
+      supervisorName,
+      supervisorContact,
       vendorName: selectedItems[0]?.Vendor_Firm_Name_5 || 'N/A',
       vendorAddress: selectedItems[0]?.Vendor_Address_5 || 'N/A',
       vendorGST: selectedItems[0]?.Vendor_GST_No_5 || 'N/A',
       vendorContact: selectedItems[0]?.Vendor_Contact_5 || 'N/A',
     };
-
-    console.log('PO Data being sent:', JSON.stringify(poData, null, 2));
 
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/create-po`, {
@@ -133,43 +123,32 @@ const PO = () => {
         body: JSON.stringify(poData),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
       const result = await response.json();
+
       if (result.pdfUrl) {
         setPdfUrl(result.pdfUrl);
-        // Updated success handling: Close modal, reset states, and show success box
         setShowModal(false);
         setSelectedQuotation('');
         setExpectedDeliveryDate('');
         setSelectedItems([]);
-        setShowSuccessBox(true); // Show the success box
+        setShowSuccessBox(true);
 
-        // Fetch updated data
-        const fetchUpdatedRequests = async () => {
+        // Refresh data
+        const refresh = async () => {
           try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/get-po-data`);
-            if (!response.ok) {
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const data = await response.json();
-            if (data && Array.isArray(data.data)) {
-              setRequests(data.data);
-            } else {
-              throw new Error('API data is not in the expected format');
-            }
-          } catch (error) {
-            console.error('Error fetching updated requests:', error);
-            setError('Failed to fetch updated data');
-            setRequests([]);
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/get-po-data`);
+            if (!res.ok) throw new Error('Network error');
+            const data = await res.json();
+            if (data && Array.isArray(data.data)) setRequests(data.data);
+          } catch (err) {
+            setError('Failed to refresh');
           } finally {
             setLoading(false);
           }
         };
-        await fetchUpdatedRequests();
+        await refresh();
       }
     } catch (error) {
       console.error('Error generating PO:', error);
@@ -179,29 +158,19 @@ const PO = () => {
     }
   };
 
-  // Share function
   const handleShare = async (url) => {
     if (!url) return;
-
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: 'Purchase Order PDF',
-          text: 'Here is the generated PO PDF.',
-          url: url,
-        });
-        console.log('Shared natively');
+        await navigator.share({ title: 'PO PDF', text: 'Here is the PO.', url });
         return;
-      } catch (err) {
-        console.warn('Native share failed, falling back', err);
-      }
+      } catch (err) { /* fallback */ }
     }
-
     try {
       await navigator.clipboard.writeText(url);
-      alert('PDF URL copied to clipboard!');
+      alert('PDF URL copied!');
     } catch (err) {
-      alert('Could not copy URL. Please copy it manually.');
+      alert('Copy failed. Copy manually.');
     }
   };
 
@@ -216,8 +185,7 @@ const PO = () => {
             setExpectedDeliveryDate('');
             setSelectedItems([]);
             setPdfUrl(null);
-            setDetailsLoading(false);
-            setShowSuccessBox(false); // Reset success box on new create
+            setShowSuccessBox(false);
           }}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
@@ -225,35 +193,25 @@ const PO = () => {
         </button>
       </div>
 
-      {/* Success Box - Shown after successful generation */}
+      {/* Success Box */}
       {showSuccessBox && pdfUrl && (
         <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-2">PO Generated Successfully!</h3>
           <div className="flex items-center space-x-4">
-            <a 
-              href={pdfUrl} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
+            <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
               View PDF
             </a>
-            <button 
-              onClick={() => handleShare(pdfUrl)} 
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
+            <button onClick={() => handleShare(pdfUrl)} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
               Share
             </button>
           </div>
-          <button 
-            onClick={() => setShowSuccessBox(false)} 
-            className="mt-2 text-sm text-gray-600 hover:underline"
-          >
+          <button onClick={() => setShowSuccessBox(false)} className="mt-2 text-sm text-gray-600 hover:underline">
             Close
           </button>
         </div>
       )}
 
+      {/* Main Table */}
       <div className="bg-white border border-gray-300 rounded shadow-sm">
         {loading ? (
           <div className="p-4 text-center text-gray-500">Loading...</div>
@@ -266,102 +224,39 @@ const PO = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100 sticky top-0 z-10">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    PLANNED_7
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    UID
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Req No
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Site Name
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Supervisor
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Material Type
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    SKU Code
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Material Name
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Require Date
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Revised Quantity
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Unit
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Brand/Company
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Indent Number
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Quotation No
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Vendor Name
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Vendor Firm
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Vendor Address
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Vendor Contact
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Vendor GST
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Rate
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    CGST
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    SGST
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    IGST
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Final Rate
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Total Value
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Approval
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Transport Required
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Expected Transport
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Freight Charges
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    Expected Freight
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">
-                    PDF URL 3
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">
-                    PDF URL 5
-                  </th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">PLANNED_7</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">UID</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Req No</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Site Name</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Supervisor</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Material Type</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">SKU Code</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Material Name</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Require Date</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Revised Qty</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Unit</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Brand</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Indent No</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Quotation No</th>
+                  {/* Vendor Name REMOVED */}
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Vendor Firm</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Vendor Address</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Vendor Contact</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Vendor GST</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Rate</th>
+                  {/* Discount REMOVED */}
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">CGST</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">SGST</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">IGST</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Final Rate</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Total Value</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Approval</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Transport</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Exp Transport</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Freight</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">Exp Freight</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-r border-gray-300">PDF 3</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">PDF 5</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -370,35 +265,26 @@ const PO = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.PLANNED_7}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.UID}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Req_No}</td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div title={request.Site_Name}>
-                        {request.Site_Name}
-                      </div>
-                    </td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200" title={request.Site_Name}>{request.Site_Name}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Site_Location}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Material_Type}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.SKU_Code}</td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div title={request.Material_Name}>
-                        {request.Material_Name}
-                      </div>
-                    </td>
+                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200" title={request.Material_Name}>{request.Material_Name}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Require_Date}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.REVISED_QUANTITY_2}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Unit_Name}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request['DECIDED_BRAND/COMPANY_NAME_2']}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.INDENT_NUMBER_3}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.QUOTATION_NO_5}</td>
-                    <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Name_5}</td>
+                    {/* Vendor Name REMOVED */}
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Firm_Name_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <div className="max-w-[120px] truncate" title={request.Vendor_Address_5}>
-                        {request.Vendor_Address_5}
-                      </div>
+                      <div className="max-w-[120px] truncate" title={request.Vendor_Address_5}>{request.Vendor_Address_5}</div>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_Contact_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Vendor_GST_No_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.Rate_5}</td>
+                    {/* Discount REMOVED */}
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.CGST_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.SGST_5}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.IGST_5}</td>
@@ -410,14 +296,10 @@ const PO = () => {
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.FREIGHT_CHARGES}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">{request.EXPECTED_FREIGHT_CHARGES}</td>
                     <td className="px-3 py-2 text-sm text-gray-800 border-r border-gray-200">
-                      <a href={request.PDF_URL_3} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        View
-                      </a>
+                      <a href={request.PDF_URL_3} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View</a>
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-800">
-                      <a href={request.PDF_URL_5} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        View
-                      </a>
+                      <a href={request.PDF_URL_5} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View</a>
                     </td>
                   </tr>
                 ))}
@@ -427,15 +309,12 @@ const PO = () => {
         )}
       </div>
 
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-            >
-              ×
-            </button>
+            <button onClick={() => setShowModal(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">×</button>
+
             {step === 1 && (
               <>
                 <h2 className="text-lg font-semibold mb-4">Select Quotation Number</h2>
@@ -447,17 +326,11 @@ const PO = () => {
                 >
                   <option>-- Select Quotation Number --</option>
                   {uniqueQuotations.map((q) => (
-                    <option key={q} value={q}>
-                      {q}
-                    </option>
+                    <option key={q} value={q}>{q}</option>
                   ))}
                 </select>
                 <div className="flex justify-end">
-                  <button
-                    onClick={handleNext}
-                    disabled={!selectedQuotation}
-                    className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400"
-                  >
+                  <button onClick={handleNext} disabled={!selectedQuotation} className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400">
                     Next
                   </button>
                 </div>
@@ -491,13 +364,14 @@ const PO = () => {
                           <tr className="text-left text-gray-600">
                             <th className="p-1">VENDOR FIRM</th>
                             <th className="p-1">RATE</th>
+                            {/* Discount REMOVED */}
                             <th className="p-1">CGST</th>
                             <th className="p-1">SGST</th>
                             <th className="p-1">IGST</th>
                             <th className="p-1">FINAL RATE</th>
-                            <th className="p-1">TOTAL QUANTITY</th>
+                            <th className="p-1">QTY</th>
                             <th className="p-1">TOTAL VALUE</th>
-                            <th className="p-1">DELIVERY DATE</th>
+                            <th className="p-1">DELIVERY</th>
                             <th className="p-1">TRANSPORT</th>
                           </tr>
                         </thead>
@@ -505,6 +379,7 @@ const PO = () => {
                           <tr className="bg-white">
                             <td className="p-1">{item.Vendor_Firm_Name_5}</td>
                             <td className="p-1">{item.Rate_5}</td>
+                            {/* <td>{item.DISCOUNT_5}%</td> REMOVED */}
                             <td className="p-1">{item.CGST_5}%</td>
                             <td className="p-1">{item.SGST_5}%</td>
                             <td className="p-1">{item.IGST_5}%</td>
@@ -519,19 +394,16 @@ const PO = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500">No details available for this quotation.</p>
+                  <p className="text-gray-500">No details available.</p>
                 )}
 
                 <div className="flex justify-between mt-4">
-                  <button
-                    onClick={() => setStep(1)}
-                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded"
-                  >
+                  <button onClick={() => setStep(1)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded">
                     Previous
                   </button>
                   <button
                     onClick={handleGeneratePO}
-                    disabled={generateLoading || !expectedDeliveryDate || detailsLoading}
+                    disabled={generateLoading || !expectedDeliveryDate}
                     className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400"
                   >
                     {generateLoading ? 'Generating...' : 'Generate PO'}
@@ -547,9 +419,3 @@ const PO = () => {
 };
 
 export default PO;
-
-
-
-
-
-
