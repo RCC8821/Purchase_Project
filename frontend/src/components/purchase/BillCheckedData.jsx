@@ -26,7 +26,7 @@ const BillCheckedData = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/Bill_Checked`);
+        const response = await fetch(`http://localhost:5000/api/Bill_Checked`);
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.statusText}`);
         }
@@ -150,7 +150,7 @@ const BillCheckedData = () => {
           REMARK_14: formData.REMARK_14 || ''
         }))
       };
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/bill_checked_status`, {
+      const response = await fetch(`http://localhost:5000/api/bill_checked_status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,7 +173,7 @@ const BillCheckedData = () => {
       );
 
       // Refetch data to ensure consistency with backend
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/Bill_Checked`)
+      await fetch(`http://localhost:5000/api/Bill_Checked`)
         .then(res => res.json())
         .then(result => {
           if (result.success && Array.isArray(result.data)) {
@@ -232,7 +232,7 @@ const BillCheckedData = () => {
       {data.length === 0 ? (
         <p className="text-gray-500">No data found.</p>
       ) : (
-        <div className="bg-white border border-gray-300 rounded-lg shadow-md overflow-x-auto max-h-[80vh]">
+        <div className="bg-white border border-gray-300 rounded-lg shadow-md overflow-x-auto max-h-[60vh]">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-100 sticky top-0 z-10">
               <tr>

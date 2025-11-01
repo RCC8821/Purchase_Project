@@ -63,55 +63,154 @@ router.get('/Bill_Tally', async (req, res) => {
 
 
 
+// router.post('/bill_tally_entry', async (req, res) => {
+//   const data = req.body;
+
+//   try {
+//     // Fetch the current sheet data
+//     const response = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Billing_FMS!A8:ZZ',
+//     });
+//     let sheetData = response.data.values || [];
+
+//     // Update each row by UID
+//     data.items.forEach((item) => {
+//       const rowIndex = sheetData.findIndex((row) => row[1] && String(row[1]).trim() === item.uid); // Column B (UID)
+//       if (rowIndex !== -1) {
+//         // Map all provided fields to corresponding columns with the same indices as your code
+//         sheetData[rowIndex][49] = data.status16 || ''; // AX - STATUS 16
+//         // sheetData[rowIndex][48] = new Date().toISOString().split('T')[0] || ''; // AY - TIME DELAY 16 (current date, commented out)
+//         sheetData[rowIndex][51] = data.vendorFirmName || ''; // AZ - VENDOR FIRM NAME 16
+//         sheetData[rowIndex][52] = data.billNo || ''; // BA - BILL NO. 16
+//         sheetData[rowIndex][53] = data.billDate || ''; // BB - BILL DATE 16
+//         sheetData[rowIndex][54] = item.amount || ''; // BC - AMOUNT 16
+//         sheetData[rowIndex][55] = item.cgst || ''; // BD - CGST 16 (as received)
+//         sheetData[rowIndex][56] = item.sgstAmt || ''; // BE - SGST 16 (as received)
+//         sheetData[rowIndex][57] = item.igst || ''; // BF - IGST 16 (as received)
+//         sheetData[rowIndex][58] = data.transportLoading || ''; // New: Transport Loading at index 58
+//         sheetData[rowIndex][59] = data.transportWOGST || ''; // BG - Transport Loading & Unloading Charges Without GST 16 (shifted to 59)
+//         sheetData[rowIndex][61] = data.remark || ''; // BH - REMARK 16
+//         sheetData[rowIndex][60] = item.total || ''; // Row index 60 for TOTAL 16 (as received from frontend)
+
+//         // Update ACTUAL 16 (column AW) to indicate data entry (commented out as per your code)
+//         // sheetData[rowIndex][48] = 'Completed'; // AW - ACTUAL 16
+//       } else {
+//         console.warn(`UID ${item.uid} not found in sheet data.`);
+//       }
+//     });
+
+//     // Write updated data back to the sheet
+//     await sheets.spreadsheets.values.update({
+//       spreadsheetId,
+//       range: 'Billing_FMS!A8:ZZ',
+//       valueInputOption: 'RAW',
+//       resource: { values: sheetData },
+//     });
+
+//     res.json({ success: true, message: 'Data updated successfully' });
+//   } catch (error) {
+//     console.error('Error updating bill tally entry:', error);
+//     res.status(500).json({ error: 'Failed to update bill tally entry' });
+//   }
+// });
+
+
+
+
+
 router.post('/bill_tally_entry', async (req, res) => {
   const data = req.body;
 
+  if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+    return res.status(400).json({ success: false, message: 'Invalid or empty items array' });
+  }
+
   try {
-    // Fetch the current sheet data
+    // Step 1: Fetch only UID column + required columns to find rows
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Billing_FMS!A8:ZZ',
+      range: 'Billing_FMS!A8:BH', // Up to BH (column 61) to cover all needed columns
     });
-    let sheetData = response.data.values || [];
 
-    // Update each row by UID
+    const rows = response.data.values || [];
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'No data found in sheet' });
+    }
+
+    // Prepare batch update requests
+    const requests = [];
+
+    // Column mapping (A=0, B=1, ..., AX=49, AZ=51, etc.)
+    const COL = {
+      STATUS_16: 'AX',     // index 49
+      VENDOR_FIRM: 'AZ',   // 51
+      BILL_NO: 'BA',       // 52
+      BILL_DATE: 'BB',     // 53
+      AMOUNT: 'BC',        // 54
+      CGST: 'BD',          // 55
+      SGST: 'BE',          // 56
+      IGST: 'BF',          // 57
+      TRANSPORT_LOADING: 'BG', // 58
+      TRANSPORT_WO_GST: 'BH',  // 59 → shifted
+      TOTAL: 'BI',         // 60
+      REMARK: 'BJ',        // 61
+      // ACTUAL_16: 'AW',  // 48 → if needed later
+    };
+
     data.items.forEach((item) => {
-      const rowIndex = sheetData.findIndex((row) => row[1] && String(row[1]).trim() === item.uid); // Column B (UID)
-      if (rowIndex !== -1) {
-        // Map all provided fields to corresponding columns with the same indices as your code
-        sheetData[rowIndex][49] = data.status16 || ''; // AX - STATUS 16
-        // sheetData[rowIndex][48] = new Date().toISOString().split('T')[0] || ''; // AY - TIME DELAY 16 (current date, commented out)
-        sheetData[rowIndex][51] = data.vendorFirmName || ''; // AZ - VENDOR FIRM NAME 16
-        sheetData[rowIndex][52] = data.billNo || ''; // BA - BILL NO. 16
-        sheetData[rowIndex][53] = data.billDate || ''; // BB - BILL DATE 16
-        sheetData[rowIndex][54] = item.amount || ''; // BC - AMOUNT 16
-        sheetData[rowIndex][55] = item.cgst || ''; // BD - CGST 16 (as received)
-        sheetData[rowIndex][56] = item.sgstAmt || ''; // BE - SGST 16 (as received)
-        sheetData[rowIndex][57] = item.igst || ''; // BF - IGST 16 (as received)
-        sheetData[rowIndex][58] = data.transportLoading || ''; // New: Transport Loading at index 58
-        sheetData[rowIndex][59] = data.transportWOGST || ''; // BG - Transport Loading & Unloading Charges Without GST 16 (shifted to 59)
-        sheetData[rowIndex][61] = data.remark || ''; // BH - REMARK 16
-        sheetData[rowIndex][60] = item.total || ''; // Row index 60 for TOTAL 16 (as received from frontend)
+      const rowIndex = rows.findIndex(
+        (row) => row[1] && String(row[1]).trim() === String(item.uid).trim()
+      );
 
-        // Update ACTUAL 16 (column AW) to indicate data entry (commented out as per your code)
-        // sheetData[rowIndex][48] = 'Completed'; // AW - ACTUAL 16
+      if (rowIndex !== -1) {
+        const rowNumber = 8 + rowIndex;
+
+        // Only update if value exists
+        const addUpdate = (colLetter, value) => {
+          if (value !== undefined && value !== null) {
+            requests.push({
+              range: `Billing_FMS!${colLetter}${rowNumber}`,
+              values: [[value]],
+            });
+          }
+        };
+
+        addUpdate(COL.STATUS_16, data.status16);
+        addUpdate(COL.VENDOR_FIRM, data.vendorFirmName);
+        addUpdate(COL.BILL_NO, data.billNo);
+        addUpdate(COL.BILL_DATE, data.billDate);
+        addUpdate(COL.AMOUNT, item.amount);
+        addUpdate(COL.CGST, item.cgst);
+        addUpdate(COL.SGST, item.sgstAmt);
+        addUpdate(COL.IGST, item.igst);
+        addUpdate(COL.TRANSPORT_LOADING, data.transportLoading);
+        addUpdate(COL.TRANSPORT_WO_GST, data.transportWOGST);
+        addUpdate(COL.TOTAL, item.total);
+        addUpdate(COL.REMARK, data.remark);
+
+        // Optional: Add ACTUAL_16 = 'Completed'
+        // addUpdate('AW', 'Completed');
       } else {
-        console.warn(`UID ${item.uid} not found in sheet data.`);
+        console.warn(`UID ${item.uid} not found in sheet.`);
       }
     });
 
-    // Write updated data back to the sheet
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: 'Billing_FMS!A8:ZZ',
-      valueInputOption: 'RAW',
-      resource: { values: sheetData },
-    });
+    // Step 2: Batch update only changed cells
+    if (requests.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        resource: {
+          valueInputOption: 'RAW',
+          data: requests,
+        },
+      });
+    }
 
-    res.json({ success: true, message: 'Data updated successfully' });
+    res.json({ success: true, message: 'Bill tally entry updated successfully' });
   } catch (error) {
     console.error('Error updating bill tally entry:', error);
-    res.status(500).json({ error: 'Failed to update bill tally entry' });
+    res.status(500).json({ success: false, message: 'Failed to update bill tally entry' });
   }
 });
 

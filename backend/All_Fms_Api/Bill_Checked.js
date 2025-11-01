@@ -55,6 +55,49 @@ router.get('/Bill_Checked', async (req, res) => {
 });
 
 
+// router.post('/bill_checked_status', async (req, res) => {
+//   const { updates } = req.body;
+
+//   if (!Array.isArray(updates) || updates.length === 0) {
+//     return res.status(400).json({ success: false, message: 'Invalid or empty updates array' });
+//   }
+
+//   try {
+//     // Fetch the current sheet data
+//     const response = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Billing_FMS!A8:ZZ',
+//     });
+//     let sheetData = response.data.values || [];
+
+//     // Update each row by UID
+//     updates.forEach(({ uid, STATUS_14, REMARK_14 }) => {
+//       const rowIndex = sheetData.findIndex((row) => row[1] && String(row[1]).trim() === uid); // Column B (UID)
+//       if (rowIndex !== -1) {
+//         sheetData[rowIndex][45] = REMARK_14 || ''; // AU - REMARK_14 (index 46)
+//         sheetData[rowIndex][43] = STATUS_14 || ''; // AV - STATUS_14 (index 47)
+//       } else {
+//         console.warn(`UID ${uid} not found in sheet data.`);
+//       }
+//     });
+
+//     // Write updated data back to the sheet
+//     await sheets.spreadsheets.values.update({
+//       spreadsheetId,
+//       range: 'Billing_FMS!A8:ZZ',
+//       valueInputOption: 'RAW',
+//       resource: { values: sheetData },
+//     });
+
+//     res.json({ success: true, message: 'STATUS_14 and REMARK_14 updated successfully' });
+//   } catch (error) {
+//     console.error('Error updating bill checked status:', error);
+//     res.status(500).json({ success: false, message: 'Failed to update bill checked status' });
+//   }
+// });
+
+
+
 router.post('/bill_checked_status', async (req, res) => {
   const { updates } = req.body;
 
@@ -63,31 +106,58 @@ router.post('/bill_checked_status', async (req, res) => {
   }
 
   try {
-    // Fetch the current sheet data
+    // Step 1: Fetch only necessary columns: UID (B), STATUS_14 (AS?), REMARK_14 (AU?)
+    // Let's assume:
+    // Column B = UID (index 1)
+    // Column AS = STATUS_14 (index 44? wait — check your sheet)
+    // Column AU = REMARK_14 (index 46)
+
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Billing_FMS!A8:ZZ',
+      range: 'Billing_FMS!A8:AU', // Only up to AU to reduce data
     });
-    let sheetData = response.data.values || [];
 
-    // Update each row by UID
+    const rows = response.data.values || [];
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'No data found in sheet' });
+    }
+
+    // Prepare batch update requests
+    const requests = [];
+
     updates.forEach(({ uid, STATUS_14, REMARK_14 }) => {
-      const rowIndex = sheetData.findIndex((row) => row[1] && String(row[1]).trim() === uid); // Column B (UID)
+      const rowIndex = rows.findIndex(row => row[1] && String(row[1]).trim() === String(uid).trim());
       if (rowIndex !== -1) {
-        sheetData[rowIndex][45] = REMARK_14 || ''; // AU - REMARK_14 (index 46)
-        sheetData[rowIndex][43] = STATUS_14 || ''; // AV - STATUS_14 (index 47)
+        const rowNumber = 8 + rowIndex; // Actual row number in sheet
+
+        // Only push updates if value is provided
+        if (STATUS_14 !== undefined) {
+          requests.push({
+            range: `Billing_FMS!AR${rowNumber}`, // Adjust column if needed
+            values: [[STATUS_14]],
+          });
+        }
+        if (REMARK_14 !== undefined) {
+          requests.push({
+            range: `Billing_FMS!AT${rowNumber}`, // Adjust column if needed
+            values: [[REMARK_14]],
+          });
+        }
       } else {
-        console.warn(`UID ${uid} not found in sheet data.`);
+        console.warn(`UID ${uid} not found in sheet.`);
       }
     });
 
-    // Write updated data back to the sheet
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: 'Billing_FMS!A8:ZZ',
-      valueInputOption: 'RAW',
-      resource: { values: sheetData },
-    });
+    // Step 2: If there are updates, send batchUpdate
+    if (requests.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        resource: {
+          valueInputOption: 'RAW',
+          data: requests,
+        },
+      });
+    }
 
     res.json({ success: true, message: 'STATUS_14 and REMARK_14 updated successfully' });
   } catch (error) {
@@ -95,5 +165,6 @@ router.post('/bill_checked_status', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update bill checked status' });
   }
 });
+
 
 module.exports = router;

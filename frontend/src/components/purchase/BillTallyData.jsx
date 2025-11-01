@@ -31,7 +31,7 @@ const BillTallyData = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/Bill_Tally`);
+        const response = await fetch(`http://localhost:5000/api/Bill_Tally`);
         if (!response.ok) throw new Error('Failed to fetch data');
         const result = await response.json();
 
@@ -209,7 +209,7 @@ const BillTallyData = () => {
     delete submitData.netAmount;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/bill_tally_entry`, { // Updated API endpoint
+      const response = await fetch(`http://localhost:5000/api/bill_tally_entry`, { // Updated API endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

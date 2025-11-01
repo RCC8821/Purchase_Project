@@ -196,18 +196,18 @@ const Dashboard = () => {
       path: null, // No direct navigation, acts as dropdown trigger
       pages: getPurchasePages(),
     },
-    {
-      id: 'billing-fms',
-      name: 'Billing FMS',
-      icon: DollarSign,
-      path: '/dashboard/invoice-generation',
-      pages: [
-        { id: 'invoice-generation', name: 'Invoice Generation', icon: Receipt, component: BillingFMS, path: '/dashboard/invoice-generation' },
-        { id: 'payment-tracking', name: 'Payment Tracking', icon: CreditCard, component: BillingFMS, path: '/dashboard/payment-tracking' },
-        { id: 'customer-billing', name: 'Customer Billing', icon: User, component: BillingFMS, path: '/dashboard/customer-billing' },
-        { id: 'financial-reports', name: 'Financial Reports', icon: FileText, component: BillingFMS, path: '/dashboard/financial-reports' },
-      ],
-    },
+    // {
+    //   id: 'billing-fms',
+    //   name: 'Billing FMS',
+    //   icon: DollarSign,
+    //   path: '/dashboard/invoice-generation',
+    //   pages: [
+    //     { id: 'invoice-generation', name: 'Invoice Generation', icon: Receipt, component: BillingFMS, path: '/dashboard/invoice-generation' },
+    //     { id: 'payment-tracking', name: 'Payment Tracking', icon: CreditCard, component: BillingFMS, path: '/dashboard/payment-tracking' },
+    //     { id: 'customer-billing', name: 'Customer Billing', icon: User, component: BillingFMS, path: '/dashboard/customer-billing' },
+    //     { id: 'financial-reports', name: 'Financial Reports', icon: FileText, component: BillingFMS, path: '/dashboard/financial-reports' },
+    //   ],
+    // },
     {
   id: 'Sheet-Link',
   name: 'Sheet Link',
