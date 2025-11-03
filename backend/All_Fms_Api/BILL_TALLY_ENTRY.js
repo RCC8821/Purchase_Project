@@ -63,59 +63,117 @@ router.get('/Bill_Tally', async (req, res) => {
 
 
 
+
+
 // router.post('/bill_tally_entry', async (req, res) => {
 //   const data = req.body;
 
+//   if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+//     return res.status(400).json({ success: false, message: 'Invalid or empty items array' });
+//   }
+
 //   try {
-//     // Fetch the current sheet data
 //     const response = await sheets.spreadsheets.values.get({
 //       spreadsheetId,
-//       range: 'Billing_FMS!A8:ZZ',
+//       range: 'Billing_FMS!A8:BM',
 //     });
-//     let sheetData = response.data.values || [];
 
-//     // Update each row by UID
+//     const rows = response.data.values || [];
+//     if (rows.length === 0) {
+//       return res.status(404).json({ success: false, message: 'No data found in sheet' });
+//     }
+
+//     const requests = [];
+
+//     const COL = {
+//       STATUS_16: 'AX',
+//       VENDOR_FIRM: 'AZ',
+//       BILL_NO: 'BA',
+//       BILL_DATE: 'BB',
+//       AMOUNT: 'BC',
+//       GST_PERCENT: 'BD',
+//       IGST_PERCENT: 'BE',
+//       CGST: 'BF',      // ← Amount
+//       SGST: 'BG',      // ← Amount
+//       IGST: 'BH',      // ← Amount
+//       TOTAL: 'BI',
+//       TRANSPORT_WO_GST: 'BJ',
+//       NET_TRANSPORT: 'BK',
+//       GRAND_TOTAL: 'BL',
+//       REMARK: 'BM',
+//     };
+
+//     const transportBase = parseFloat(data.transportWOGST) || 0;
+//     const gstRate = parseFloat(data.gstRate) || 0;
+//     const netTransport = (transportBase * (1 + gstRate / 100)).toFixed(2);
+//     const grandTotal = data.netAmount || '0.00';
+
 //     data.items.forEach((item) => {
-//       const rowIndex = sheetData.findIndex((row) => row[1] && String(row[1]).trim() === item.uid); // Column B (UID)
-//       if (rowIndex !== -1) {
-//         // Map all provided fields to corresponding columns with the same indices as your code
-//         sheetData[rowIndex][49] = data.status16 || ''; // AX - STATUS 16
-//         // sheetData[rowIndex][48] = new Date().toISOString().split('T')[0] || ''; // AY - TIME DELAY 16 (current date, commented out)
-//         sheetData[rowIndex][51] = data.vendorFirmName || ''; // AZ - VENDOR FIRM NAME 16
-//         sheetData[rowIndex][52] = data.billNo || ''; // BA - BILL NO. 16
-//         sheetData[rowIndex][53] = data.billDate || ''; // BB - BILL DATE 16
-//         sheetData[rowIndex][54] = item.amount || ''; // BC - AMOUNT 16
-//         sheetData[rowIndex][55] = item.cgst || ''; // BD - CGST 16 (as received)
-//         sheetData[rowIndex][56] = item.sgstAmt || ''; // BE - SGST 16 (as received)
-//         sheetData[rowIndex][57] = item.igst || ''; // BF - IGST 16 (as received)
-//         sheetData[rowIndex][58] = data.transportLoading || ''; // New: Transport Loading at index 58
-//         sheetData[rowIndex][59] = data.transportWOGST || ''; // BG - Transport Loading & Unloading Charges Without GST 16 (shifted to 59)
-//         sheetData[rowIndex][61] = data.remark || ''; // BH - REMARK 16
-//         sheetData[rowIndex][60] = item.total || ''; // Row index 60 for TOTAL 16 (as received from frontend)
+//       const rowIndex = rows.findIndex(
+//         (row) => row[1] && String(row[1]).trim() === String(item.uid).trim()
+//       );
 
-//         // Update ACTUAL 16 (column AW) to indicate data entry (commented out as per your code)
-//         // sheetData[rowIndex][48] = 'Completed'; // AW - ACTUAL 16
+//       if (rowIndex !== -1) {
+//         const rowNumber = 8 + rowIndex;
+
+//         const addUpdate = (colLetter, value) => {
+//           if (value !== undefined && value !== null && value !== '') {
+//             requests.push({
+//               range: `Billing_FMS!${colLetter}${rowNumber}`,
+//               values: [[value]],
+//             });
+//           }
+//         };
+
+//         // Common
+//         addUpdate(COL.STATUS_16, data.status16);
+//         addUpdate(COL.VENDOR_FIRM, data.vendorFirmName);
+//         addUpdate(COL.BILL_NO, data.billNo);
+//         addUpdate(COL.BILL_DATE, data.billDate);
+//         addUpdate(COL.AMOUNT, item.amount);
+//         addUpdate(COL.TOTAL, item.total);
+//         addUpdate(COL.REMARK, data.remark);
+
+//         // GST % (BD)
+//         addUpdate(COL.GST_PERCENT, item.gstPercent);
+
+//         // IGST % (BE)
+//         addUpdate(COL.IGST_PERCENT, item.igst !== '0' ? item.igst : '0');
+
+//         // CGST Amount (BF)
+//         addUpdate(COL.CGST, item.cgstAmt);
+
+//         // SGST Amount (BG)
+//         addUpdate(COL.SGST, item.sgstAmt);
+
+//         // IGST Amount (BH)
+//         addUpdate(COL.IGST, item.igstAmt);
+
+//         // Transport
+//         addUpdate(COL.TRANSPORT_WO_GST, data.transportWOGST);
+//         addUpdate(COL.NET_TRANSPORT, netTransport);
+//         addUpdate(COL.GRAND_TOTAL, grandTotal);
 //       } else {
-//         console.warn(`UID ${item.uid} not found in sheet data.`);
+//         console.warn(`UID ${item.uid} not found in sheet.`);
 //       }
 //     });
 
-//     // Write updated data back to the sheet
-//     await sheets.spreadsheets.values.update({
-//       spreadsheetId,
-//       range: 'Billing_FMS!A8:ZZ',
-//       valueInputOption: 'RAW',
-//       resource: { values: sheetData },
-//     });
+//     if (requests.length > 0) {
+//       await sheets.spreadsheets.values.batchUpdate({
+//         spreadsheetId,
+//         resource: {
+//           valueInputOption: 'RAW',
+//           data: requests,
+//         },
+//       });
+//     }
 
-//     res.json({ success: true, message: 'Data updated successfully' });
+//     res.json({ success: true, message: 'Bill tally entry updated successfully' });
 //   } catch (error) {
 //     console.error('Error updating bill tally entry:', error);
-//     res.status(500).json({ error: 'Failed to update bill tally entry' });
+//     res.status(500).json({ success: false, message: 'Failed to update bill tally entry' });
 //   }
 // });
-
-
 
 
 
@@ -127,10 +185,9 @@ router.post('/bill_tally_entry', async (req, res) => {
   }
 
   try {
-    // Step 1: Fetch only UID column + required columns to find rows
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Billing_FMS!A8:BH', // Up to BH (column 61) to cover all needed columns
+      range: 'Billing_FMS!A8:BM',
     });
 
     const rows = response.data.values || [];
@@ -138,25 +195,33 @@ router.post('/bill_tally_entry', async (req, res) => {
       return res.status(404).json({ success: false, message: 'No data found in sheet' });
     }
 
-    // Prepare batch update requests
     const requests = [];
 
-    // Column mapping (A=0, B=1, ..., AX=49, AZ=51, etc.)
     const COL = {
-      STATUS_16: 'AX',     // index 49
-      VENDOR_FIRM: 'AZ',   // 51
-      BILL_NO: 'BA',       // 52
-      BILL_DATE: 'BB',     // 53
-      AMOUNT: 'BC',        // 54
-      CGST: 'BD',          // 55
-      SGST: 'BE',          // 56
-      IGST: 'BF',          // 57
-      TRANSPORT_LOADING: 'BG', // 58
-      TRANSPORT_WO_GST: 'BH',  // 59 → shifted
-      TOTAL: 'BI',         // 60
-      REMARK: 'BJ',        // 61
-      // ACTUAL_16: 'AW',  // 48 → if needed later
+      STATUS_16: 'AX',
+      VENDOR_FIRM: 'AZ',
+      BILL_NO: 'BA',
+      BILL_DATE: 'BB',
+      AMOUNT: 'BC',
+      GST_PERCENT: 'BD',
+      IGST_PERCENT: 'BE',
+      CGST: 'BF',
+      SGST: 'BG',
+      IGST: 'BH',
+      TOTAL: 'BI',
+      TRANSPORT_WO_GST: 'BJ',
+      NET_TRANSPORT: 'BK',
+      GRAND_TOTAL: 'BL',
+      REMARK: 'BM',
     };
+
+    const transportBase = parseFloat(data.transportWOGST) || 0;
+    const gstRate = parseFloat(data.gstRate) || 0;
+    const netTransport = (transportBase * (1 + gstRate / 100)).toFixed(2);
+    const grandTotal = data.netAmount || '0.00';
+
+    // Store row numbers for all valid UIDs
+    const itemRows = [];
 
     data.items.forEach((item) => {
       const rowIndex = rows.findIndex(
@@ -165,10 +230,10 @@ router.post('/bill_tally_entry', async (req, res) => {
 
       if (rowIndex !== -1) {
         const rowNumber = 8 + rowIndex;
+        itemRows.push({ item, rowNumber });
 
-        // Only update if value exists
         const addUpdate = (colLetter, value) => {
-          if (value !== undefined && value !== null) {
+          if (value !== undefined && value !== null && value !== '') {
             requests.push({
               range: `Billing_FMS!${colLetter}${rowNumber}`,
               values: [[value]],
@@ -176,27 +241,57 @@ router.post('/bill_tally_entry', async (req, res) => {
           }
         };
 
+        // Common fields for ALL rows
         addUpdate(COL.STATUS_16, data.status16);
         addUpdate(COL.VENDOR_FIRM, data.vendorFirmName);
         addUpdate(COL.BILL_NO, data.billNo);
         addUpdate(COL.BILL_DATE, data.billDate);
         addUpdate(COL.AMOUNT, item.amount);
-        addUpdate(COL.CGST, item.cgst);
-        addUpdate(COL.SGST, item.sgstAmt);
-        addUpdate(COL.IGST, item.igst);
-        addUpdate(COL.TRANSPORT_LOADING, data.transportLoading);
-        addUpdate(COL.TRANSPORT_WO_GST, data.transportWOGST);
         addUpdate(COL.TOTAL, item.total);
         addUpdate(COL.REMARK, data.remark);
 
-        // Optional: Add ACTUAL_16 = 'Completed'
-        // addUpdate('AW', 'Completed');
+        // GST
+        addUpdate(COL.GST_PERCENT, item.gstPercent);
+        addUpdate(COL.IGST_PERCENT, item.igst !== '0' ? item.igst : '0');
+        addUpdate(COL.CGST, item.cgstAmt);
+        addUpdate(COL.SGST, item.sgstAmt);
+        addUpdate(COL.IGST, item.igstAmt);
+
+        // Transport fields: ONLY in last row, others get '-'
+        // We'll handle BJ, BK, BL later
       } else {
         console.warn(`UID ${item.uid} not found in sheet.`);
       }
     });
 
-    // Step 2: Batch update only changed cells
+    // If no valid rows, exit
+    if (itemRows.length === 0) {
+      return res.status(400).json({ success: false, message: 'No matching UIDs found in sheet' });
+    }
+
+    // Find the LAST row (highest rowNumber)
+    const lastRow = itemRows.reduce((max, curr) => curr.rowNumber > max.rowNumber ? curr : max);
+
+    // Now update BJ, BK, BL
+    itemRows.forEach(({ rowNumber }) => {
+      const isLastRow = rowNumber === lastRow.rowNumber;
+
+      // Transport fields
+      requests.push({
+        range: `Billing_FMS!${COL.TRANSPORT_WO_GST}${rowNumber}`,
+        values: [[isLastRow ? data.transportWOGST : '-']],
+      });
+      requests.push({
+        range: `Billing_FMS!${COL.NET_TRANSPORT}${rowNumber}`,
+        values: [[isLastRow ? netTransport : '-']],
+      });
+      requests.push({
+        range: `Billing_FMS!${COL.GRAND_TOTAL}${rowNumber}`,
+        values: [[isLastRow ? grandTotal : '-']],
+      });
+    });
+
+    // Execute batch update
     if (requests.length > 0) {
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId,
@@ -213,5 +308,8 @@ router.post('/bill_tally_entry', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update bill tally entry' });
   }
 });
+
+
+
 
 module.exports = router;
