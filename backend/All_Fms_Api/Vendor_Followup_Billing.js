@@ -49,57 +49,77 @@ const router = express.Router();
 //   }
 // });
 
-
 router.get('/vendor-FollowUp-Billing', async (req, res) => {
   try {
-    // Fetch data from Purchase_FMS sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Billing_FMS!A8:CE', // Range from A8 to CE
+      range: 'Billing_FMS!A9:CE',
     });
 
     let data = response.data.values || [];
+    console.log('Total data rows:', data.length);
 
-    // Filter and transform data
+    let totalMatches = 0;
+
     const filteredData = data
-      .filter(row => {
-        const planned12 = (row[27] || '').toString().trim();     // CF - PLANNED 12
-        const status12 = (row[29] || '').toString().trim();      // CH - STATUS 12
+      .map((row, idx) => {
+        const padded = Array(32).fill('');
+        row.forEach((cell, i) => {
+          if (i < 32) padded[i] = cell || '';
+        });
 
-        // Condition: PLANNED 12 filled AND STATUS 12 is exactly "Hold"
-        return planned12 !== '' && status12 === 'Hold';
+        const planned12 = String(padded[27] || '').trim();     // CF → index 27
+        const status12 = String(padded[29] || '').trim();      // CH → index 29 (STATUS 12)
+
+        return { row: padded, planned12, status12, originalIndex: idx + 9 };
       })
-      .map(row => ({
-        UID: row[1] || '',                    // B
-        siteName: row[3] || '',               // D
-        supervisorName: row[4] || '',         // E
-        materialName: row[7] || '',           // H
-        revisedQuantity: row[25] || '',       // Z (REVISED QTY)
-        finalReceivedQuantity: row[26] || '', // AA (FINAL RECEIVED QTY)
-        unitName: row[9] || '',               // J
-        vendorFirmName: row[23] || '',        // X (Vendor Firm Name)
-        poNumber: row[16] || '',              // Q (PO Number)
-        planned12: row[27] || '',             // CF
-        status12: row[29] || '',              // CH
-        followUpCount12: row[30] || '',       // CI
-        remark12: row[32] || '',              // CK (assuming skip CJ if needed)
-        vendorContact: row[24] || '',         // Y (next to Vendor Firm Name)
+      .filter(item => {
+        const { planned12, status12 } = item;
+
+        const hasPlanned = planned12 !== '';
+        const notReceived = !status12.toLowerCase().includes('received');
+
+        const match = hasPlanned && notReceived;
+
+        if (match) {
+          totalMatches++;
+          console.log(`MATCH #${totalMatches} (Row ${item.originalIndex}): PLANNED12="${item.planned12}", STATUS12="${item.status12}"`);
+        }
+
+        return match;
+      })
+      .map(item => ({
+        UID: item.row[1] || '',
+        siteName: item.row[3] || '',
+        supervisorName: item.row[4] || '',
+        materialName: item.row[7] || '',
+        revisedQuantity: item.row[25] || '',
+        finalReceivedQuantity: item.row[26] || '',
+        unitName: item.row[9] || '',
+        vendorFirmName: item.row[23] || '',
+        poNumber: item.row[16] || '',
+        planned12: item.planned12,
+        status12: item.status12,           // SIRF YEHI DIKHEGA
+        followUpCount12: item.row[30] || '',
+        remark12: item.row[32] || '',
+        vendorContact: item.row[24] || '',
       }));
+
+    console.log('TOTAL MATCHES:', totalMatches);
 
     res.json({
       success: true,
       data: filteredData
     });
   } catch (error) {
-    console.error('Error fetching Vendor-FollowUp-Billing data:', error);
-    res.status(500).json({ 
+    console.error('Error:', error.message);
+    res.status(500).json({
       success: false,
-      error: 'Failed to fetch Vendor-FollowUp-Billing data' 
+      error: 'Failed',
+      details: error.message
     });
   }
 });
-
-
 
 router.post('/update-followup-Billing', async (req, res) => {
   try {
