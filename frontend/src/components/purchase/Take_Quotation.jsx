@@ -2739,9 +2739,9 @@ const Take_Quotation = () => {
                   </div>
                 )}  */} 
 
-
-                {currentStep === 3 && (
+{currentStep === 3 && (
   <div className="space-y-6">
+    {/* Step Header */}
     <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
       <h5 className="font-semibold text-purple-800 mb-2">
         Step 3: Add Vendors and Quotation Details
@@ -2750,23 +2750,22 @@ const Take_Quotation = () => {
         Add vendor information and their associated materials for quotation.
       </p>
     </div>
+
+    {/* Main Vendors Container */}
     <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-      <div className="flex justify-between items-center mb-6">
+      {/* Section Title */}
+      <div className="mb-6">
         <h5 className="text-lg font-semibold text-gray-800">Vendors</h5>
-        <button
-          onClick={addVendor}
-          className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-          disabled={isSaving}
-        >
-          Add Vendor
-        </button>
       </div>
+
+      {/* Scrollable Vendors List */}
       <div className="space-y-6 max-h-[600px] overflow-y-auto">
         {vendors.map((vendor, vIndex) => (
           <div
             key={vIndex}
             className="bg-gray-50 border border-gray-200 rounded-xl p-6 relative shadow-sm"
           >
+            {/* Vendor Header */}
             <div className="flex justify-between items-center mb-4">
               <h6 className="text-md font-semibold text-blue-800">
                 Vendor {vIndex + 1}
@@ -2782,6 +2781,7 @@ const Take_Quotation = () => {
 
             {/* Vendor Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Vendor Firm */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Vendor Firm <span className="text-red-500">*</span>
@@ -2804,6 +2804,8 @@ const Take_Quotation = () => {
                   ))}
                 </select>
               </div>
+
+              {/* Vendor Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Vendor Name
@@ -2818,6 +2820,8 @@ const Take_Quotation = () => {
                   disabled={isSaving}
                 />
               </div>
+
+              {/* GST Number */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   GST Number
@@ -2832,6 +2836,8 @@ const Take_Quotation = () => {
                   disabled={isSaving}
                 />
               </div>
+
+              {/* Contact Number */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Contact Number
@@ -2847,6 +2853,8 @@ const Take_Quotation = () => {
                 />
               </div>
             </div>
+
+            {/* Address */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Address
@@ -2862,7 +2870,10 @@ const Take_Quotation = () => {
                 disabled={isSaving}
               />
             </div>
+
+            {/* Additional Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Delivery Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Delivery Expected Date <span className="text-red-500">*</span>
@@ -2879,6 +2890,8 @@ const Take_Quotation = () => {
                   disabled={isSaving}
                 />
               </div>
+
+              {/* Bill Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Bill Type <span className="text-red-500">*</span>
@@ -2899,6 +2912,8 @@ const Take_Quotation = () => {
                   <option>Cash Bill</option>
                 </select>
               </div>
+
+              {/* Payment Terms */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Payment Terms <span className="text-red-500">*</span>
@@ -2918,6 +2933,8 @@ const Take_Quotation = () => {
                   <option>Advance</option>
                 </select>
               </div>
+
+              {/* Credit in Days */}
               {vendor.paymentTerms === "Credit" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2937,6 +2954,8 @@ const Take_Quotation = () => {
                   />
                 </div>
               )}
+
+              {/* Transport Required */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Transport Required <span className="text-red-500">*</span>
@@ -2956,6 +2975,8 @@ const Take_Quotation = () => {
                   <option>No</option>
                 </select>
               </div>
+
+              {/* Expected Transport Charges */}
               {vendor.transportRequired === "Yes" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2965,11 +2986,7 @@ const Take_Quotation = () => {
                     type="number"
                     value={vendor.expectedTransportCharges}
                     onChange={(e) =>
-                      handleVendorChange(
-                        vIndex,
-                        "expectedTransportCharges",
-                        e.target.value
-                      )
+                      handleVendorChange(vIndex, "expectedTransportCharges", e.target.value)
                     }
                     className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                       !vendor.expectedTransportCharges ? "border-red-300" : ""
@@ -2979,6 +2996,8 @@ const Take_Quotation = () => {
                   />
                 </div>
               )}
+
+              {/* Freight Charges */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Freight Charges <span className="text-red-500">*</span>
@@ -2998,6 +3017,8 @@ const Take_Quotation = () => {
                   <option>No</option>
                 </select>
               </div>
+
+              {/* Expected Freight Charges */}
               {vendor.freightCharges === "Yes" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -3007,11 +3028,7 @@ const Take_Quotation = () => {
                     type="number"
                     value={vendor.expectedFreightCharges}
                     onChange={(e) =>
-                      handleVendorChange(
-                        vIndex,
-                        "expectedFreightCharges",
-                        e.target.value
-                      )
+                      handleVendorChange(vIndex, "expectedFreightCharges", e.target.value)
                     }
                     className={`w-full p-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                       !vendor.expectedFreightCharges ? "border-red-300" : ""
@@ -3028,6 +3045,7 @@ const Take_Quotation = () => {
               <h6 className="text-md font-semibold text-indigo-800 mb-4">
                 Materials
               </h6>
+
               <div className="space-y-4">
                 {vendor.materials.map((material, mIndex) => (
                   <div
@@ -3046,8 +3064,9 @@ const Take_Quotation = () => {
                         Remove
                       </button>
                     </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      {/* MATERIAL SELECT BY UID */}
+                      {/* Material Select */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Material (Qty + UID) <span className="text-red-500">*</span>
@@ -3072,6 +3091,8 @@ const Take_Quotation = () => {
                             ))}
                         </select>
                       </div>
+
+                      {/* Rate */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Rate <span className="text-red-500">*</span>
@@ -3089,6 +3110,8 @@ const Take_Quotation = () => {
                           disabled={isSaving}
                         />
                       </div>
+
+                      {/* Revised Quantity */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Revised Quantity
@@ -3100,6 +3123,8 @@ const Take_Quotation = () => {
                           className="w-full p-2 border-2 border-gray-200 rounded-lg bg-gray-100 font-semibold text-orange-600 text-sm"
                         />
                       </div>
+
+                      {/* Unit */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Unit
@@ -3111,6 +3136,8 @@ const Take_Quotation = () => {
                           className="w-full p-2 border-2 border-gray-200 rounded-lg bg-gray-100 text-sm"
                         />
                       </div>
+
+                      {/* Brand */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Brand
@@ -3122,12 +3149,9 @@ const Take_Quotation = () => {
                           className="w-full p-2 border-2 border-gray-200 rounded-lg bg-gray-100 text-sm"
                         />
                       </div>
-                      {[
-                        "Discount (%)",
-                        "CGST (%)",
-                        "SGST (%)",
-                        "IGST (%)",
-                      ].map((f) => (
+
+                      {/* Tax Fields */}
+                      {["Discount (%)", "CGST (%)", "SGST (%)", "IGST (%)"].map((f) => (
                         <div key={f}>
                           <label className="block text-xs font-medium text-gray-700 mb-1">
                             {f}
@@ -3144,6 +3168,8 @@ const Take_Quotation = () => {
                           />
                         </div>
                       ))}
+
+                      {/* Total After Tax */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Total (After Tax)
@@ -3155,6 +3181,8 @@ const Take_Quotation = () => {
                           className="w-full p-2 border-2 border-gray-200 rounded-lg bg-gray-100 font-semibold text-green-600 text-sm"
                         />
                       </div>
+
+                      {/* Total Value */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Total Value
@@ -3166,6 +3194,8 @@ const Take_Quotation = () => {
                           className="w-full p-2 border-2 border-gray-200 rounded-lg bg-gray-100 font-semibold text-blue-600 text-sm"
                         />
                       </div>
+
+                      {/* Remark */}
                       <div className="md:col-span-2">
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Remark
@@ -3185,7 +3215,7 @@ const Take_Quotation = () => {
                 ))}
               </div>
 
-              {/* ADD MATERIAL BUTTON MOVED TO BOTTOM */}
+              {/* Add Material Button (at bottom of vendor) */}
               <div className="mt-6 flex justify-center">
                 <button
                   onClick={() => addMaterialToVendor(vIndex)}
@@ -3204,10 +3234,32 @@ const Take_Quotation = () => {
             </div>
           </div>
         ))}
+
+        {/* ADD VENDOR BUTTON — MOVED TO BOTTOM */}
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={addVendor}
+            className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-base"
+            disabled={isSaving}
+          >
+            + Add Another Vendor
+          </button>
+        </div>
+
+        {/* Empty State */}
         {vendors.length === 0 && (
-          <p className="text-sm text-gray-500 text-center py-8">
-            No vendors added yet. Click "Add Vendor" to start.
-          </p>
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-500 mb-4">
+              No vendors added yet. Click below to start.
+            </p>
+            <button
+              onClick={addVendor}
+              className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-base"
+              disabled={isSaving}
+            >
+              + Add Vendor
+            </button>
+          </div>
         )}
       </div>
     </div>
