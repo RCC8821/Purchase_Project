@@ -1,4 +1,6 @@
 
+// // ///// main code full working //////////////
+
 // const express = require('express');
 // const { sheets, spreadsheetId, drive } = require('../config/googleSheet');
 // const router = express.Router();
@@ -245,8 +247,6 @@
 
 
 
-
-
 // const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDeliveryDate, poNumber, siteName, siteLocation, supervisorName, supervisorContact, vendorName, vendorAddress, vendorGST, vendorContact, companyLogoBase64 = null) => {
 //   console.log('Current working directory:', process.cwd());
 //   console.log(`Generating PDF: PO ${poNumber}, Quotation ${quotationNo}, Indent ${indentNo}, Items: ${approvedItems.length}, Delivery Date: ${expectedDeliveryDate}`);
@@ -255,14 +255,12 @@
 //     throw new Error('autoTable plugin not loaded');
 //   }
 
-//   // Use helvetica font by default, removing Hindi font support
 //   doc.setFont('helvetica', 'normal');
 
 //   const pageWidth = doc.internal.pageSize.getWidth();
 //   const pageHeight = doc.internal.pageSize.getHeight();
 //   const bottomMargin = 30;
 
-//   // Function to extract only English text up to the first Hindi character or delimiter
 //   const extractEnglish = (text) => {
 //     if (!text) return 'N/A';
 //     const englishOnly = text.split(/[/\p{Script=Devanagari}\p{So}\p{S}]/u)[0].trim();
@@ -303,18 +301,35 @@
 //     doc.setFontSize(7);
 //     doc.text('INFRASTRUCTURES', 18, headerY + 15);
 //   }
+  
+//   // === ADDRESS BLOCK - CORRECTLY POSITIONED ABOVE RED LINE ===
+//   const addressStartY = headerY + 10; // Logo starts at headerY+10 → Address starts here
 
 //   doc.setFontSize(8);
 //   doc.setFont('helvetica', 'bold');
 //   doc.setTextColor(0, 0, 0);
-//   doc.text('R. C. C. Infrastructures', pageWidth - 15, headerY, { align: 'right' });
+//   doc.text('R. C. C. Infrastructures', pageWidth - 15, addressStartY, { align: 'right' });
   
 //   doc.setFontSize(7);
 //   doc.setFont('helvetica', 'normal');
-//   doc.text('310 Saket Nagar, 9B Near Sagar Public School, Bhopal, 462026', pageWidth - 15, headerY + 4, { align: 'right' });
-//   doc.text('Contact: 7869962504', pageWidth - 15, headerY + 8, { align: 'right' });
-//   doc.text('Email: mayank@rccinfrastructure.com', pageWidth - 15, headerY + 12, { align: 'right' });
-//   doc.text('GST: 23ABHFR3130L1ZA', pageWidth - 15, headerY + 16, { align: 'right' });
+//   doc.text('310 Saket Nagar, 9B Near Sagar Public School, Bhopal, 462026', pageWidth - 15, addressStartY + 4, { align: 'right' });
+//   doc.text('Contact: 7869962504', pageWidth - 15, addressStartY + 8, { align: 'right' });
+//   doc.text('Email: mayank@rccinfrastructure.com', pageWidth - 15, addressStartY + 12, { align: 'right' });
+//   doc.text('GST: 23ABHFR3130L1ZA', pageWidth - 15, addressStartY + 16, { align: 'right' });
+
+  
+//   // ===================================================================
+//   // doc.setFontSize(8);
+//   // doc.setFont('helvetica', 'bold');
+//   // doc.setTextColor(0, 0, 0);
+//   // doc.text('R. C. C. Infrastructures', pageWidth - 15, headerY, { align: 'right' });
+  
+//   // doc.setFontSize(7);
+//   // doc.setFont('helvetica', 'normal');
+//   // doc.text('310 Saket Nagar, 9B Near Sagar Public School, Bhopal, 462026', pageWidth - 15, headerY + 4, { align: 'right' });
+//   // doc.text('Contact: 7869962504', pageWidth - 15, headerY + 8, { align: 'right' });
+//   // doc.text('Email: mayank@rccinfrastructure.com', pageWidth - 15, headerY + 12, { align: 'right' });
+//   // doc.text('GST: 23ABHFR3130L1ZA', pageWidth - 15, headerY + 16, { align: 'right' });
 
 //   doc.setDrawColor(220, 53, 69);
 //   doc.setLineWidth(0.5);
@@ -351,7 +366,6 @@
 //   const keyLeft = 15;
 //   const keyRight = pageWidth / 2 + 10;
 //   const gap = 2;
-
 //   const lineHeight = 5;
 //   let currentY = infoY;
 
@@ -462,6 +476,7 @@
 
 //   currentY += 3;
 
+//   // UPDATED TABLE BODY WITH DISCOUNT
 //   const tableBody = approvedItems && approvedItems.length > 0 ? approvedItems.map((item, index) => [
 //     index + 1,
 //     extractEnglish(item.UID || item.uid || ''),
@@ -469,6 +484,7 @@
 //     extractEnglish(item.REVISED_QUANTITY_2 || item.quantity || ''),
 //     extractEnglish(item.Unit_Name || item.unit || ''),
 //     extractEnglish(item.Rate_5 || item.rate || ''),
+//     (extractEnglish(item.DISCOUNT_5 || item.discount || '0') || '0') + '%', // DISCOUNT WITH %
 //     extractEnglish(item.CGST_5 || item.cgst || ''),
 //     extractEnglish(item.SGST_5 || item.sgst || ''),
 //     extractEnglish(item.IGST_5 || item.igst || ''),
@@ -479,12 +495,13 @@
 //   const grandTotal = approvedItems && approvedItems.length > 0 
 //     ? approvedItems.reduce((acc, item) => {
 //         const value = parseFloat(extractEnglish(item.TOTAL_VALUE_5 || item.totalValue || 0));
-//         return acc + value;
+//         return acc + (isNaN(value) ? 0 : value);
 //       }, 0)
 //     : 0;
 
+//   // UPDATED autoTable WITH DISCOUNT COLUMN
 //   doc.autoTable({
-//     head: [['S.\nNo', 'UID', 'Material Name', 'Quantity', 'Unit', 'Rate', 'CGST', 'SGST', 'IGST', 'Final\nRate', 'Total\nValue']],
+//     head: [['S.\nNo', 'UID', 'Material Name', 'Quantity', 'Unit', 'Rate', 'Discount', 'CGST', 'SGST', 'IGST', 'Final\nRate', 'Total\nValue']],
 //     body: tableBody,
 //     startY: currentY + 2,
 //     theme: 'grid',
@@ -508,15 +525,16 @@
 //     columnStyles: {
 //       0: { halign: 'center', cellWidth: 10 },
 //       1: { halign: 'center', cellWidth: 15 },
-//       2: { halign: 'center', cellWidth: 40 },
-//       3: { halign: 'center', cellWidth: 15 },
-//       4: { halign: 'center', cellWidth: 15 },
-//       5: { halign: 'center', cellWidth: 15 },
-//       6: { halign: 'center', cellWidth: 12 },
-//       7: { halign: 'center', cellWidth: 12 },
-//       8: { halign: 'center', cellWidth: 12 },
-//       9: { halign: 'center', cellWidth: 15 },
-//       10: { halign: 'center', cellWidth: 15 },
+//       2: { halign: 'center', cellWidth: 38 },
+//       3: { halign: 'center', cellWidth: 14 },
+//       4: { halign: 'center', cellWidth: 14 },
+//       5: { halign: 'center', cellWidth: 14 },
+//       6: { halign: 'center', cellWidth: 14 }, // DISCOUNT
+//       7: { halign: 'center', cellWidth: 11 },
+//       8: { halign: 'center', cellWidth: 11 },
+//       9: { halign: 'center', cellWidth: 11 },
+//       10: { halign: 'center', cellWidth: 14 },
+//       11: { halign: 'center', cellWidth: 14 },
 //     },
 //     alternateRowStyles: { fillColor: [245, 245, 245] },
 //     margin: { left: 15, right: 15, bottom: bottomMargin },
@@ -638,8 +656,6 @@
 //   const base64Data = Buffer.from(pdfBuffer).toString('base64');
 //   return `data:application/pdf;base64,${base64Data}`;
 // };
-
-
 
 
 
@@ -777,9 +793,6 @@
 // });
 
 // module.exports = router;
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -1034,6 +1047,7 @@ async function generatePONumber(spreadsheetId, sheetName) {
 
 
 
+
 const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDeliveryDate, poNumber, siteName, siteLocation, supervisorName, supervisorContact, vendorName, vendorAddress, vendorGST, vendorContact, companyLogoBase64 = null) => {
   console.log('Current working directory:', process.cwd());
   console.log(`Generating PDF: PO ${poNumber}, Quotation ${quotationNo}, Indent ${indentNo}, Items: ${approvedItems.length}, Delivery Date: ${expectedDeliveryDate}`);
@@ -1103,20 +1117,6 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   doc.text('Contact: 7869962504', pageWidth - 15, addressStartY + 8, { align: 'right' });
   doc.text('Email: mayank@rccinfrastructure.com', pageWidth - 15, addressStartY + 12, { align: 'right' });
   doc.text('GST: 23ABHFR3130L1ZA', pageWidth - 15, addressStartY + 16, { align: 'right' });
-
-  
-  // ===================================================================
-  // doc.setFontSize(8);
-  // doc.setFont('helvetica', 'bold');
-  // doc.setTextColor(0, 0, 0);
-  // doc.text('R. C. C. Infrastructures', pageWidth - 15, headerY, { align: 'right' });
-  
-  // doc.setFontSize(7);
-  // doc.setFont('helvetica', 'normal');
-  // doc.text('310 Saket Nagar, 9B Near Sagar Public School, Bhopal, 462026', pageWidth - 15, headerY + 4, { align: 'right' });
-  // doc.text('Contact: 7869962504', pageWidth - 15, headerY + 8, { align: 'right' });
-  // doc.text('Email: mayank@rccinfrastructure.com', pageWidth - 15, headerY + 12, { align: 'right' });
-  // doc.text('GST: 23ABHFR3130L1ZA', pageWidth - 15, headerY + 16, { align: 'right' });
 
   doc.setDrawColor(220, 53, 69);
   doc.setLineWidth(0.5);
@@ -1286,49 +1286,69 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
       }, 0)
     : 0;
 
-  // UPDATED autoTable WITH DISCOUNT COLUMN
-  doc.autoTable({
-    head: [['S.\nNo', 'UID', 'Material Name', 'Quantity', 'Unit', 'Rate', 'Discount', 'CGST', 'SGST', 'IGST', 'Final\nRate', 'Total\nValue']],
-    body: tableBody,
-    startY: currentY + 2,
-    theme: 'grid',
-    styles: { 
-      fontSize: 8, 
-      cellPadding: 2.5, 
-      font: 'helvetica', 
-      textColor: [0, 0, 0], 
-      lineColor: [200, 200, 200], 
-      lineWidth: 0.1, 
-      overflow: 'linebreak' 
-    },
-    headStyles: { 
-      fillColor: [240, 240, 240], 
-      textColor: [0, 0, 0], 
-      fontStyle: 'bold', 
-      fontSize: 8, 
-      halign: 'center', 
-      cellPadding: 3 
-    },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 10 },
-      1: { halign: 'center', cellWidth: 15 },
-      2: { halign: 'center', cellWidth: 38 },
-      3: { halign: 'center', cellWidth: 14 },
-      4: { halign: 'center', cellWidth: 14 },
-      5: { halign: 'center', cellWidth: 14 },
-      6: { halign: 'center', cellWidth: 14 }, // DISCOUNT
-      7: { halign: 'center', cellWidth: 11 },
-      8: { halign: 'center', cellWidth: 11 },
-      9: { halign: 'center', cellWidth: 11 },
-      10: { halign: 'center', cellWidth: 14 },
-      11: { halign: 'center', cellWidth: 14 },
-    },
-    alternateRowStyles: { fillColor: [245, 245, 245] },
-    margin: { left: 15, right: 15, bottom: bottomMargin },
-    pageBreak: 'auto',
-    showHead: 'everyPage',
-    rowPageBreak: 'avoid',
-  });
+  // UPDATED autoTable WITH BOLD BORDERS FOR BETTER BLACK & WHITE PRINTING
+ doc.autoTable({
+  head: [['S.No', 'UID', 'Material Name', 'Quantity', 'Unit', 'Rate', 'Discount', 'CGST', 'SGST', 'IGST', 'Final Rate', 'Total Value']],
+  body: tableBody,
+  startY: currentY + 2,
+  theme: 'grid',
+
+  // GLOBAL STYLES
+  styles: {
+    fontSize: 9.2,           // 9.5 se thoda kam — safe aur clear
+    cellPadding: 2.8,        // Thoda tight padding → space save
+    font: 'helvetica',
+    lineColor: [0, 0, 0],
+    lineWidth: 0.35,
+    overflow: 'linebreak',
+  },
+
+  // BODY TEXT KO BOLD + DARK KAR DO (sabse important)
+  bodyStyles: {
+    fontStyle: 'bold',
+    textColor: [15, 15, 15],  // Darker than black for print
+  },
+
+  // HEADER KO CHHOTA AUR CLEAN RAKHO
+  headStyles: {
+    fillColor: [235, 235, 235],
+    textColor: [0, 0, 0],
+    fontStyle: 'bold',
+    fontSize: 8.3,
+    halign: 'center',
+    cellPadding: 3,
+    lineWidth: 0.4,
+  },
+
+  // COLUMN WIDTHS — OPTIMIZED (total ~195mm = A4 safe width)
+  columnStyles: {
+    0: { cellWidth: 10,   halign: 'center' },     // S.No
+    1: { cellWidth: 16,   halign: 'center' },     // UID
+    2: { cellWidth: 42,   halign: 'left' },       // Material Name (thoda bada kiya)
+    3: { cellWidth: 13,   halign: 'center' },     // Qty
+    4: { cellWidth: 12,   halign: 'center' },     // Unit
+    5: { cellWidth: 16,   halign: 'right' },      // Rate
+    6: { cellWidth: 13,   halign: 'center' },     // Discount
+    7: { cellWidth: 10,   halign: 'center' },     // CGST
+    8: { cellWidth: 10,   halign: 'center' },     // SGST
+    9: { cellWidth: 10,   halign: 'center' },     // IGST
+    10: { cellWidth: 16,  halign: 'right' },      // Final Rate
+    11: { cellWidth: 19,  halign: 'right', fontStyle: 'bold' }, // Total Value (extra bold)
+  },
+
+  alternateRowStyles: { fillColor: [250, 250, 250] },
+  margin: { left: 14, right: 14, bottom: 30 },
+  pageBreak: 'auto',
+  showHead: 'everyPage',
+  rowPageBreak: 'avoid',
+
+  // YEH LINE SABSE ZAROORI HAI — text overflow ko smartly handle karega
+  didParseCell: function (data) {
+    if (data.column.index === 2 && data.cell.raw && data.cell.raw.length > 30) {
+      data.cell.text = doc.splitTextToSize(data.cell.raw, 40);
+    }
+  }
+});
 
   let tableEndY = doc.lastAutoTable.finalY;
   tableEndY = checkPageBreak(tableEndY, 15);
@@ -1443,6 +1463,10 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   const base64Data = Buffer.from(pdfBuffer).toString('base64');
   return `data:application/pdf;base64,${base64Data}`;
 };
+
+
+
+
 
 
 
