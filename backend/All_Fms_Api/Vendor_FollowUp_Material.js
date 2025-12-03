@@ -493,7 +493,7 @@ router.post('/update-vendor-follow-up-material', async (req, res) => {
     console.log(`Found UID "${uid}" at sheet row ${sheetRowNumber}`);
 
     // Define correct column indices (0-based relative to B)
-    const statusColumnIndex = 65;   // STATUS_8 (BO)
+    const statusColumnIndex = 66;   // STATUS_8 (BO)
     const followUpCountColumnIndex = 67; // FOLLOW_UP_COUNT_8 (BP)
     const expectedDateColumnIndex = 68; // EXPECTED_DELIVERY_DATE_8 (BQ)
     const remarkColumnIndex = 69;   // REMARK_RECEIVED_VENDOR_8 (BR)
