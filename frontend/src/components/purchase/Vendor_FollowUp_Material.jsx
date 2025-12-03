@@ -357,6 +357,7 @@ const Vendor_FollowUp_Material = () => {
                     <option value="">Select Status</option>
                     <option value="Dispatched">Dispatched</option>
                     <option value="Not Dispatched">Not Dispatched</option>
+                    <option value="Partition">Partition </option>
                   </select>
                 </div>
 
