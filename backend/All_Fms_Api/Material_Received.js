@@ -307,7 +307,7 @@ router.post('/save-material-receipt', async (req, res) => {
     // Sirf append karo - bas itna ho
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Material_Received!A2', // Start from A2 (header row 1 hai)
+      range: 'Material_Received!A2:Q', // Start from A2 (header row 1 hai)
       valueInputOption: 'RAW',
       resource: {
         values: [values],
