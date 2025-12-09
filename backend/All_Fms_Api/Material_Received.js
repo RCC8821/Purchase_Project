@@ -305,14 +305,27 @@ router.post('/save-material-receipt', async (req, res) => {
     ];
 
     // Sirf append karo - bas itna ho
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: 'Material_Received!A2:Q', // Start from A2 (header row 1 hai)
-      valueInputOption: 'RAW',
-      resource: {
-        values: [values],
-      },
-    });
+  // Get current sheet data to find last row
+const sheetData = await sheets.spreadsheets.values.get({
+  spreadsheetId,
+  range: 'Material_Received!A:A', // only column A is enough
+});
+
+// Number of existing rows
+const lastRow = (sheetData.data.values ? sheetData.data.values.length : 1) + 1;
+
+// Final write range
+const writeRange = `Material_Received!A${lastRow}:Q${lastRow}`;
+
+await sheets.spreadsheets.values.update({
+  spreadsheetId,
+  range: writeRange,
+  valueInputOption: 'RAW',
+  resource: {
+    values: [values],
+  },
+});
+
 
     return res.json({
       success: true,
