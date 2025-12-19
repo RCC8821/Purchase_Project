@@ -325,7 +325,7 @@ const fetchInitialData = async () => {
                   {item.finalIndentPDF && <DocLink icon={<FaFilePdf />} label="Indent PDF" url={item.finalIndentPDF} />}
                   {item.poPDF && <DocLink icon={<FaFilePdf />} label="PO PDF" url={item.poPDF} />}
                   {item.mrnPDF && <DocLink icon={<FaFilePdf />} label="MRN PDF" url={item.mrnPDF} />}
-                  {item.approvalQuotationPDF && <DocLink icon={<FaFilePdf />} label="Quotation PDF" url={item.approvalQuotationPDF} />}
+                  {item.invoicePhoto && <DocLink icon={<FaFilePdf />} label="Invoice Photo PDF" url={item.invoicePhoto} />}
                 </div>
 
                 {selectedBills.includes(item.UID) && (

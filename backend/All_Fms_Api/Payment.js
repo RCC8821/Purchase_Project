@@ -79,6 +79,7 @@ router.get('/Payment', async (req, res) => {
           mrnPDF: row[19] ? String(row[19]).trim() : '',
           vendorFirmName: row[51] ? String(row[51]).trim() : (row[23] ? String(row[23]).trim() : ''),
           invoice13: currentInvoiceNo,
+          invoicePhoto: row[37] ? String(row[37].trim() ): '',
           billDate: row[53] ? String(row[53]).trim() : '',
           latestPaidAmount,
           latestBalanceAmount
