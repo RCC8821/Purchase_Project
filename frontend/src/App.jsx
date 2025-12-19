@@ -12,7 +12,7 @@ import Material_Received from './components/purchase/Material_Received';
 import Final_Material_Received from './components/purchase/Final_Material_Received';
 import MRN from './components/purchase/MRN';
 import BillingFMS from './components/BillingFMS';
-
+import Payment from './components/purchase/Payment';
 
 /////// Billing components ///////////////////////
 
@@ -43,6 +43,7 @@ const App = () => {
           <Route path='Bill_Processing' element={<Bill_Processing/>}/>
           <Route path='BillCheckedData' element={<BillCheckedData/>}/>
           <Route path='BillTallyData' element={<BillTallyData/>}/>
+          <Route path='Payment' element={<Payment/>}/>
           {/* <Route path="procurement-reports" element={<ProcurementReports />} /> */}
 
           <Route path="invoice-generation" element={<BillingFMS selectedPage="invoice-generation" />} />

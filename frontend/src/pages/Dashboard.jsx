@@ -18,6 +18,7 @@ import BillCheckedData from '../components/purchase/BillCheckedData';
 import Vendor_followup_billing from '../components/purchase/Vendor_followup_billing';
 import Bill_Processing from '../components/purchase/Bill_Processing';
 import BillTallyData from '../components/purchase/BillTallyData';
+import Payment from '../components/purchase/Payment';
 
 const Dashboard = () => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -72,6 +73,7 @@ const Dashboard = () => {
     { id: 'Bill_Processing', name: 'Bill_Processing', icon: Truck, component: Bill_Processing, path: '/dashboard/Bill_Processing', allowedUserTypes: ['admin', 'Somesh Chadhar'] },
     { id: 'BillCheckedData', name: 'BillCheckedData', icon: Truck, component: BillCheckedData, path: '/dashboard/BillCheckedData', allowedUserTypes: ['admin', 'Abhishek Sharma'] },
     { id: 'BillTallyData', name: 'BillTallyData', icon: Truck, component: BillTallyData, path: '/dashboard/BillTallyData', allowedUserTypes: ['admin','Govind Ram Nagar'] },
+    { id: 'Payment', name: 'Payment', icon: Truck, component: Payment, path: '/dashboard/Payment', allowedUserTypes: ['admin','Govind Ram Nagar'] },
   ];
 
   const getPurchasePages = () => {
@@ -99,6 +101,7 @@ const Dashboard = () => {
     'Bill_Processing': { title: 'Bill_Processing', content: 'You do not have permission to access any Purchase FMS pages.' },
     'BillCheckedData': { title: 'BillCheckedData', content: 'You do not have permission to access any Purchase FMS pages.' },
     'BillTallyData': { title: 'BillTallyData', content: 'You do not have permission to access any BillTallyData FMS pages.' },
+    'Payment': { title: 'Payment', content: 'You do not have permission to access any BillTallyData FMS pages.' },
     'no-access': { title: 'No Access', content: 'You do not have permission to access any Purchase FMS pages.' },
   };
 
