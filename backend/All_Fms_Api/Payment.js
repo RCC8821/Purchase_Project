@@ -120,6 +120,130 @@ router.get('/Payment', async (req, res) => {
 
 
 
+// router.post("/Update-Payment", async (req, res) => {
+//   try {
+//     const paymentDataArray = req.body;
+
+//     if (!Array.isArray(paymentDataArray) || paymentDataArray.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         error: "Request body must be a non-empty array of payment objects.",
+//       });
+//     }
+
+//     const billNos = paymentDataArray.map(item => item.billNo);
+
+//     const findRowRes = await sheets.spreadsheets.values.get({
+//       spreadsheetId: spreadsheetId,
+//       range: 'Billing_FMS!BA7:BA',
+//     });
+
+//     const sheetRows = findRowRes.data.values || [];
+//     const rowMap = new Map();
+
+//     billNos.forEach(billNo => {
+//       const requestBillNo = billNo.toString().trim();
+//       const rowIndex = sheetRows.findIndex(row => row && row[0]?.toString().trim() === requestBillNo);
+//       if (rowIndex !== -1) {
+//         rowMap.set(billNo, 7 + rowIndex);
+//       }
+//     });
+
+//     const fmsUpdates = [];
+//     const paymentSheetRows = [];
+//     const missingBills = [];
+
+//     const currentTimestamp = new Date().toLocaleString('en-GB', {
+//       day: '2-digit', month: '2-digit', year: 'numeric',
+//       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+//     }).replace(',', '');
+
+//     for (const item of paymentDataArray) {
+//       const {
+//         timestamp = currentTimestamp,
+//         planned17,
+//         siteName,
+//         vendorFirmName16,
+//         billNo,
+//         billDate16,
+//         netAmount16,
+//         currentPaid,          // ← Sirf current payment
+//         paidAmount17,         // ← Total paid till date
+//         balanceAmount17,
+//         bankDetails17,
+//         paymentMode17,
+//         paymentDetails17,
+//         paymentDate18,
+//         grandTotal
+//       } = item;
+
+//       const targetRow = rowMap.get(billNo);
+
+//       if (targetRow) {
+//         fmsUpdates.push(
+//           { range: `Billing_FMS!BT${targetRow}`, values: [["Done"]] },
+//           { range: `Billing_FMS!BW${targetRow}`, values: [[paidAmount17]] },     // ← Cumulative
+//           { range: `Billing_FMS!BX${targetRow}`, values: [[balanceAmount17]] },
+//           { range: `Billing_FMS!BY${targetRow}`, values: [[bankDetails17]] },
+//           { range: `Billing_FMS!BZ${targetRow}`, values: [[paymentMode17]] },
+//           { range: `Billing_FMS!CA${targetRow}`, values: [[paymentDetails17]] },
+//           { range: `Billing_FMS!CB${targetRow}`, values: [[paymentDate18]] },
+//           // { range: `Billing_FMS!CC${targetRow}`, values: [[grandTotal]] }
+//         );
+//       } else {
+//         missingBills.push(billNo);
+//       }
+
+//       // Payment_Sheet me sirf current payment daalo
+//       paymentSheetRows.push([
+//         timestamp,
+//         planned17,
+//         siteName,
+//         vendorFirmName16,
+//         billNo,
+//         billDate16,
+//         netAmount16,
+//         currentPaid,           // ← YEH SIRF CURRENT AMOUNT
+//         balanceAmount17,
+//         bankDetails17,
+//         paymentMode17,
+//         paymentDetails17,
+//         paymentDate18,
+//         grandTotal
+//       ]);
+//     }
+
+//     if (fmsUpdates.length > 0) {
+//       await sheets.spreadsheets.values.batchUpdate({
+//         spreadsheetId: spreadsheetId,
+//         resource: { valueInputOption: 'USER_ENTERED', data: fmsUpdates }
+//       });
+//     }
+
+//     if (paymentSheetRows.length > 0) {
+//       await sheets.spreadsheets.values.append({
+//         spreadsheetId: spreadsheetId,
+//         range: 'Payment_Sheet!A:N',
+//         valueInputOption: 'USER_ENTERED',
+//         insertDataOption: 'INSERT_ROWS',
+//         resource: { values: paymentSheetRows }
+//       });
+//     }
+
+//     res.json({
+//       success: true,
+//       updatedInFMS: Math.floor(fmsUpdates.length / 8),
+//       addedToPaymentSheet: paymentSheetRows.length,
+//       missingBills
+//     });
+
+//   } catch (error) {
+//     console.error('Error in /Update-Payment:', error);
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// });
+
+
 router.post("/Update-Payment", async (req, res) => {
   try {
     const paymentDataArray = req.body;
@@ -133,6 +257,7 @@ router.post("/Update-Payment", async (req, res) => {
 
     const billNos = paymentDataArray.map(item => item.billNo);
 
+    // Billing_FMS से billNo ढूंढने के लिए BA column (row 7 से शुरू)
     const findRowRes = await sheets.spreadsheets.values.get({
       spreadsheetId: spreadsheetId,
       range: 'Billing_FMS!BA7:BA',
@@ -145,12 +270,12 @@ router.post("/Update-Payment", async (req, res) => {
       const requestBillNo = billNo.toString().trim();
       const rowIndex = sheetRows.findIndex(row => row && row[0]?.toString().trim() === requestBillNo);
       if (rowIndex !== -1) {
-        rowMap.set(billNo, 7 + rowIndex);
+        rowMap.set(billNo, 7 + rowIndex); // actual row number
       }
     });
 
     const fmsUpdates = [];
-    const paymentSheetRows = [];
+    const newPaymentRows = [];
     const missingBills = [];
 
     const currentTimestamp = new Date().toLocaleString('en-GB', {
@@ -167,8 +292,8 @@ router.post("/Update-Payment", async (req, res) => {
         billNo,
         billDate16,
         netAmount16,
-        currentPaid,          // ← Sirf current payment
-        paidAmount17,         // ← Total paid till date
+        currentPaid,
+        paidAmount17,
         balanceAmount17,
         bankDetails17,
         paymentMode17,
@@ -182,20 +307,18 @@ router.post("/Update-Payment", async (req, res) => {
       if (targetRow) {
         fmsUpdates.push(
           { range: `Billing_FMS!BT${targetRow}`, values: [["Done"]] },
-          { range: `Billing_FMS!BW${targetRow}`, values: [[paidAmount17]] },     // ← Cumulative
+          { range: `Billing_FMS!BW${targetRow}`, values: [[paidAmount17]] },
           { range: `Billing_FMS!BX${targetRow}`, values: [[balanceAmount17]] },
           { range: `Billing_FMS!BY${targetRow}`, values: [[bankDetails17]] },
           { range: `Billing_FMS!BZ${targetRow}`, values: [[paymentMode17]] },
           { range: `Billing_FMS!CA${targetRow}`, values: [[paymentDetails17]] },
           { range: `Billing_FMS!CB${targetRow}`, values: [[paymentDate18]] },
-          // { range: `Billing_FMS!CC${targetRow}`, values: [[grandTotal]] }
         );
       } else {
         missingBills.push(billNo);
       }
 
-      // Payment_Sheet me sirf current payment daalo
-      paymentSheetRows.push([
+      newPaymentRows.push([
         timestamp,
         planned17,
         siteName,
@@ -203,7 +326,7 @@ router.post("/Update-Payment", async (req, res) => {
         billNo,
         billDate16,
         netAmount16,
-        currentPaid,           // ← YEH SIRF CURRENT AMOUNT
+        currentPaid,
         balanceAmount17,
         bankDetails17,
         paymentMode17,
@@ -213,34 +336,69 @@ router.post("/Update-Payment", async (req, res) => {
       ]);
     }
 
+    // 1. Billing_FMS में batch update
     if (fmsUpdates.length > 0) {
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: spreadsheetId,
-        resource: { valueInputOption: 'USER_ENTERED', data: fmsUpdates }
+        resource: {
+          valueInputOption: 'USER_ENTERED',
+          data: fmsUpdates
+        }
       });
     }
 
-    if (paymentSheetRows.length > 0) {
-      await sheets.spreadsheets.values.append({
+    // 2. Payment_Sheet में पहली empty row से insert करना
+    if (newPaymentRows.length > 0) {
+      // Column A पढ़कर पहली empty row ढूंढो (header row 1 है)
+      const existingRes = await sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
-        range: 'Payment_Sheet!A:N',
+        range: 'Payment_Sheet!A:A', // performance के लिए सिर्फ column A
+      });
+
+      const columnA = existingRes.data.values || [];
+      let firstEmptyRow = 2; // default: header के ठीक नीचे (row 2)
+
+      // Row 2 से शुरू करके पहली empty cell ढूंढो
+      for (let i = 1; i < columnA.length; i++) { // i=1 → actual row 2
+        const cellValue = columnA[i][0];
+        if (cellValue === undefined || cellValue === null || cellValue.toString().trim() === "") {
+          firstEmptyRow = i + 1; // actual sheet row number
+          break;
+        }
+      }
+
+      // अगर कोई empty row नहीं मिली (पूरी column filled) → last row के नीचे
+      if (firstEmptyRow === 2 && columnA.length > 1) {
+        firstEmptyRow = columnA.length + 1;
+      }
+
+      // नई rows को firstEmptyRow से लिखो
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: spreadsheetId,
+        range: `Payment_Sheet!A${firstEmptyRow}`,
         valueInputOption: 'USER_ENTERED',
-        insertDataOption: 'INSERT_ROWS',
-        resource: { values: paymentSheetRows }
+        resource: {
+          values: newPaymentRows
+        }
       });
     }
 
+    // Success response
     res.json({
       success: true,
       updatedInFMS: Math.floor(fmsUpdates.length / 8),
-      addedToPaymentSheet: paymentSheetRows.length,
+      addedToPaymentSheet: newPaymentRows.length,
       missingBills
     });
 
   } catch (error) {
     console.error('Error in /Update-Payment:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error"
+    });
   }
 });
+
 
 module.exports = router;
