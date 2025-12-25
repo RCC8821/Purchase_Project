@@ -1005,7 +1005,7 @@ const Payment = () => {
                     <option value="">-- Select --</option>
                     <option value="SVC Main A/C(202)">SVC Main A/C(202)</option>
                     <option value="SVC VENDER PAY A/C(328)">
-                      SVC VENDER PAY A/C(328)
+                      SVC VENDOR PAY A/C(328)
                     </option>
                     <option value="HDFC Kabir Ahuja(341)">HDFC Kabir Ahuja(341)</option>
                     <option value="HDFC Rajeev Abott(313)">HDFC Rajeev Abott(313)</option>
