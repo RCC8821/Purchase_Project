@@ -3,12 +3,12 @@ const { sheets, spreadsheetId } = require('../config/googleSheet');
 
 const router = express.Router();
 
-router.get('/Bill_Checked', async (req, res) => {
+router.get('/Bill_Checked_Step18', async (req, res) => {
   try {
     // Fetch data from Billing_FMS sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Billing_FMS!A8:CE', // Range from A8 to CE
+      range: 'Billing_FMS!A8:CF', // Range from A8 to CE
     });
 
     let data = response.data.values || [];
@@ -16,12 +16,12 @@ router.get('/Bill_Checked', async (req, res) => {
     // Filter and transform data based on PLANNED 14 and ACTUAL 14
     const filteredData = data
       .filter(row => {
-        const planned14 = row[41] || ''; 
-        const actual14 = row[42] || ''; //
-        return planned14 && !actual14; // 
+        const planned14 = row[82] || ''; 
+        const actual14 = row[83] || ''; 
+        return planned14 && !actual14; 
       })
       .map(row => ({
-        planned14: row[41] || '', // Column AF for PLANNED 14
+        planned14: row[82] || '', // Column AF for PLANNED 14
         UID: row[1] || '', // Column B
         siteName: row[3] || '', // Column D
         materialType: row[5] || '', // Column F
@@ -57,7 +57,7 @@ router.get('/Bill_Checked', async (req, res) => {
 
 
 
-router.post('/bill_checked_status', async (req, res) => {
+router.post('/bill_checked_status_18Step', async (req, res) => {
   const { updates } = req.body;
 
   if (!Array.isArray(updates) || updates.length === 0) {
@@ -73,7 +73,7 @@ router.post('/bill_checked_status', async (req, res) => {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Billing_FMS!A8:AU', // Only up to AU to reduce data
+      range: 'Billing_FMS!A8:CJ', // Only up to AU to reduce data
     });
 
     const rows = response.data.values || [];
@@ -84,22 +84,22 @@ router.post('/bill_checked_status', async (req, res) => {
     // Prepare batch update requests
     const requests = [];
 
-    updates.forEach(({ uid, STATUS_14, REMARK_14 }) => {
+    updates.forEach(({ uid, STATUS_18, REMARK_18 }) => {
       const rowIndex = rows.findIndex(row => row[1] && String(row[1]).trim() === String(uid).trim());
       if (rowIndex !== -1) {
         const rowNumber = 8 + rowIndex; // Actual row number in sheet
 
         // Only push updates if value is provided
-        if (STATUS_14 !== undefined) {
+        if (STATUS_18 !== undefined) {
           requests.push({
-            range: `Billing_FMS!AR${rowNumber}`, // Adjust column if needed
-            values: [[STATUS_14]],
+            range: `Billing_FMS!CG${rowNumber}`, // Adjust column if needed
+            values: [[STATUS_18]],
           });
         }
-        if (REMARK_14 !== undefined) {
+        if (REMARK_18 !== undefined) {
           requests.push({
-            range: `Billing_FMS!AT${rowNumber}`, // Adjust column if needed
-            values: [[REMARK_14]],
+            range: `Billing_FMS!CI${rowNumber}`, // Adjust column if needed
+            values: [[REMARK_18]],
           });
         }
       } else {
@@ -118,7 +118,7 @@ router.post('/bill_checked_status', async (req, res) => {
       });
     }
 
-    res.json({ success: true, message: 'STATUS_14 and REMARK_14 updated successfully' });
+    res.json({ success: true, message: 'STATUS_18 and REMARK_18 updated successfully' });
   } catch (error) {
     console.error('Error updating bill checked status:', error);
     res.status(500).json({ success: false, message: 'Failed to update bill checked status' });

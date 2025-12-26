@@ -19,6 +19,7 @@ const BillProcessing = require("./All_Fms_Api/Bill_Processing")
 const Bill_Checked = require('./All_Fms_Api/Bill_Checked')
 const Bill_Tally= require('./All_Fms_Api/BILL_TALLY_ENTRY')
 const Payment = require('./All_Fms_Api/Payment')
+const Bill_Checked_Step18 = require('./All_Fms_Api/BILL _CHECKD_18Step')
 const cloudinary = require("cloudinary").v2;
 
 const app = express();
@@ -59,6 +60,8 @@ app.use('/api',BillProcessing)
 app.use('/api',Bill_Checked)
 app.use('/api',Bill_Tally)
 app.use('/api',Payment)
+app.use('/api',Bill_Checked_Step18)
+
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

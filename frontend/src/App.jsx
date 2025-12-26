@@ -20,7 +20,7 @@ import Vendor_followup_billing from './components/purchase/Vendor_followup_billi
 import Bill_Processing from './components/purchase/Bill_Processing';
 import BillCheckedData from './components/purchase/BillCheckedData';
 import BillTallyData from './components/purchase/BillTallyData';
-
+import Bill_Checked_18Step from './components/purchase/Bill_Checked_18Step';
 
 
 const App = () => {
@@ -44,6 +44,7 @@ const App = () => {
           <Route path='BillCheckedData' element={<BillCheckedData/>}/>
           <Route path='BillTallyData' element={<BillTallyData/>}/>
           <Route path='Payment' element={<Payment/>}/>
+          <Route path='Bill_Checked_18Step' element={Bill_Checked_18Step}/>
           {/* <Route path="procurement-reports" element={<ProcurementReports />} /> */}
 
           <Route path="invoice-generation" element={<BillingFMS selectedPage="invoice-generation" />} />
