@@ -78,7 +78,7 @@ router.get('/BILL-PROCESSING', async (req, res) => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Billing_FMS!A8:CE',
+      range: 'Billing_FMS!A8:CK',
     });
 
     let data = response.data.values || [];
@@ -104,6 +104,7 @@ router.get('/BILL-PROCESSING', async (req, res) => {
         approvalQuotationNo: row[14] || '',
         approvalQuotation: row[15] || '',
         poNumber: row[16] || '',
+        PODate: row[88] || '',
         poPDF: row[17] || '',
         mrnNo: row[18] || '',
         mrnPDF: row[19] || '',

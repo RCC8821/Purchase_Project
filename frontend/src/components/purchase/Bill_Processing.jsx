@@ -381,7 +381,7 @@ const Bill_Processing = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
-              <thead className="bg-gray-100">
+              <thead className="bg-gray-400">
                 <tr>
                   <th className="px-3 py-2 text-left font-medium border-r border-gray-300">Planned 13</th>
                   <th className="px-3 py-2 text-left font-medium border-r border-gray-300">UID</th>
@@ -397,6 +397,7 @@ const Bill_Processing = () => {
                   <th className="px-3 py-2 text-left font-medium border-r border-gray-300">Approval Quotation No</th>
                   <th className="px-3 py-2 text-left font-medium border-r border-gray-300">Approval Quotation</th>
                   <th className="px-3 py-2 text-left font-medium border-r border-gray-300">PO Number</th>
+                  <th className="px-3 py-2 text-left font-medium border-r border-gray-300">PO Date</th>
                   <th className="px-3 py-2 text-left font-medium border-r border-gray-300">PO PDF</th>
                   <th className="px-3 py-2 text-left font-medium border-r border-gray-300">MRN No</th>
                   <th className="px-3 py-2 text-left font-medium border-r border-gray-300">MRN PDF</th>
@@ -425,6 +426,7 @@ const Bill_Processing = () => {
                       {r.approvalQuotation && <a href={r.approvalQuotation} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View PDF</a>}
                     </td>
                     <td className="px-3 py-2 border-r">{r.poNumber}</td>
+                    <td className="px-3 py-2 border-r">{r.PODate}</td>
                     <td className="px-3 py-2 border-r">
                       {r.poPDF && <a href={r.poPDF} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View PDF</a>}
                     </td>
