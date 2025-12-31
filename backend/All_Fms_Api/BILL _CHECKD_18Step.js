@@ -8,7 +8,7 @@ router.get('/Bill_Checked_Step18', async (req, res) => {
     // Fetch data from Billing_FMS sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Billing_FMS!A8:CF', // Range from A8 to CE
+      range: 'Billing_FMS!A8:CK', // Range from A8 to CE
     });
 
     let data = response.data.values || [];
@@ -35,6 +35,7 @@ router.get('/Bill_Checked_Step18', async (req, res) => {
         approvalQuotationNo: row[14] || '', // Column P for Approval Quotation No
         approvalQuotationPDF: row[15] || '', // Column Q for Approval Quotation PDF
         poNumber: row[16] || '', // Column Q for PO Number
+        PODate: row[88] || '',
         poPDF: row[17] || '', // Column R for PO PDF
         mrnNo: row[18] || '', // Column S for MRN No
         mrnPDF: row[19] || '', // Column T for MRN PDF

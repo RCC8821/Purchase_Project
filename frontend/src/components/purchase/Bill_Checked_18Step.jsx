@@ -237,6 +237,7 @@ const Bill_Checked_18Step = () => {
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase border-r border-gray-300">Approval Quotation No</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase border-r border-gray-300">Approval Quotation PDF</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase border-r border-gray-300">PO Number</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase border-r border-gray-300">PO Date</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase border-r border-gray-300">PO PDF</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase border-r border-gray-300">MRN No</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase border-r border-gray-300">MRN PDF</th>
@@ -272,6 +273,7 @@ const Bill_Checked_18Step = () => {
                     {item.approvalQuotationPDF ? <a href={item.approvalQuotationPDF} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View PDF</a> : '-'}
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{item.poNumber}</td>
+                  <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">{item.PODate}</td>
                   <td className="px-4 py-2 text-sm text-gray-800 border-r border-gray-200">
                     {item.poPDF ? <a href={item.poPDF} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View PDF</a> : '-'}
                   </td>
