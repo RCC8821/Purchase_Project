@@ -529,6 +529,7 @@ router.post('/save-take-Quotation', async (req, res) => {
           range: `Purchase_FMS!${noQuotCol}${rowNumber}`,
           values: [[entry.NO_OF_QUOTATION_4 || '']],
         });
+        
       } else {
         console.warn(`No row found in Purchase_FMS for UID: ${entry.UID}`);
       }
@@ -592,5 +593,436 @@ router.post('/save-take-Quotation', async (req, res) => {
     });
   }
 });
+
+
+
+
+// router.post('/save-take-Quotation', async (req, res) => {
+//   const { entries } = req.body;
+
+//   console.log('Received payload:', JSON.stringify(req.body, null, 2));
+
+//   if (!entries || !Array.isArray(entries) || entries.length === 0) {
+//     console.log('Validation failed - entries:', entries);
+//     return res.status(400).json({ error: 'Entries array is required and must not be empty' });
+//   }
+
+//   // Validate UID, REVISED_QUANTITY_2, Indent_No, and Final_Rate in each entry
+//   for (let i = 0; i < entries.length; i++) {
+//     const entry = entries[i];
+//     if (!entry.UID || typeof entry.UID !== 'string') {
+//       console.log(`Invalid UID in entry ${i + 1}:`, entry.UID);
+//       return res.status(400).json({ error: `Invalid or missing UID in entry ${i + 1}` });
+//     }
+//     if (!entry.REVISED_QUANTITY_2 || isNaN(parseFloat(entry.REVISED_QUANTITY_2))) {
+//       console.log(`Invalid or missing REVISED_QUANTITY_2 in entry ${i + 1}:`, entry.REVISED_QUANTITY_2);
+//       return res.status(400).json({ error: `Invalid or missing REVISED_QUANTITY_2 in entry ${i + 1}` });
+//     }
+//     if (!entry.Indent_No || typeof entry.Indent_No !== 'string') {
+//       console.log(`Invalid Indent_No in entry ${i + 1}:`, entry.Indent_No);
+//       return res.status(400).json({ error: `Invalid or missing Indent_No in entry ${i + 1}` });
+//     }
+//     if (!entry.Final_Rate || isNaN(parseFloat(entry.Final_Rate))) {
+//       console.log(`Invalid or missing Final_Rate in entry ${i + 1}:`, entry.Final_Rate);
+//       return res.status(400).json({ error: `Invalid or missing Final_Rate in entry ${i + 1}` });
+//     }
+//   }
+
+//   try {
+//     // Get sheet metadata for both sheets
+//     const sheetMetadata = await sheets.spreadsheets.get({
+//       spreadsheetId,
+//       ranges: ['Quotation_Master', 'Purchase_FMS'],
+//       fields: 'sheets(properties(sheetId,gridProperties,title))',
+//     });
+
+//     const quotationMasterSheet = sheetMetadata.data.sheets?.find(
+//       sheet => sheet.properties?.title === 'Quotation_Master'
+//     );
+//     const purchaseFMSSheet = sheetMetadata.data.sheets?.find(
+//       sheet => sheet.properties?.title === 'Purchase_FMS'
+//     );
+
+//     if (!quotationMasterSheet) {
+//       console.error('Quotation_Master sheet not found in spreadsheet');
+//       return res.status(400).json({ error: 'Quotation_Master sheet not found in spreadsheet' });
+//     }
+//     if (!purchaseFMSSheet) {
+//       console.error('Purchase_FMS sheet not found in spreadsheet');
+//       return res.status(400).json({ error: 'Purchase_FMS sheet not found in spreadsheet' });
+//     }
+
+//     const quotationSheetProperties = quotationMasterSheet.properties;
+//     const purchaseSheetProperties = purchaseFMSSheet.properties;
+//     let maxRowsQuotation = quotationSheetProperties.gridProperties.rowCount;
+//     let maxRowsPurchase = purchaseSheetProperties.gridProperties.rowCount;
+//     console.log('Current max rows in Quotation_Master:', maxRowsQuotation);
+//     console.log('Current max rows in Purchase_FMS:', maxRowsPurchase);
+
+//     // Fetch headers from Quotation_Master
+//     const headerResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Quotation_Master!A1:AE1',
+//     });
+
+//     const headers = headerResponse.data.values ? headerResponse.data.values[0] || [] : [];
+//     console.log('Fetched Quotation_Master headers:', headers);
+
+//     // Find existing quotation numbers in column AC (Quotation_No)
+//     const dataResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Quotation_Master!AC2:AC',
+//     });
+
+//     const quoValues = dataResponse.data.values ? dataResponse.data.values.map(row => row[0]).filter(val => val && val.startsWith('QUO_')) : [];
+//     let nextQuoNumber = 1;
+//     if (quoValues.length > 0) {
+//       const numbers = quoValues
+//         .map(val => parseInt(val.replace('QUO_', '')))
+//         .filter(num => !isNaN(num));
+//       nextQuoNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+//     }
+
+//     // Generate new quotation number (e.g., QUO_001)
+//     const newQuoNumber = `QUO_${nextQuoNumber.toString().padStart(3, '0')}`;
+//     console.log('Generated quotation number:', newQuoNumber);
+
+//     // Update headers for Quotation_Master
+//     const headerUpdates = [];
+//     if (!headers[28]) {
+//       headerUpdates.push({
+//         range: 'Quotation_Master!AC1',
+//         values: [['Quotation_No']],
+//       });
+//     }
+//     if (!headers[29]) {
+//       headerUpdates.push({
+//         range: 'Quotation_Master!AD1',
+//         values: [['Total_Quantity']],
+//       });
+//     }
+//     if (!headers[30]) {
+//       headerUpdates.push({
+//         range: 'Quotation_Master!AE1',
+//         values: [['Total_Value']],
+//       });
+//     }
+
+//     if (headerUpdates.length > 0) {
+//       await sheets.spreadsheets.values.batchUpdate({
+//         spreadsheetId,
+//         resource: {
+//           valueInputOption: 'RAW',
+//           data: headerUpdates,
+//         },
+//       });
+//       console.log('Updated Quotation_Master headers:', headerUpdates.map(update => update.range));
+//     }
+
+//     // Function to convert column index to letter
+//     function getColumnLetter(index) {
+//       let column = '';
+//       let num = index + 1; // 1-based
+//       while (num > 0) {
+//         const mod = (num - 1) % 26;
+//         column = String.fromCharCode(65 + mod) + column;
+//         num = Math.floor((num - 1) / 26);
+//       }
+//       return column;
+//     }
+
+//     // Fetch headers from Purchase_FMS (row 7)
+//     const purchaseHeaderResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Purchase_FMS!A7:AF7',
+//     });
+
+//     const purchaseHeaders = purchaseHeaderResponse.data.values ? purchaseHeaderResponse.data.values[0] || [] : [];
+//     console.log('Fetched Purchase_FMS headers:', purchaseHeaders);
+
+//     // Find required column indices
+//     const uidColumnIndex = purchaseHeaders.findIndex(header => header && header.toLowerCase().trim() === 'uid');
+//     if (uidColumnIndex === -1) {
+//       console.error('UID column not found in Purchase_FMS');
+//       return res.status(400).json({ error: 'UID column not found in Purchase_FMS' });
+//     }
+
+//     const indentColumnIndex = purchaseHeaders.findIndex(header => header && header.trim() === 'INDENT NUMBER 3');
+//     if (indentColumnIndex === -1) {
+//       console.error('INDENT NUMBER 3 column not found in Purchase_FMS');
+//       return res.status(400).json({ error: 'INDENT NUMBER 3 column not found in Purchase_FMS' });
+//     }
+
+//     const status4ColumnIndex = purchaseHeaders.findIndex(header => header && header.trim() === 'STATUS 4');
+//     if (status4ColumnIndex === -1) {
+//       console.error('STATUS 4 column not found in Purchase_FMS');
+//       return res.status(400).json({ error: 'STATUS 4 column not found in Purchase_FMS' });
+//     }
+
+//     const noOfQuotationColumnIndex = purchaseHeaders.findIndex(header => header && header.trim() === 'No. Of Quotation 4');
+//     if (noOfQuotationColumnIndex === -1) {
+//       console.error('No. Of Quotation 4 column not found in Purchase_FMS');
+//       return res.status(400).json({ error: 'No. Of Quotation 4 column not found in Purchase_FMS' });
+//     }
+
+//     // ←←← नया: REMARK 4 column ढूंढें
+//     const remark4ColumnIndex = purchaseHeaders.findIndex(header => header && header.trim() === 'REMARK 4');
+//     if (remark4ColumnIndex === -1) {
+//       console.error('REMARK 4 column not found in Purchase_FMS');
+//       return res.status(400).json({ error: 'REMARK 4 column not found in Purchase_FMS' });
+//     }
+
+//     console.log(`UID at column ${getColumnLetter(uidColumnIndex)} (index ${uidColumnIndex})`);
+//     console.log(`INDENT NUMBER 3 at column ${getColumnLetter(indentColumnIndex)} (index ${indentColumnIndex})`);
+//     console.log(`STATUS 4 at column ${getColumnLetter(status4ColumnIndex)} (index ${status4ColumnIndex})`);
+//     console.log(`No. Of Quotation 4 at column ${getColumnLetter(noOfQuotationColumnIndex)} (index ${noOfQuotationColumnIndex})`);
+//     console.log(`REMARK 4 at column ${getColumnLetter(remark4ColumnIndex)} (index ${remark4ColumnIndex})`);
+
+//     // Fetch Purchase_FMS data (from row 8 onwards)
+//     const purchaseResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Purchase_FMS!A8:AF',
+//     });
+
+//     const purchaseRows = purchaseResponse.data.values || [];
+//     console.log('Fetched Purchase_FMS rows (first 5 for brevity):', purchaseRows.slice(0, 5));
+
+//     // Create UID to row map (row 8 से शुरू)
+//     const uidToRowMap = new Map();
+//     purchaseRows.forEach((row, i) => {
+//       const uid = row[uidColumnIndex];
+//       if (uid) {
+//         uidToRowMap.set(uid, i + 8); // actual row number in sheet
+//       }
+//     });
+//     console.log('UID to row map:', Object.fromEntries(uidToRowMap));
+
+//     // Validate all entries: same Indent_No, UID exists, and matches Indent_No
+//     const indentNo = entries[0].Indent_No;
+//     for (let i = 0; i < entries.length; i++) {
+//       const entry = entries[i];
+//       if (entry.Indent_No !== indentNo) {
+//         return res.status(400).json({ error: `All entries must have the same Indent_No (${indentNo})` });
+//       }
+//       const rowNumber = uidToRowMap.get(entry.UID);
+//       if (!rowNumber) {
+//         return res.status(400).json({ error: `UID ${entry.UID} not found in Purchase_FMS` });
+//       }
+//       const rowIndex = rowNumber - 8;
+//       const row = purchaseRows[rowIndex];
+//       if (!row || row[indentColumnIndex] !== indentNo) {
+//         return res.status(400).json({ error: `UID ${entry.UID} does not match Indent_No ${indentNo} in Purchase_FMS` });
+//       }
+//     }
+
+//     // Proceed with Quotation_Master updates
+//     const rowsResponse = await sheets.spreadsheets.values.get({
+//       spreadsheetId,
+//       range: 'Quotation_Master!A2:AE',
+//     });
+
+//     const rows = rowsResponse.data.values || [];
+//     let nextRow = 2 + rows.length;
+
+//     const rowsNeeded = nextRow + entries.length - 1;
+//     if (rowsNeeded > maxRowsQuotation) {
+//       const additionalRows = rowsNeeded - maxRowsQuotation + 100;
+//       await sheets.spreadsheets.batchUpdate({
+//         spreadsheetId,
+//         resource: {
+//           requests: [{
+//             appendDimension: {
+//               sheetId: quotationSheetProperties.sheetId,
+//               dimension: 'ROWS',
+//               length: additionalRows,
+//             },
+//           }],
+//         },
+//       });
+//       maxRowsQuotation += additionalRows;
+//       console.log(`Extended Quotation_Master by ${additionalRows} rows. New max rows: ${maxRowsQuotation}`);
+//     }
+
+//     const updateData = [];
+//     entries.forEach((entry, index) => {
+//       const revisedQuantity = parseFloat(entry.REVISED_QUANTITY_2);
+//       const finalRate = parseFloat(entry.Final_Rate);
+//       const totalValue = (revisedQuantity * finalRate).toFixed(2);
+
+//       if (isNaN(revisedQuantity) || isNaN(finalRate) || parseFloat(totalValue) <= 0) {
+//         return res.status(400).json({
+//           error: `Invalid data in entry ${index + 1}`,
+//         });
+//       }
+
+//       const now = new Date();
+//       const istOptions = {
+//         timeZone: "Asia/Kolkata",
+//         year: "numeric",
+//         month: "2-digit",
+//         day: "2-digit",
+//         hour: "2-digit",
+//         minute: "2-digit",
+//         second: "2-digit",
+//         hour12: false,
+//       };
+//       const istFormatter = new Intl.DateTimeFormat("en-IN", istOptions);
+//       const parts = istFormatter.formatToParts(now);
+//       const year = parts.find(p => p.type === "year").value;
+//       const month = parts.find(p => p.type === "month").value;
+//       const day = parts.find(p => p.type === "day").value;
+//       const hour = parts.find(p => p.type === "hour").value;
+//       const minute = parts.find(p => p.type === "minute").value;
+//       const second = parts.find(p => p.type === "second").value;
+//       const timestamp = `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+
+//       const rowData = [
+//         timestamp,                                      // A
+//         entry.Req_No || '',                             // B
+//         entry.UID,                                      // C
+//         entry.site_name || '',                          // D
+//         entry.Indent_No,                                // E
+//         entry.Material_name || '',                      // F
+//         entry.Vendor_Name || '',                        // G
+//         entry.Vendor_Ferm_Name || '',                   // H
+//         entry.Vendor_Address || '',                     // I
+//         entry.Contact_Number || '',                     // J
+//         entry.Vendor_GST_No || '',                      // K
+//         parseFloat(entry.RATE) || 0,                    // L
+//         parseFloat(entry.Discount) || 0,                // M
+//         parseFloat(entry.CGST) || 0,                    // N
+//         parseFloat(entry.SGST) || 0,                    // O
+//         parseFloat(entry.IGST) || 0,                    // P
+//         finalRate,                                      // Q
+//         entry.Delivery_Expected_Date || '',             // R
+//         entry.Payment_Terms_Condistion_Advacne_Credit || '', // S
+//         parseInt(entry.Credit_in_Days) || 0,            // T
+//         entry.Bill_Type || '',                          // U
+//         entry.IS_TRANSPORT_REQUIRED || '',              // V
+//         parseFloat(entry.EXPECTED_TRANSPORT_CHARGES) || 0, // W
+//         parseFloat(entry.FRIGHET_CHARGES) || 0,         // X
+//         parseFloat(entry.EXPECTED_FRIGHET_CHARGES) || 0, // Y
+//         entry.PLANNED_4 || '',                          // Z
+//         entry.NO_OF_QUOTATION_4 || '',                  // AA
+//         entry.REMARK_4 || '',                           // AB ← REMARK_4 यहाँ जा रहा है
+//         newQuoNumber,                                   // AC
+//         revisedQuantity.toFixed(2),                     // AD
+//         totalValue,                                     // AE
+//       ];
+
+//       const updateRange = `Quotation_Master!A${nextRow}:AE${nextRow}`;
+//       updateData.push({
+//         range: updateRange,
+//         values: [rowData],
+//       });
+
+//       nextRow++;
+//     });
+
+//     if (updateData.length === 0) {
+//       return res.status(400).json({ error: 'No valid entries to save' });
+//     }
+
+//     const batchUpdateRequest = {
+//       spreadsheetId,
+//       resource: {
+//         valueInputOption: 'RAW',
+//         data: updateData,
+//       },
+//     };
+
+//     const updateResponse = await sheets.spreadsheets.values.batchUpdate(batchUpdateRequest);
+//     console.log('Quotation_Master updated:', JSON.stringify(updateResponse.data, null, 2));
+
+//     // Update Purchase_FMS: STATUS 4 → 'Done', No. Of Quotation 4, और REMARK 4
+//     const purchaseUpdates = [];
+//     const statusCol = getColumnLetter(status4ColumnIndex);
+//     const noQuotCol = getColumnLetter(noOfQuotationColumnIndex);
+//     const remarkCol = getColumnLetter(remark4ColumnIndex); // ← नया
+
+//     entries.forEach((entry) => {
+//       const rowNumber = uidToRowMap.get(entry.UID);
+//       if (rowNumber) {
+//         console.log(`Updating row ${rowNumber} for UID ${entry.UID}: STATUS 4 = 'Done', No. Of Quotation 4 = '${entry.NO_OF_QUOTATION_4 || ''}', REMARK 4 = '${entry.REMARK_4 || ''}'`);
+
+//         // STATUS 4 → Done
+//         purchaseUpdates.push({
+//           range: `Purchase_FMS!${statusCol}${rowNumber}`,
+//           values: [['Done']],
+//         });
+
+//         // No. Of Quotation 4
+//         purchaseUpdates.push({
+//           range: `Purchase_FMS!${noQuotCol}${rowNumber}`,
+//           values: [[entry.NO_OF_QUOTATION_4 || '']],
+//         });
+
+//         // ←←← नया: REMARK 4 update
+//         purchaseUpdates.push({
+//           range: `Purchase_FMS!${remarkCol}${rowNumber}`,
+//           values: [[entry.REMARK_4 || '']],
+//         });
+
+//       } else {
+//         console.warn(`No row found in Purchase_FMS for UID: ${entry.UID}`);
+//       }
+//     });
+
+//     // Check if Purchase_FMS has enough rows
+//     let maxRowNeededPurchase = maxRowsPurchase;
+//     if (purchaseUpdates.length > 0) {
+//       const updatedRowNumbers = Array.from(uidToRowMap.values());
+//       const maxFromUpdates = Math.max(...purchaseUpdates.map(u => parseInt(u.range.match(/\d+$/)[0]) || 0));
+//       maxRowNeededPurchase = Math.max(...updatedRowNumbers, maxFromUpdates);
+//     }
+//     if (maxRowNeededPurchase > maxRowsPurchase) {
+//       const additionalRows = maxRowNeededPurchase - maxRowsPurchase + 100;
+//       await sheets.spreadsheets.batchUpdate({
+//         spreadsheetId,
+//         resource: {
+//           requests: [{
+//             appendDimension: {
+//               sheetId: purchaseSheetProperties.sheetId,
+//               dimension: 'ROWS',
+//               length: additionalRows,
+//             },
+//           }],
+//         },
+//       });
+//       maxRowsPurchase += additionalRows;
+//       console.log(`Extended Purchase_FMS by ${additionalRows} rows. New max rows: ${maxRowsPurchase}`);
+//     }
+
+//     if (purchaseUpdates.length > 0) {
+//       console.log('Purchase_FMS updates:', JSON.stringify(purchaseUpdates, null, 2));
+//       const purchaseBatchUpdateRequest = {
+//         spreadsheetId,
+//         resource: {
+//           valueInputOption: 'RAW',
+//           data: purchaseUpdates,
+//         },
+//       };
+//       const purchaseUpdateResponse = await sheets.spreadsheets.values.batchUpdate(purchaseBatchUpdateRequest);
+//       console.log('Purchase_FMS batch update response:', JSON.stringify(purchaseUpdateResponse.data, null, 2));
+//     } else {
+//       console.warn('No updates prepared for Purchase_FMS');
+//     }
+
+//     return res.json({
+//       message: 'Data appended to Google Sheet successfully',
+//       quotationNumber: newQuoNumber,
+//       totalQuantity: entries.reduce((sum, e) => sum + parseFloat(e.REVISED_QUANTITY_2 || 0), 0),
+//       totalValue: entries.reduce((sum, e) => sum + (parseFloat(e.REVISED_QUANTITY_2 || 0) * parseFloat(e.Final_Rate || 0)), 0).toFixed(2)
+//     });
+//   } catch (error) {
+//     console.error('Error:', error.message, error.stack);
+//     return res.status(500).json({
+//       error: 'Server error',
+//       details: error.message,
+//     });
+//   }
+// });
+
+
 
 module.exports = router;
