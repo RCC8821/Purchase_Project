@@ -166,12 +166,20 @@ router.post("/Update-Payment", async (req, res) => {
     const newPaymentRows = [];
     const missingBills = [];
 
-    const now = new Date();
-    const currentTimestamp = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+ const now = new Date().toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).replace(',', '');
 
     for (const item of paymentDataArray) {
       const {
-        timestamp = currentTimestamp,
+        timestamp = now,
         planned17,
         siteName,
         vendorFirmName16,
