@@ -540,6 +540,7 @@ const PO = () => {
       vendorContact: selectedItems[0]?.Vendor_Contact_5 || 'N/A',
     };
 
+    console.log(poData)
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/create-po`, {
         method: 'POST',

@@ -7,16 +7,90 @@ const { sheets, spreadsheetId } = require('../config/googleSheet');
 const router = express.Router();
 
 // GET: Fetch all dropdown data including Remarks from Sheet1!J2:J
+// router.get('/dropdowns', async (req, res) => {
+//   try {
+//     const ranges = [
+//       'Project_Data!D3:D', // Site Names
+//       'Project_Data!A3:A', // Supervisor Names
+//       'Project_Data!H3:H', // Material Types
+//       'Project_Data!I3:I', // Material Names
+//       'Project_Data!J3:J', // Units
+//       'Project_Data!K3:K', // SKU Codes
+//       'Project_Data!F3:F', // Remarks (New)
+//     ];
+
+//     const response = await sheets.spreadsheets.values.batchGet({
+//       spreadsheetId,
+//       ranges,
+//     });
+
+//     const [
+//       siteNames = [],
+//       supervisorNames = [],
+//       materialTypes = [],
+//       materialNames = [],
+//       units = [],
+//       skuCodes = [],
+//       remarks = [],
+//     ] = response.data.valueRanges.map(range => range.values?.flat() || []);
+
+//     // Remove duplicates
+//     const uniqueSiteNames = [...new Set(siteNames.filter(Boolean))];
+//     const uniqueSupervisorNames = [...new Set(supervisorNames.filter(Boolean))];
+//     const uniqueMaterialTypes = [...new Set(materialTypes.filter(Boolean))];
+//     const uniqueRemarks = [...new Set(remarks.filter(Boolean))];
+
+//     // Build materialMap: type → [materialNames]
+//     const materialMap = {};
+//     materialTypes.forEach((type, i) => {
+//       const normType = type.toLowerCase();
+//       if (!materialMap[normType]) materialMap[normType] = [];
+//       const name = materialNames[i];
+//       if (name && !materialMap[normType].includes(name)) {
+//         materialMap[normType].push(name);
+//       }
+//     });
+
+//     // Build unitMap: materialName → { unit, skuCode }
+//     const unitMap = {};
+//     materialNames.forEach((name, i) => {
+//       if (name && units[i]) {
+//         unitMap[name.toLowerCase()] = {
+//           unit: units[i],
+//           skuCode: skuCodes[i] || '',
+//         };
+//       }
+//     });
+
+//     res.json({
+//       siteNames: uniqueSiteNames,
+//       supervisorNames: uniqueSupervisorNames,
+//       materialTypes: uniqueMaterialTypes,
+//       materialNames: materialNames.filter(Boolean),
+//       units: units.filter(Boolean),
+//       skuCodes: skuCodes.filter(Boolean),
+//       remarks: uniqueRemarks, // Sent to frontend
+//       materialMap,
+//       unitMap,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching dropdowns:', error);
+//     res.status(500).json({ error: 'Failed to load dropdown data' });
+//   }
+// });
+
+
+
 router.get('/dropdowns', async (req, res) => {
   try {
     const ranges = [
-      'Sheet1!A2:A', // Site Names
-      'Sheet1!B2:B', // Supervisor Names
-      'Sheet1!C2:C', // Material Types
-      'Sheet1!D2:D', // Material Names
-      'Sheet1!E2:E', // Units
-      'Sheet1!F2:F', // SKU Codes
-      'Sheet1!J2:J', // Remarks (New)
+      'Project_Data!D3:D',   // 0 → Site Names
+      'Project_Data!A3:A',   // 1 → Supervisor Names
+      'Project_Data!H3:H',   // 2 → Material Types
+      'Project_Data!I3:I',   // 3 → Material Names
+      'Project_Data!J3:J',   // 4 → Units
+      'Project_Data!K3:K',   // 5 → SKU Codes
+      'Project_Data!F3:F',   // 6 → Contractor / Remark
     ];
 
     const response = await sheets.spreadsheets.values.batchGet({
@@ -24,57 +98,67 @@ router.get('/dropdowns', async (req, res) => {
       ranges,
     });
 
+    const values = response.data.valueRanges.map(range => range.values?.flat() || []);
+
     const [
-      siteNames = [],
-      supervisorNames = [],
-      materialTypes = [],
-      materialNames = [],
-      units = [],
-      skuCodes = [],
-      remarks = [],
-    ] = response.data.valueRanges.map(range => range.values?.flat() || []);
+      siteNamesRaw,
+      supervisorNamesRaw,
+      materialTypesRaw,
+      materialNamesRaw,
+      unitsRaw,
+      skuCodesRaw,
+      contractorsRaw,          // ← Column F
+    ] = values;
 
-    // Remove duplicates
-    const uniqueSiteNames = [...new Set(siteNames.filter(Boolean))];
-    const uniqueSupervisorNames = [...new Set(supervisorNames.filter(Boolean))];
-    const uniqueMaterialTypes = [...new Set(materialTypes.filter(Boolean))];
-    const uniqueRemarks = [...new Set(remarks.filter(Boolean))];
+    // Unique cleaned lists
+    const siteNames = [...new Set(siteNamesRaw.filter(Boolean))].sort();
+    const supervisorNames = [...new Set(supervisorNamesRaw.filter(Boolean))].sort();
+    const materialTypes = [...new Set(materialTypesRaw.filter(Boolean))].sort();
 
-    // Build materialMap: type → [materialNames]
+    // Site → Contractor map (case-insensitive key)
+    const siteToContractorMap = {};
+    siteNamesRaw.forEach((site, index) => {
+      if (site && contractorsRaw[index]) {
+        const key = site.trim().toLowerCase();
+        siteToContractorMap[key] = contractorsRaw[index].trim();
+      }
+    });
+
+    // materialMap: type → names
     const materialMap = {};
-    materialTypes.forEach((type, i) => {
-      const normType = type.toLowerCase();
+    materialTypesRaw.forEach((type, i) => {
+      if (!type) return;
+      const normType = type.toLowerCase().trim();
       if (!materialMap[normType]) materialMap[normType] = [];
-      const name = materialNames[i];
+      const name = materialNamesRaw[i]?.trim();
       if (name && !materialMap[normType].includes(name)) {
         materialMap[normType].push(name);
       }
     });
 
-    // Build unitMap: materialName → { unit, skuCode }
+    // unitMap: name → {unit, sku}
     const unitMap = {};
-    materialNames.forEach((name, i) => {
-      if (name && units[i]) {
-        unitMap[name.toLowerCase()] = {
-          unit: units[i],
-          skuCode: skuCodes[i] || '',
+    materialNamesRaw.forEach((name, i) => {
+      if (!name) return;
+      const normName = name.toLowerCase().trim();
+      if (unitsRaw[i]) {
+        unitMap[normName] = {
+          unit: unitsRaw[i].trim(),
+          skuCode: skuCodesRaw[i]?.trim() || '',
         };
       }
     });
 
     res.json({
-      siteNames: uniqueSiteNames,
-      supervisorNames: uniqueSupervisorNames,
-      materialTypes: uniqueMaterialTypes,
-      materialNames: materialNames.filter(Boolean),
-      units: units.filter(Boolean),
-      skuCodes: skuCodes.filter(Boolean),
-      remarks: uniqueRemarks, // Sent to frontend
+      siteNames,
+      supervisorNames,
+      materialTypes,
       materialMap,
       unitMap,
+      siteToContractorMap,       // ← NEW - most important for autofill
     });
   } catch (error) {
-    console.error('Error fetching dropdowns:', error);
+    console.error('Dropdowns error:', error);
     res.status(500).json({ error: 'Failed to load dropdown data' });
   }
 });
