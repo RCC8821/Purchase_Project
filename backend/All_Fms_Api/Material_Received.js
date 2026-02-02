@@ -4,11 +4,40 @@ const { sheets, drive, spreadsheetId } = require('../config/googleSheet');
 const { Readable } = require('stream');
 const router = express.Router();
 
+// router.get('/dropdowns', async (req, res) => {
+//   try {
+//     const ranges = [
+//       'Project_Data!D2:D', // Site Names
+//       'Project_Data!A2:A', // Supervisor Names
+//     ];
+
+//     const response = await sheets.spreadsheets.values.batchGet({
+//       spreadsheetId,
+//       ranges,
+//     });
+
+//     const [siteNames, supervisorNames] = response.data.valueRanges.map(
+//       (range) => range.values?.flat() || []
+//     );
+
+//     res.json({
+//       siteNames: siteNames || [],
+//       supervisorNames: supervisorNames || [],
+//     });
+//   } catch (error) {
+//     console.error('Error fetching Google Sheet data:', error);
+//     res.status(500).json({ error: 'Failed to fetch dropdown data' });
+//   }
+// });
+
+
+
+
 router.get('/dropdowns', async (req, res) => {
   try {
     const ranges = [
-      'Sheet1!A2:A', // Site Names
-      'Sheet1!B2:B', // Supervisor Names
+      'Project_Data!D3:D',   // Site Names       (column D)
+      'Project_Data!A3:A',   // Supervisor Names (column A)
     ];
 
     const response = await sheets.spreadsheets.values.batchGet({
@@ -16,21 +45,54 @@ router.get('/dropdowns', async (req, res) => {
       ranges,
     });
 
-    const [siteNames, supervisorNames] = response.data.valueRanges.map(
-      (range) => range.values?.flat() || []
+    const [siteNamesRaw, supervisorNamesRaw] = response.data.valueRanges.map(
+      range => range.values?.flat() || []
     );
 
-    res.json({
-      siteNames: siteNames || [],
-      supervisorNames: supervisorNames || [],
+    // Pair site + supervisor and filter invalid/empty rows
+    const rows = [];
+    for (let i = 0; i < siteNamesRaw.length; i++) {
+      const site = (siteNamesRaw[i] || '').trim();
+      const supervisor = (supervisorNamesRaw[i] || '').trim();
+
+      if (site && supervisor) {
+        rows.push({ site, supervisor });
+      }
+    }
+
+    // ── Unique sorted site names ─────────────────────────────
+    const siteNames = [...new Set(rows.map(r => r.site))].sort();
+
+    // ── Site → Supervisors map (case-insensitive key) ────────
+    const siteToSupervisors = {};
+
+    rows.forEach(({ site, supervisor }) => {
+      const normSite = site.toLowerCase();   // key = lowercase
+      if (!siteToSupervisors[normSite]) {
+        siteToSupervisors[normSite] = new Set();
+      }
+      siteToSupervisors[normSite].add(supervisor);
     });
+
+    // Convert Sets to sorted arrays
+    const siteSupervisorMap = {};
+    Object.keys(siteToSupervisors).forEach(key => {
+      siteSupervisorMap[key] = [...siteToSupervisors[key]].sort();
+    });
+
+    // ── Final response ───────────────────────────────────────
+    res.json({
+      siteNames,                    // array of unique sites (preserves original case)
+      siteSupervisorMap,            // key = site.toLowerCase() → array of supervisors
+      // Optional helpers (remove if not needed):
+      // totalRowsProcessed: rows.length,
+    });
+
   } catch (error) {
-    console.error('Error fetching Google Sheet data:', error);
-    res.status(500).json({ error: 'Failed to fetch dropdown data' });
+    console.error('Error fetching dropdowns:', error);
+    res.status(500).json({ error: 'Failed to load dropdown data' });
   }
 });
-
-
 
 
 router.post('/save-material-receipt', async (req, res) => {
