@@ -494,10 +494,6 @@
 
 
 
-
-
-
-
 import React, { useEffect, useState } from "react";
 import { Plus, Trash2, Send } from "lucide-react";
 import axios from "axios";
@@ -566,6 +562,7 @@ const SearchableSelect = ({
         <ul
           className="absolute z-50 w-full bg-white border border-gray-300 rounded-md mt-1 
                      max-h-64 overflow-y-auto shadow-xl"
+          style={{ top: "100%", left: 0 }}
         >
           {displayOptions.length > 0 ? (
             displayOptions.map((opt, idx) => (
@@ -601,7 +598,7 @@ const RequirementReceived = () => {
   const [formData, setFormData] = useState({
     siteName: "",
     supervisorName: "",
-    remark: "", // now auto-filled → contractor
+    remark: "",
   });
 
   const [items, setItems] = useState([
@@ -618,14 +615,15 @@ const RequirementReceived = () => {
 
   const [dropdownOptions, setDropdownOptions] = useState({
     siteNames: [],
-    supervisorNames: [],
     materialTypes: [],
+    remarks: [],
+    siteSupervisorMap: {}, // ← new: site (lowercase) → array of supervisors
   });
+
+  const [filteredSupervisors, setFilteredSupervisors] = useState([]); // ← new
 
   const [materialMap, setMaterialMap] = useState({});
   const [unitMap, setUnitMap] = useState({});
-  const [siteToContractorMap, setSiteToContractorMap] = useState({});
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
@@ -639,15 +637,18 @@ const RequirementReceived = () => {
 
         setDropdownOptions({
           siteNames: data.siteNames || [],
-          supervisorNames: data.supervisorNames || [],
           materialTypes: data.materialTypes || [],
+          remarks: data.remarks || [],
+          siteSupervisorMap: data.siteSupervisorMap || {},
         });
 
         setMaterialMap(data.materialMap || {});
         setUnitMap(data.unitMap || {});
-        setSiteToContractorMap(data.siteToContractorMap || {});
+
+        // Optional: if you want to keep original full list as fallback
+        // setDropdownOptions(prev => ({ ...prev, supervisorNames: data.supervisorNames || [] }));
       } catch (err) {
-        setError("Failed to load dropdowns. Please try again.");
+        setError("Failed to load dropdown data. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -655,22 +656,23 @@ const RequirementReceived = () => {
     fetchData();
   }, []);
 
-  // Auto-fill contractor when site changes
-  useEffect(() => {
-    if (!formData.siteName) {
-      setFormData((prev) => ({ ...prev, remark: "" }));
+  // When site is selected → filter supervisors
+  const handleSiteChange = (val) => {
+    setFormData((prev) => ({ ...prev, siteName: val, supervisorName: "" }));
+
+    if (!val) {
+      setFilteredSupervisors([]);
       return;
     }
 
-    const key = formData.siteName.trim().toLowerCase();
-    const contractor = siteToContractorMap[key] || "";
+    const key = val.trim().toLowerCase();
+    const supervisors = dropdownOptions.siteSupervisorMap[key] || [];
+    setFilteredSupervisors(supervisors);
 
-    setFormData((prev) => ({ ...prev, remark: contractor }));
-  }, [formData.siteName, siteToContractorMap]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Optional: if only one supervisor → auto-select
+    if (supervisors.length === 1) {
+      setFormData((prev) => ({ ...prev, supervisorName: supervisors[0] }));
+    }
   };
 
   const handleItemChange = (index, field, value) => {
@@ -683,7 +685,7 @@ const RequirementReceived = () => {
       updated[index].skuCode = "";
     }
     if (field === "materialName") {
-      const norm = value.toLowerCase().trim();
+      const norm = value.toLowerCase();
       updated[index].units = unitMap[norm]?.unit || "";
       updated[index].skuCode = unitMap[norm]?.skuCode || "";
     }
@@ -712,7 +714,6 @@ const RequirementReceived = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!formData.siteName || !formData.supervisorName) {
       alert("Site and Supervisor are required");
       return;
@@ -736,7 +737,6 @@ const RequirementReceived = () => {
 
     const payload = { ...formData, items };
     setLoading(true);
-
     try {
       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/submit-requirement`, payload);
       setSuccessMessage("Requirement submitted successfully!");
@@ -762,9 +762,12 @@ const RequirementReceived = () => {
         skuCode: "",
       },
     ]);
+    setFilteredSupervisors([]);
   };
 
-  if (loading) return <div className="text-center mt-10 text-gray-600">Loading...</div>;
+  if (loading)
+    return <div className="text-center mt-10 text-gray-600">Loading dropdowns...</div>;
+
   if (error)
     return (
       <div className="text-center mt-10 text-red-500">
@@ -791,22 +794,31 @@ const RequirementReceived = () => {
               label="Site Name"
               required
               value={formData.siteName}
-              onChange={(val) => setFormData((prev) => ({ ...prev, siteName: val }))}
+              onChange={handleSiteChange}
               options={dropdownOptions.siteNames}
               placeholder="Select Site"
+              disabled={!dropdownOptions.siteNames.length}
             />
+
             <SearchableSelect
               label="Supervisor Name"
               required
               value={formData.supervisorName}
               onChange={(val) => setFormData((prev) => ({ ...prev, supervisorName: val }))}
-              options={dropdownOptions.supervisorNames}
-              placeholder="Select Supervisor"
+              options={filteredSupervisors}
+              placeholder={
+                formData.siteName
+                  ? filteredSupervisors.length === 0
+                    ? "No supervisors found for this site"
+                    : `Select Supervisor (${filteredSupervisors.length})`
+                  : "Select site first"
+              }
+              disabled={!formData.siteName || filteredSupervisors.length === 0}
             />
           </div>
         </div>
 
-        {/* Items */}
+        {/* Material Items */}
         <div className="mb-6">
           <h4 className="text-lg font-medium mb-4 text-gray-800 border-b pb-2">
             Material Items
@@ -818,7 +830,10 @@ const RequirementReceived = () => {
                 <div className="flex justify-between mb-3">
                   <h5 className="font-medium">Item {idx + 1}</h5>
                   {items.length > 1 && (
-                    <button onClick={() => removeItem(idx)} className="text-red-500 hover:text-red-700">
+                    <button
+                      onClick={() => removeItem(idx)}
+                      className="text-red-500 hover:text-red-700"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}
@@ -833,6 +848,7 @@ const RequirementReceived = () => {
                     options={dropdownOptions.materialTypes}
                     placeholder="Select Type"
                   />
+
                   <SearchableSelect
                     label="Material Name"
                     required
@@ -842,6 +858,7 @@ const RequirementReceived = () => {
                     placeholder={item.materialType ? "Select Material" : "First select type"}
                     disabled={!item.materialType}
                   />
+
                   <div>
                     <label className="block text-sm font-medium mb-1">Quantity *</label>
                     <input
@@ -852,6 +869,7 @@ const RequirementReceived = () => {
                       onChange={(e) => handleItemChange(idx, "quantity", e.target.value)}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium mb-1">Units *</label>
                     <input
@@ -861,6 +879,7 @@ const RequirementReceived = () => {
                       value={item.units}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium mb-1">SKU Code *</label>
                     <input
@@ -870,6 +889,7 @@ const RequirementReceived = () => {
                       value={item.skuCode}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium mb-1">Req Days *</label>
                     <select
@@ -885,6 +905,7 @@ const RequirementReceived = () => {
                       ))}
                     </select>
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium mb-1">Use For Reason *</label>
                     <input
@@ -909,23 +930,23 @@ const RequirementReceived = () => {
           })}
         </div>
 
-        {/* Contractor - Auto-filled */}
+        {/* Remark / Contractor */}
         <div className="mb-6">
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">
             <p className="text-xs text-yellow-800 font-medium leading-tight">
-              यह Contractor का नाम चुनी गई साइट के अनुसार अपने आप भर जाएगा।
-              केवल 'With Material' वाले ठेकेदारों के लिए इस्तेमाल करें।
+              यह Item केवल उसी ठेकेदार (Contractor) के कार्य हेतु है जिसे ‘With Material’ का कार्य दिया गया है। 
+              ठेकेदार (Contractor) का नाम उसी के अनुसार चयनित (Select) किया जाए। 
+              अन्य साइट के Engineer इस विकल्प को चयनित (Select) न करें।
             </p>
           </div>
 
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Contractor
-          </label>
-          <input
-            type="text"
-            readOnly
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-800 cursor-not-allowed"
-            value={formData.remark || "Site चुनने के बाद दिखेगा"}
+          <SearchableSelect
+            label="Contractor"
+            value={formData.remark}
+            onChange={(val) => setFormData((prev) => ({ ...prev, remark: val }))}
+            options={dropdownOptions.remarks}
+            placeholder="Search or select remark..."
+            disabled={!dropdownOptions.remarks.length}
           />
         </div>
 
@@ -937,12 +958,13 @@ const RequirementReceived = () => {
           >
             Reset
           </button>
+
           <button
             onClick={handleSubmit}
             disabled={loading}
             className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
           >
-            {loading ? "Submitting..." : (<><Send className="w-4 h-4" /> Submit</>)}
+            {loading ? "Submitting..." : (<> <Send className="w-4 h-4" /> Submit </>)}
           </button>
         </div>
 
