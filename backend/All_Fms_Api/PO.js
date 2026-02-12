@@ -1026,6 +1026,8 @@ async function generatePONumber(spreadsheetId, sheetName) {
   }
 }
 
+
+
 const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDeliveryDate, poNumber, siteName, siteLocation, supervisorName, supervisorContact, vendorName, vendorAddress, vendorGST, vendorContact, companyLogoBase64 = null) => {
   console.log('Current working directory:', process.cwd());
   console.log(`Generating PDF: PO ${poNumber}, Quotation ${quotationNo}, Indent ${indentNo}, Items: ${approvedItems.length}, Delivery Date: ${expectedDeliveryDate}`);
@@ -1042,10 +1044,26 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   const pageHeight = doc.internal.pageSize.getHeight();
   const bottomMargin = 30;
 
+  // const extractEnglish = (text) => {
+  //   if (!text) return 'N/A';
+  //   return String(text).split(/[/\p{Script=Devanagari}\p{So}\p{S}]/u)[0].trim() || 'N/A';
+  // };
+
+
   const extractEnglish = (text) => {
-    if (!text) return 'N/A';
-    return String(text).split(/[/\p{Script=Devanagari}\p{So}\p{S}]/u)[0].trim() || 'N/A';
-  };
+  if (!text) return 'N/A';
+  
+  let str = String(text).trim();
+  
+  // हिंदी (Devanagari) को हटाओ, लेकिन / , numbers, inches आदि सब रखो
+  str = str.replace(/[\p{Script=Devanagari}]+/gu, ' ');
+  
+  // extra spaces को क्लीन करो
+  str = str.replace(/\s+/g, ' ').trim();
+  
+  return str || 'N/A';
+};
+
 
   const checkPageBreak = (currentY, requiredSpace) => {
     if (currentY + requiredSpace > pageHeight - bottomMargin) {
