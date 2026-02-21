@@ -21,10 +21,12 @@
 // import Payment from '../components/purchase/Payment';
 // import Bill_Checked_18Step from '../components/purchase/Bill_Checked_18Step';
 
+// import ContractorPurchseForm from '../components/ContractorPurchase/ContractorPurchseForm';
 
 // const Dashboard = () => {
 //   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 //   const [isPurchaseDropdownOpen, setIsPurchaseDropdownOpen] = useState(false);
+//   const [isTopDropdownOpen, setIsTopDropdownOpen] = useState(false);
 //   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 //   const [userType, setUserType] = useState(null);
 //   const [selectedPage, setSelectedPage] = useState('no-access');
@@ -112,6 +114,7 @@
 //   const selectPage = (pageId) => {
 //     setSelectedPage(pageId);
 //     setIsPurchaseDropdownOpen(false);
+//     setIsTopDropdownOpen(false);
 //     setIsMobileMenuOpen(false);
 //     const purchasePages = getPurchasePages();
 //     const page = [...purchasePages, ...menuItems.find(m => m.id === 'billing-fms')?.pages || []].find(p => p.id === pageId);
@@ -138,11 +141,12 @@
 
 //   const CurrentComponent = getCurrentComponent();
 //   const togglePurchaseDropdown = () => setIsPurchaseDropdownOpen(!isPurchaseDropdownOpen);
+//   const toggleTopDropdown = () => setIsTopDropdownOpen(!isTopDropdownOpen);
 //   const isPageAllowed = () => [...getPurchasePages(), ...menuItems.find(m => m.id === 'billing-fms')?.pages || []].some(page => page.id === selectedPage);
 
 //   return (
 //     <div className="flex h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50">
-//       {/* Sidebar */}
+//       {/* Sidebar - FIXED: Added proper scrolling structure */}
 //       <div
 //         className={`${
 //           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
@@ -152,10 +156,11 @@
 //         onMouseEnter={() => setIsSidebarExpanded(true)}
 //         onMouseLeave={() => setIsSidebarExpanded(false)}
 //       >
+//         {/* FIXED: Proper flex container with h-full */}
 //         <div className="flex flex-col h-full">
-//           <div className={`flex items-center p-6 border-b border-indigo-700 transition-all duration-300 ${isSidebarExpanded ? 'justify-between' : 'lg:justify-center'}`}>
+//           {/* Header - Fixed at top */}
+//           <div className={`flex-shrink-0 flex items-center p-6 border-b border-indigo-700 transition-all duration-300 ${isSidebarExpanded ? 'justify-between' : 'lg:justify-center'}`}>
 //             <div className="flex items-center space-x-3">
-//               {/* FIXED: No blue background */}
 //               <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center overflow-hidden">
 //                 <img src="/rcc-logo.png" alt="RCC logo" className="w-10 h-10 object-contain" />
 //               </div>
@@ -168,14 +173,18 @@
 //             </button>
 //           </div>
 
-//           <nav className="flex-1 p-4">
+//           {/* FIXED: Scrollable navigation area */}
+//           <nav className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-indigo-700 scrollbar-track-indigo-900">
 //             <ul className="space-y-2">
 //               {menuItems.map((menu) => (
 //                 <li key={menu.id} className="relative">
 //                   <button
 //                     onClick={() => {
 //                       if (menu.url) window.open(menu.url, '_blank', 'noopener,noreferrer');
-//                       else if (menu.id === 'purchase-fms' && menu.pages.length > 0) togglePurchaseDropdown();
+//                       else if (menu.id === 'purchase-fms' && menu.pages.length > 0) {
+//                         setIsPurchaseDropdownOpen(!isPurchaseDropdownOpen);
+//                         setIsTopDropdownOpen(false); // Top dropdown band karo
+//                       }
 //                       else if (menu.path) selectPage(menu.id);
 //                     }}
 //                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group relative text-white/90 hover:bg-white/10 hover:text-white ${
@@ -194,6 +203,7 @@
 //                     )}
 //                   </button>
 
+//                   {/* FIXED: Dropdown items inside scrollable area */}
 //                   {isSidebarExpanded && menu.pages && menu.pages.length > 0 && isPurchaseDropdownOpen && menu.id === 'purchase-fms' && (
 //                     <ul className="ml-6 mt-2 space-y-1 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg shadow-md">
 //                       {menu.pages.map((page) => (
@@ -216,7 +226,8 @@
 //             </ul>
 //           </nav>
 
-//           <div className="p-4 border-t border-indigo-700">
+//           {/* FIXED: Footer - Always visible at bottom */}
+//           <div className="flex-shrink-0 p-4 border-t border-indigo-700 bg-indigo-900/50">
 //             <div className={`flex items-center mb-4 transition-all duration-300 ${isSidebarExpanded ? 'space-x-3' : 'lg:justify-center lg:space-x-0'}`}>
 //               <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
 //                 <User className="w-5 h-5 text-white" />
@@ -257,7 +268,6 @@
 //         <main className="flex-1 overflow-auto p-6">
 //           <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-indigo-100">
             
-//             {/* FIXED: Title + Select Page together at top */}
 //             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-indigo-100">
 //               <div>
 //                 <h3 className="text-2xl font-bold text-indigo-900">
@@ -269,19 +279,21 @@
 //                 </p>
 //               </div>
 
-//               {/* FIXED: Select Page at top-right */}
 //               {menuItems.find(m => m.id === 'purchase-fms')?.pages.length > 0 && isPageAllowed() && (
 //                 <div className="relative">
 //                   <button
-//                     onClick={togglePurchaseDropdown}
+//                     onClick={() => {
+//                       setIsTopDropdownOpen(!isTopDropdownOpen);
+//                       setIsPurchaseDropdownOpen(false); // Sidebar dropdown band karo
+//                     }}
 //                     className="flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all duration-200 shadow-md font-medium"
 //                   >
 //                     Select Page
-//                     <ChevronDown className={`w-4 h-4 transition-transform ${isPurchaseDropdownOpen ? 'rotate-180' : ''}`} />
+//                     <ChevronDown className={`w-4 h-4 transition-transform ${isTopDropdownOpen ? 'rotate-180' : ''}`} />
 //                   </button>
 
-//                   {isPurchaseDropdownOpen && (
-//                     <div className="absolute right-0 mt-2 w-64 bg-white border border-indigo-200 rounded-xl shadow-2xl z-10">
+//                   {isTopDropdownOpen && (
+//                     <div className="absolute right-0 mt-2 w-64 bg-white border border-indigo-200 rounded-xl shadow-2xl z-10 max-h-96 overflow-y-auto">
 //                       {getPurchasePages().map((page) => (
 //                         <button
 //                           key={page.id}
@@ -302,7 +314,6 @@
 //               )}
 //             </div>
 
-//             {/* Page Content */}
 //             <div className="min-h-[400px]">
 //               {CurrentComponent ? (
 //                 <CurrentComponent selectedPage={selectedPage} />
@@ -353,6 +364,7 @@ import BillTallyData from '../components/purchase/BillTallyData';
 import Payment from '../components/purchase/Payment';
 import Bill_Checked_18Step from '../components/purchase/Bill_Checked_18Step';
 
+import ContractorPurchseForm from '../components/ContractorPurchase/ContractorPurchseForm';
 
 const Dashboard = () => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -368,12 +380,12 @@ const Dashboard = () => {
     const storedUserType = localStorage.getItem('userType');
     if (storedUserType) {
       setUserType(storedUserType);
-      const purchasePages = getPurchasePages();
-      if (purchasePages.length > 0) {
-        const defaultPage = purchasePages[0].id;
+      const allowedPages = getAllowedPages();
+      if (allowedPages.length > 0) {
+        const defaultPage = allowedPages[0].id;
         setSelectedPage(defaultPage);
-        if (!purchasePages.some(page => location.pathname === page.path)) {
-          navigate(purchasePages[0].path);
+        if (!allowedPages.some(page => location.pathname === page.path)) {
+          navigate(allowedPages[0].path);
         }
       }
     } else {
@@ -383,15 +395,23 @@ const Dashboard = () => {
   }, [navigate, location.pathname]);
 
   useEffect(() => {
-    const purchasePages = getPurchasePages();
-    const allPages = [...purchasePages, ...menuItems.find(m => m.id === 'billing-fms')?.pages || []];
-    const currentPage = allPages.find(page => location.pathname === page.path);
+    const allowedPages = getAllowedPages();
+    const currentPage = allowedPages.find(page => location.pathname === page.path);
     if (currentPage) {
       setSelectedPage(currentPage.id);
-    } else if (!purchasePages.length && userType) {
+    } else if (allowedPages.length === 0 && userType) {
       setSelectedPage('no-access');
     }
   }, [location.pathname, userType]);
+
+  const contractorPage = {
+    id: 'contractor-purchase-form',
+    name: 'Contractor Purchase Form',
+    icon: FileText,
+    component: ContractorPurchseForm,
+    path: '/dashboard/contractor-purchase-form',
+    allowedUserTypes: ['admin', 'Anish', 'Gourav Singh']
+  };
 
   const allPurchasePages = [
     { id: 'requirement-received', name: 'Requirement Received', icon: FileText, component: RequirementReceived, path: '/dashboard/requirement-received', allowedUserTypes: ['admin', 'Anish'] },
@@ -417,12 +437,35 @@ const Dashboard = () => {
     return allPurchasePages.filter(page => page.allowedUserTypes.includes(userType));
   };
 
+  const getAllowedPages = () => {
+    const pages = [...allPurchasePages];
+    if (userType && contractorPage.allowedUserTypes.includes(userType)) {
+      pages.push(contractorPage);
+    }
+    return pages.filter(page => page.allowedUserTypes.includes(userType));
+  };
+
   const menuItems = [
     { id: 'purchase-fms', name: 'Purchase FMS', icon: ShoppingCart, path: null, pages: getPurchasePages() },
-    { id: 'Sheet-Link', name: 'Sheet Link', icon: FileText, url: 'https://docs.google.com/spreadsheets/d/18bmeQLqAOqleKS9628izEnirrRwOqkC0G_pEYGOsO-Y/edit?gid=0#gid=0', pages: [] }
+    { id: 'Sheet-Link', name: 'Sheet Link', icon: FileText, url: 'https://docs.google.com/spreadsheets/d/18bmeQLqAOqleKS9628izEnirrRwOqkC0G_pEYGOsO-Y/edit?gid=0#gid=0', pages: [] },
+    // Contractor Purchase Form as separate main menu item
+    ...(userType && contractorPage.allowedUserTypes.includes(userType)
+      ? [{ 
+          id: contractorPage.id, 
+          name: contractorPage.name, 
+          icon: contractorPage.icon, 
+          path: contractorPage.path, 
+          component: contractorPage.component, 
+          pages: [] 
+        }]
+      : []),
   ];
 
   const pageContent = {
+    'contractor-purchase-form': { 
+      title: 'Contractor Purchase Form', 
+      content: 'Create and manage contractor purchase requests and documentation.' 
+    },
     'requirement-received': { title: 'Requirement Form', content: 'View and manage received procurement requirements.' },
     'approve-required': { title: 'Approve Required', content: 'Review and approve required requests.' },
     'indent-to-get-quotation': { title: 'Indent (To Get Quotation)', content: 'Manage indents to request quotations.' },
@@ -447,9 +490,22 @@ const Dashboard = () => {
     setIsPurchaseDropdownOpen(false);
     setIsTopDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    const purchasePages = getPurchasePages();
-    const page = [...purchasePages, ...menuItems.find(m => m.id === 'billing-fms')?.pages || []].find(p => p.id === pageId);
-    if (page) navigate(page.path);
+
+    // Find the page in menuItems or purchase pages
+    let targetPage = null;
+    for (const menu of menuItems) {
+      if (menu.id === pageId) {
+        targetPage = menu;
+        break;
+      }
+      if (menu.pages) {
+        targetPage = menu.pages.find(p => p.id === pageId);
+        if (targetPage) break;
+      }
+    }
+    if (targetPage?.path) {
+      navigate(targetPage.path);
+    }
   };
 
   const handleLogout = () => {
@@ -462,8 +518,11 @@ const Dashboard = () => {
 
   const getCurrentComponent = () => {
     for (const menu of menuItems) {
+      if (menu.id === selectedPage) {
+        return menu.component || null;
+      }
       if (menu.pages) {
-        const page = menu.pages.find((p) => p.id === selectedPage);
+        const page = menu.pages.find(p => p.id === selectedPage);
         if (page) return page.component;
       }
     }
@@ -471,13 +530,17 @@ const Dashboard = () => {
   };
 
   const CurrentComponent = getCurrentComponent();
-  const togglePurchaseDropdown = () => setIsPurchaseDropdownOpen(!isPurchaseDropdownOpen);
-  const toggleTopDropdown = () => setIsTopDropdownOpen(!isTopDropdownOpen);
-  const isPageAllowed = () => [...getPurchasePages(), ...menuItems.find(m => m.id === 'billing-fms')?.pages || []].some(page => page.id === selectedPage);
+  const isPageAllowed = () => {
+    return menuItems.some(menu => {
+      if (menu.id === selectedPage) return true;
+      if (menu.pages) return menu.pages.some(p => p.id === selectedPage);
+      return false;
+    });
+  };
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50">
-      {/* Sidebar - FIXED: Added proper scrolling structure */}
+      {/* Sidebar */}
       <div
         className={`${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
@@ -487,9 +550,7 @@ const Dashboard = () => {
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
       >
-        {/* FIXED: Proper flex container with h-full */}
         <div className="flex flex-col h-full">
-          {/* Header - Fixed at top */}
           <div className={`flex-shrink-0 flex items-center p-6 border-b border-indigo-700 transition-all duration-300 ${isSidebarExpanded ? 'justify-between' : 'lg:justify-center'}`}>
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center overflow-hidden">
@@ -504,19 +565,20 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {/* FIXED: Scrollable navigation area */}
           <nav className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-indigo-700 scrollbar-track-indigo-900">
             <ul className="space-y-2">
               {menuItems.map((menu) => (
                 <li key={menu.id} className="relative">
                   <button
                     onClick={() => {
-                      if (menu.url) window.open(menu.url, '_blank', 'noopener,noreferrer');
-                      else if (menu.id === 'purchase-fms' && menu.pages.length > 0) {
+                      if (menu.url) {
+                        window.open(menu.url, '_blank', 'noopener,noreferrer');
+                      } else if (menu.pages && menu.pages.length > 0) {
                         setIsPurchaseDropdownOpen(!isPurchaseDropdownOpen);
-                        setIsTopDropdownOpen(false); // Top dropdown band karo
+                        setIsTopDropdownOpen(false);
+                      } else if (menu.id) {
+                        selectPage(menu.id);
                       }
-                      else if (menu.path) selectPage(menu.id);
                     }}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group relative text-white/90 hover:bg-white/10 hover:text-white ${
                       selectedPage === menu.id || (menu.pages && menu.pages.some(p => p.id === selectedPage))
@@ -534,7 +596,6 @@ const Dashboard = () => {
                     )}
                   </button>
 
-                  {/* FIXED: Dropdown items inside scrollable area */}
                   {isSidebarExpanded && menu.pages && menu.pages.length > 0 && isPurchaseDropdownOpen && menu.id === 'purchase-fms' && (
                     <ul className="ml-6 mt-2 space-y-1 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg shadow-md">
                       {menu.pages.map((page) => (
@@ -557,7 +618,6 @@ const Dashboard = () => {
             </ul>
           </nav>
 
-          {/* FIXED: Footer - Always visible at bottom */}
           <div className="flex-shrink-0 p-4 border-t border-indigo-700 bg-indigo-900/50">
             <div className={`flex items-center mb-4 transition-all duration-300 ${isSidebarExpanded ? 'space-x-3' : 'lg:justify-center lg:space-x-0'}`}>
               <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -576,7 +636,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content Area - same as before */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-indigo-100 p-4">
           <div className="flex items-center justify-between">
@@ -598,7 +658,6 @@ const Dashboard = () => {
 
         <main className="flex-1 overflow-auto p-6">
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-indigo-100">
-            
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-indigo-100">
               <div>
                 <h3 className="text-2xl font-bold text-indigo-900">
@@ -615,7 +674,7 @@ const Dashboard = () => {
                   <button
                     onClick={() => {
                       setIsTopDropdownOpen(!isTopDropdownOpen);
-                      setIsPurchaseDropdownOpen(false); // Sidebar dropdown band karo
+                      setIsPurchaseDropdownOpen(false);
                     }}
                     className="flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all duration-200 shadow-md font-medium"
                   >

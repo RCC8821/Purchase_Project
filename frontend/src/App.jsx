@@ -21,6 +21,8 @@ import Bill_Processing from './components/purchase/Bill_Processing';
 import BillCheckedData from './components/purchase/BillCheckedData';
 import BillTallyData from './components/purchase/BillTallyData';
 import Bill_Checked_18Step from './components/purchase/Bill_Checked_18Step';
+import ContractorPurchseForm from './components/ContractorPurchase/ContractorPurchseForm';
+
 
 
 const App = () => {
@@ -45,6 +47,7 @@ const App = () => {
           <Route path='BillTallyData' element={<BillTallyData/>}/>
           <Route path='Payment' element={<Payment/>}/>
           <Route path='Bill_Checked_18Step' element={Bill_Checked_18Step}/>
+          <Route path='contractor-purchase-form' element={ContractorPurchseForm}/>
           {/* <Route path="procurement-reports" element={<ProcurementReports />} /> */}
 
           <Route path="invoice-generation" element={<BillingFMS selectedPage="invoice-generation" />} />

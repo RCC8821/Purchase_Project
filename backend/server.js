@@ -22,6 +22,8 @@ const Payment = require('./All_Fms_Api/Payment')
 const Bill_Checked_Step18 = require('./All_Fms_Api/BILL _CHECKD_18Step')
 const cloudinary = require("cloudinary").v2;
 
+const contractorForm = require('./All_Fms_Api/ContractorForm/ContractorForm')
+
 const app = express();
 
 app.use(express.json({ limit: '10mb' }));
@@ -61,6 +63,13 @@ app.use('/api',Bill_Checked)
 app.use('/api',Bill_Tally)
 app.use('/api',Payment)
 app.use('/api',Bill_Checked_Step18)
+
+
+/////  Contractor Form 
+
+app.use('/api/contractor',contractorForm)
+
+
 
 // Start the server
 const PORT = process.env.PORT || 5000;
