@@ -96,13 +96,9 @@ router.get('/dropdowns', async (req, res) => {
       units:        unitsRaw.filter(Boolean),
       skuCodes:     skuCodesRaw.filter(Boolean),
       remarks:      uniqueRemarks,
-
       materialMap,
       unitMap,
-
-      // ── New: this is what frontend needs for auto-fill ──
-      siteSupervisorMap,           // key = site.toLowerCase()
-      // Optional: also send original mapping if you want case-sensitive display
+      siteSupervisorMap,           
       siteToSupervisorsRaw: siteToSupervisors, 
     });
 

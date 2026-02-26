@@ -43,7 +43,7 @@ cloudinary.config({
 
 // //////  Alll api call//////////
 
-app.use('/api', authRoutes);
+app.use('/api', authRoutes)
 app.use('/api', AllFMS)
 app.use('/api', AllFMSData)
 app.use('/api',IndentData)
