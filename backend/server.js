@@ -24,6 +24,21 @@ const cloudinary = require("cloudinary").v2;
 
 const contractorForm = require('./All_Fms_Api/ContractorForm/ContractorForm')
 
+////// Site expeses api 
+
+const DebitApprovel1=require('./SiteExpenses/Debit/DebitApprovel1')
+
+const SiteApprovels= require('./SiteExpenses/SiteExpenses/SiteApprovels')
+
+const LabourApprovel = require("./SiteExpenses/Labour/LabourExpenses")
+
+
+/////// OutStanding Form 
+
+const OutStanding= require('./All_Fms_Api/OutStanding')
+
+
+
 const app = express();
 
 app.use(express.json({ limit: '10mb' }));
@@ -68,6 +83,18 @@ app.use('/api',Bill_Checked_Step18)
 /////  Contractor Form 
 
 app.use('/api/contractor',contractorForm)
+
+/////// outStanding form 
+
+app.use('/api/outStading',OutStanding)
+
+//// // Site Expenses 
+
+app.use('/api/DebitExpenses',DebitApprovel1)
+
+app.use('/api/SiteExpenses',SiteApprovels)
+
+app.use('/api/labour',LabourApprovel)
 
 
 

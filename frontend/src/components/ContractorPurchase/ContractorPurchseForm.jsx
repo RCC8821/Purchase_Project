@@ -22,7 +22,7 @@ const ContractorPurchaseForm = () => {
   const [formData, setFormData] = useState({
     siteName: '',
     supervisorName: '',
-    remark: '',  // ← yeh sirf optional rahega
+    remark: '',
     challanNo: '',
     contractorName: '',
     contractorFirm: '',
@@ -39,6 +39,17 @@ const ContractorPurchaseForm = () => {
 
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successDetails, setSuccessDetails] = useState({ reqNo: '', rowsAdded: 0 });
+
+  // Responsive check for mobile
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchDropdowns = async () => {
@@ -141,18 +152,11 @@ const ContractorPurchaseForm = () => {
     reader.readAsDataURL(file);
   };
 
-  // Sab required fields check karne wala function
   const isFormValid = () => {
-    // Site Name + Supervisor Name
     if (!formData.siteName.trim() || !formData.supervisorName.trim()) return false;
-
-    // Contractor Name + Contractor Firm
     if (!formData.contractorName.trim() || !formData.contractorFirm.trim()) return false;
-
-    // Material Photo
     if (!formData.materialPhoto) return false;
 
-    // Har item ke sab fields
     for (const item of formData.items) {
       if (
         !item.materialType.trim() ||
@@ -166,7 +170,6 @@ const ContractorPurchaseForm = () => {
       }
     }
 
-    // Challan: number YA photo mein se kam se kam ek
     const hasChallanNo = formData.challanNo.trim().length > 0;
     const hasChallanPhoto = !!formData.challanPhoto;
     if (!hasChallanNo && !hasChallanPhoto) return false;
@@ -239,12 +242,44 @@ const ContractorPurchaseForm = () => {
     }
   };
 
+  // ── Responsive Styles ──────────────────────────────────────────────────
+  const containerStyle = {
+    backgroundColor: '#f9fafb',
+    minHeight: '100vh',
+    padding: isMobile ? '20px 12px' : '30px 20px',
+    fontFamily: 'Inter, Segoe UI, sans-serif',
+  };
+
+  const innerContainerStyle = {
+    maxWidth: '1100px',
+    margin: '0 auto',
+  };
+
+  const sectionStyle = {
+    background: '#fff',
+    border: '1px solid #e5e7eb',
+    borderRadius: '10px',
+    padding: isMobile ? '18px' : '24px',
+    marginBottom: '20px',
+  };
+
+  const grid3Style = {
+    display: 'grid',
+    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
+    gap: '16px',
+  };
+
+  const tableContainerStyle = {
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch', // smooth scroll on iOS
+  };
+
   const inputStyle = {
     width: '100%',
-    padding: '9px 12px',
+    padding: isMobile ? '10px 12px' : '9px 12px',
     border: '1px solid #d1d5db',
     borderRadius: '6px',
-    fontSize: '14px',
+    fontSize: isMobile ? '15px' : '14px', // थोड़ा बड़ा मोबाइल पर
     outline: 'none',
     backgroundColor: '#fff',
     boxSizing: 'border-box',
@@ -258,40 +293,45 @@ const ContractorPurchaseForm = () => {
 
   const labelStyle = {
     display: 'block',
-    fontSize: '13px',
+    fontSize: isMobile ? '14px' : '13px',
     fontWeight: '600',
     color: '#374151',
-    marginBottom: '5px',
-  };
-
-  const sectionStyle = {
-    background: '#fff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '10px',
-    padding: '24px',
-    marginBottom: '20px',
+    marginBottom: '6px',
   };
 
   const sectionTitleStyle = {
-    fontSize: '14px',
+    fontSize: isMobile ? '15px' : '14px',
     fontWeight: '700',
     color: '#1f2937',
-    marginBottom: '18px',
+    marginBottom: '16px',
     paddingBottom: '10px',
     borderBottom: '1px solid #f3f4f6',
   };
 
+  const submitButtonStyle = {
+    width: isMobile ? '100%' : 'auto',
+    padding: '12px 32px',
+    background: loading || !isFormValid() ? '#9ca3af' : '#2563eb',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '15px',
+    fontWeight: '600',
+    cursor: loading || !isFormValid() ? 'not-allowed' : 'pointer',
+    marginTop: isMobile ? '16px' : 0,
+  };
+
   return (
-    <div style={{ backgroundColor: '#f9fafb', minHeight: '100vh', padding: '30px 20px', fontFamily: 'Inter, Segoe UI, sans-serif' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#111827', margin: 0 }}>
+    <div style={containerStyle}>
+      <div style={innerContainerStyle}>
+        {/* <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ fontSize: isMobile ? '20px' : '22px', fontWeight: '700', color: '#111827', margin: 0 }}>
             Contractor Material Purchase Request
           </h2>
           <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
             Fill in the details below to submit a material requirement
           </p>
-        </div>
+        </div> */}
 
         {message.text && (
           <div
@@ -330,7 +370,7 @@ const ContractorPurchaseForm = () => {
               style={{
                 background: '#fff',
                 borderRadius: '12px',
-                padding: '32px 40px',
+                padding: isMobile ? '24px 28px' : '32px 40px',
                 maxWidth: '420px',
                 width: '90%',
                 textAlign: 'center',
@@ -356,7 +396,7 @@ const ContractorPurchaseForm = () => {
               </button>
 
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
-              <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: '0 0 12px' }}>
+              <h3 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '700', color: '#111827', margin: '0 0 12px' }}>
                 Submission Successful!
               </h3>
               <p style={{ fontSize: '16px', color: '#374151', margin: '0 0 20px' }}>
@@ -396,7 +436,7 @@ const ContractorPurchaseForm = () => {
             {/* Site Information */}
             <div style={sectionStyle}>
               <div style={sectionTitleStyle}>Site Information</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+              <div style={grid3Style}>
                 <div>
                   <label style={labelStyle}>
                     Site / Project Name <span style={{ color: 'red' }}>*</span>
@@ -467,7 +507,7 @@ const ContractorPurchaseForm = () => {
             {/* Contractor Information */}
             <div style={sectionStyle}>
               <div style={sectionTitleStyle}>Contractor Information</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+              <div style={grid3Style}>
                 <div>
                   <label style={labelStyle}>
                     Contractor Name <span style={{ color: 'red' }}>*</span>
@@ -556,7 +596,7 @@ const ContractorPurchaseForm = () => {
                   Challan Photo <span style={{ color: 'red' }}>*</span> (ya number)
                 </label>
                 <input
-                required
+                  required
                   type="file"
                   accept="image/*"
                   onChange={handleChallanPhotoChange}
@@ -584,15 +624,15 @@ const ContractorPurchaseForm = () => {
             <div style={sectionStyle}>
               <div style={sectionTitleStyle}>Materials Required</div>
 
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <div style={tableContainerStyle}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: isMobile ? '12px' : '13px', minWidth: isMobile ? '800px' : 'auto' }}>
                   <thead>
                     <tr style={{ background: '#f3f4f6' }}>
                       {['#', 'Type *', 'Material Name *', 'SKU Code', 'Unit', 'Qty *', 'Purpose *', ''].map((h, i) => (
                         <th
                           key={i}
                           style={{
-                            padding: '10px',
+                            padding: isMobile ? '8px 6px' : '10px',
                             textAlign: 'left',
                             fontWeight: '600',
                             color: '#374151',
@@ -608,14 +648,14 @@ const ContractorPurchaseForm = () => {
                   <tbody>
                     {formData.items.map((item, index) => (
                       <tr key={index} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                        <td style={{ padding: '8px 10px', color: '#6b7280', fontWeight: '600' }}>{index + 1}</td>
+                        <td style={{ padding: isMobile ? '8px 6px' : '8px 10px', color: '#6b7280', fontWeight: '600' }}>{index + 1}</td>
 
-                        <td style={{ padding: '8px 6px' }}>
+                        <td style={{ padding: isMobile ? '8px 4px' : '8px 6px' }}>
                           <select
                             value={item.materialType}
                             onChange={(e) => handleTypeChange(index, e.target.value)}
                             required
-                            style={{ ...inputStyle, minWidth: '120px' }}
+                            style={{ ...inputStyle, minWidth: isMobile ? '110px' : '120px' }}
                           >
                             <option value="">-- Type --</option>
                             {dropdownData.materialTypes.map((t) => (
@@ -624,7 +664,7 @@ const ContractorPurchaseForm = () => {
                           </select>
                         </td>
 
-                        <td style={{ padding: '8px 6px' }}>
+                        <td style={{ padding: isMobile ? '8px 4px' : '8px 6px' }}>
                           <select
                             value={item.materialName}
                             onChange={(e) => handleNameChange(index, e.target.value)}
@@ -632,7 +672,7 @@ const ContractorPurchaseForm = () => {
                             disabled={!item.materialType}
                             style={{
                               ...inputStyle,
-                              minWidth: '160px',
+                              minWidth: isMobile ? '140px' : '160px',
                               backgroundColor: !item.materialType ? '#f9fafb' : '#fff',
                             }}
                           >
@@ -643,25 +683,25 @@ const ContractorPurchaseForm = () => {
                           </select>
                         </td>
 
-                        <td style={{ padding: '8px 6px' }}>
+                        <td style={{ padding: isMobile ? '8px 4px' : '8px 6px' }}>
                           <input
                             type="text"
                             value={item.skuCode}
                             readOnly
-                            style={{ ...inputStyle, minWidth: '90px', backgroundColor: '#f9fafb', color: '#6b7280' }}
+                            style={{ ...inputStyle, minWidth: isMobile ? '80px' : '90px', backgroundColor: '#f9fafb', color: '#6b7280' }}
                           />
                         </td>
 
-                        <td style={{ padding: '8px 6px' }}>
+                        <td style={{ padding: isMobile ? '8px 4px' : '8px 6px' }}>
                           <input
                             type="text"
                             value={item.units}
                             readOnly
-                            style={{ ...inputStyle, minWidth: '70px', backgroundColor: '#f9fafb', color: '#6b7280' }}
+                            style={{ ...inputStyle, minWidth: isMobile ? '60px' : '70px', backgroundColor: '#f9fafb', color: '#6b7280' }}
                           />
                         </td>
 
-                        <td style={{ padding: '8px 6px' }}>
+                        <td style={{ padding: isMobile ? '8px 4px' : '8px 6px' }}>
                           <input
                             type="number"
                             name="quantity"
@@ -671,11 +711,11 @@ const ContractorPurchaseForm = () => {
                             min="0.01"
                             step="any"
                             placeholder="0"
-                            style={{ ...inputStyle, minWidth: '80px' }}
+                            style={{ ...inputStyle, minWidth: isMobile ? '70px' : '80px' }}
                           />
                         </td>
 
-                        <td style={{ padding: '8px 6px' }}>
+                        <td style={{ padding: isMobile ? '8px 4px' : '8px 6px' }}>
                           <input
                             type="text"
                             name="reason"
@@ -683,17 +723,17 @@ const ContractorPurchaseForm = () => {
                             onChange={(e) => handleItemChange(index, e)}
                             required
                             placeholder="e.g. Foundation work"
-                            style={{ ...inputStyle, minWidth: '150px' }}
+                            style={{ ...inputStyle, minWidth: isMobile ? '130px' : '150px' }}
                           />
                         </td>
 
-                        <td style={{ padding: '8px 6px' }}>
+                        <td style={{ padding: isMobile ? '8px 4px' : '8px 6px' }}>
                           {formData.items.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeItem(index)}
                               style={{
-                                padding: '6px 12px',
+                                padding: '6px 10px',
                                 background: '#fff',
                                 border: '1px solid #fca5a5',
                                 borderRadius: '6px',
@@ -726,6 +766,7 @@ const ContractorPurchaseForm = () => {
                   fontWeight: '600',
                   color: '#374151',
                   cursor: 'pointer',
+                  width: isMobile ? '100%' : 'auto',
                 }}
               >
                 + Add Material
@@ -737,16 +778,7 @@ const ContractorPurchaseForm = () => {
               <button
                 type="submit"
                 disabled={loading || !isFormValid()}
-                style={{
-                  padding: '12px 32px',
-                  background: loading || !isFormValid() ? '#9ca3af' : '#2563eb',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: loading || !isFormValid() ? 'not-allowed' : 'pointer',
-                }}
+                style={submitButtonStyle}
               >
                 {loading ? 'Submitting...' : 'Submit Requirement'}
               </button>

@@ -14,6 +14,7 @@ import MRN from './components/purchase/MRN';
 import BillingFMS from './components/BillingFMS';
 import Payment from './components/purchase/Payment';
 
+
 /////// Billing components ///////////////////////
 
 import Vendor_followup_billing from './components/purchase/Vendor_followup_billing';
@@ -23,6 +24,9 @@ import BillTallyData from './components/purchase/BillTallyData';
 import Bill_Checked_18Step from './components/purchase/Bill_Checked_18Step';
 import ContractorPurchseForm from './components/ContractorPurchase/ContractorPurchseForm';
 
+////////
+
+import OutStanding from './components/purchase/OutStanding';
 
 
 const App = () => {
@@ -48,6 +52,7 @@ const App = () => {
           <Route path='Payment' element={<Payment/>}/>
           <Route path='Bill_Checked_18Step' element={Bill_Checked_18Step}/>
           <Route path='contractor-purchase-form' element={ContractorPurchseForm}/>
+          <Route path='outstanding' element={OutStanding}/>
           {/* <Route path="procurement-reports" element={<ProcurementReports />} /> */}
 
           <Route path="invoice-generation" element={<BillingFMS selectedPage="invoice-generation" />} />
