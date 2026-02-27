@@ -913,7 +913,7 @@ const Dashboard = () => {
       icon: DollarSign, 
       component: OutStanding, 
       path: '/dashboard/outstanding', 
-      allowedUserTypes: ['admin', 'Anish', 'Gourav Singh', 'Govind Ram Nagar'] 
+      allowedUserTypes: ['admin', 'Govind Ram Nagar'] 
     },
   ];
 
