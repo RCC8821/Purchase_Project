@@ -8,24 +8,36 @@ const router = express.Router();
 
 // router.get('/get-project-dropdown', async (req, res) => {
 //   try {
-//     const response = await sheets.spreadsheets.values.get({
-//       spreadsheetId: SiteExpeseSheetId,
-//       range: 'Project_Data!C2:D', // C and D columns, starting from row 2 (skip header)
-//     });
+//     // Fetch C, D columns and U column separately (ya ek saath bhi kar sakte hain)
+//     const [cdResponse, uResponse] = await Promise.all([
+//       sheets.spreadsheets.values.get({
+//         spreadsheetId: SiteExpeseSheetId,
+//         range: 'Project_Data!C3:D', // C and D columns
+//       }),
+//       sheets.spreadsheets.values.get({
+//         spreadsheetId: SiteExpeseSheetId,
+//         range: 'Project_Data!U3:U', // U column
+//       })
+//     ]);
 
-//     const rows = response.data.values || [];
+//     const cdRows = cdResponse.data.values || [];
+//     const uRows = uResponse.data.values || [];
 
-//     // Filter out empty rows and map to dropdown format
-//     const projectDropdownData = rows
-//       .filter(row => row[0] || row[1]) // Keep rows where C or D has data
-//       .map((row, index) => ({
-//         id: index + 1,
-//         projectName: row[0] || '',      // Column C
-//         projectEngineer: row[1] || '',  // Column D
-//         // Combined label for dropdown display
-//         label: `${row[0] || ''} - ${row[1] || ''}`.trim(),
-//         value: row[0] || ''  // Use project name as value
-//       }));
+//     // Combine data from both ranges
+//     const projectDropdownData = cdRows
+//       .map((row, index) => {
+//         const uValue = uRows[index] ? uRows[index][0] : ''; // Get U column value
+//         return {
+//           id: index + 1,
+//           projectName: row[0] || '',      // Column C
+//           projectEngineer: row[1] || '',  // Column D
+//           extraField: uValue || '',        // Column U
+//           // Combined label for dropdown display
+//           label: `${row[0] || ''} - ${row[1] || ''}`.trim(),
+//           value: row[0] || ''  // Use project name as value
+//         };
+//       })
+//       .filter(item => item.projectName || item.projectEngineer || item.extraField);
 
 //     // Remove duplicates based on projectName
 //     const uniqueProjects = projectDropdownData.filter(
@@ -53,59 +65,58 @@ const router = express.Router();
 
 router.get('/get-project-dropdown', async (req, res) => {
   try {
-    // Fetch C, D columns and U column separately (ya ek saath bhi kar sakte hain)
-    const [cdResponse, uResponse] = await Promise.all([
-      sheets.spreadsheets.values.get({
-        spreadsheetId: SiteExpeseSheetId,
-        range: 'Project_Data!C3:D', // C and D columns
-      }),
-      sheets.spreadsheets.values.get({
-        spreadsheetId: SiteExpeseSheetId,
-        range: 'Project_Data!U3:U', // U column
-      })
-    ]);
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SiteExpeseSheetId,
+      range: 'Project_Data!A3:U1000',   // A se U tak (U = 21st column, index 20)
+    });
 
-    const cdRows = cdResponse.data.values || [];
-    const uRows = uResponse.data.values || [];
+    const rows = response.data.values || [];
 
-    // Combine data from both ranges
-    const projectDropdownData = cdRows
-      .map((row, index) => {
-        const uValue = uRows[index] ? uRows[index][0] : ''; // Get U column value
-        return {
-          id: index + 1,
-          projectName: row[0] || '',      // Column C
-          projectEngineer: row[1] || '',  // Column D
-          extraField: uValue || '',        // Column U
-          // Combined label for dropdown display
-          label: `${row[0] || ''} - ${row[1] || ''}`.trim(),
-          value: row[0] || ''  // Use project name as value
-        };
-      })
-      .filter(item => item.projectName || item.projectEngineer || item.extraField);
+    const projectMap = new Map(); // projectName (A column) → object (duplicates avoid)
 
-    // Remove duplicates based on projectName
-    const uniqueProjects = projectDropdownData.filter(
-      (project, index, self) =>
-        index === self.findIndex(p => p.projectName === project.projectName)
-    );
+    rows.forEach((row, index) => {
+      const projectName = (row[0] || '').trim(); // Column A (index 0)
+      if (!projectName) return; // empty project skip
+
+      const key = projectName.toLowerCase();
+
+      if (!projectMap.has(key)) {
+        projectMap.set(key, {
+          id: index + 3, // sheet row number (starts from 3)
+          projectName: projectName,
+          engineer: (row[1] || '').trim(),                    // B - Engineer
+          contractorName: (row[2] || '').trim(),              // C - Contractor Name
+          contractorFirmName: (row[3] || '').trim(),          // D - Firm Name
+          expenseWorkType: (row[4] || '').trim(),             // E - Site Exp / Work Type
+          labourWorkType: (row[9] || '').trim(),              // J (index 9) - Labour Work Type
+          // labourCategory: (row[10] || '').trim(),          // K - agar chahiye to uncomment
+          // ... add other columns similarly
+          bankName: (row[20] || '').trim(),                   // U column (index 20) - Bank names/accounts
+          label: `${projectName}${row[1] ? ` - ${row[1].trim()}` : ''}`.trim(),
+          value: projectName,
+        });
+      }
+      // Optional: agar same project ke multiple entries hain to latest update karna
+      // else { projectMap.set(key, { ...updated fields }) }
+    });
+
+    const projects = Array.from(projectMap.values());
 
     res.json({
       success: true,
-      count: uniqueProjects.length,
-      data: uniqueProjects
+      count: projects.length,
+      data: projects
     });
 
   } catch (error) {
     console.error('Error fetching project dropdown data:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch project dropdown data',
+      message: 'Failed to fetch project data',
       error: error.message
     });
   }
 });
-
 
 
 router.get('/get-Labour-Approve', async (req, res) => {
@@ -573,7 +584,7 @@ router.get('/get-Approvel-ashokSir', async (req, res) => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SiteExpeseSheetId,
-      range: 'Labour_FMS!A7:AX',   // starts from row 7 (data)
+      range: 'Labour_FMS!A7:BT',   // starts from row 7 (data)
     });
 
     const rows = response.data.values || [];
@@ -603,8 +614,8 @@ router.get('/get-Approvel-ashokSir', async (req, res) => {
         totalLabour:             row[10] || '',
         dateRequired:            row[11] || '',
         headOfContractor:        row[12] || '',
-        nameOfContractor:        row[13] || '',
-        contractorFirmName:      row[14] || '',
+        nameOfContractor:        row[25] || '',
+        contractorFirmName:      row[26] || '',
         Approved_Head_2:         row[24] || '',
 
         Labouar_Contractor_Name_3:         row[32] || '',

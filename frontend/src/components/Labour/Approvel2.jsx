@@ -216,10 +216,7 @@ const Approvel2 = () => {
       {/* ========== Header Section ========== */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <UserCheck className="w-7 h-7 text-purple-600" />
-            Ashok Sir Approval
-          </h2>
+          
           <p className="text-gray-500 mt-1">Final approval step for labour requests</p>
         </div>
         
@@ -300,33 +297,14 @@ const Approvel2 = () => {
                   <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
                     Work Description
                   </th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
-                    Labour Cat. 1
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
-                    No. of Labour 1
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
-                    Labour Cat. 2
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
-                    No. of Labour 2
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      Total Labour
-                    </div>
-                  </th>
+               
                   <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       Date Required
                     </div>
                   </th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
-                    Head of Contractor
-                  </th>
+                 
                   <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
                     Name of Contractor
                   </th>
@@ -455,40 +433,7 @@ const Approvel2 = () => {
                       </span>
                     </td>
                     
-                    {/* Labour Category 1 */}
-                    <td className="px-4 py-4 whitespace-nowrap  bg-green-50">
-                      <span className="text-sm font-medium text-gray-900 capitalize">
-                        {item.labourCategory1 || 'N/A'}
-                      </span>
-                    </td>
-                    
-                    {/* Number of Labour 1 */}
-                    <td className="px-4 py-4 whitespace-nowrap text-center  bg-green-50">
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-sm">
-                        {item.numberOfLabour1 || '0'}
-                      </span>
-                    </td>
-                    
-                    {/* Labour Category 2 */}
-                    <td className="px-4 py-4 whitespace-nowrap  bg-green-50">
-                      <span className="text-sm font-medium text-gray-900 capitalize">
-                        {item.labourCategory2 || 'N/A'}
-                      </span>
-                    </td>
-                    
-                    {/* Number of Labour 2 */}
-                    <td className="px-4 py-4 whitespace-nowrap text-center  bg-green-50">
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 font-bold text-sm">
-                        {item.numberOfLabour2 || '0'}
-                      </span>
-                    </td>
-                    
-                    {/* Total Labour */}
-                    <td className="px-4 py-4 whitespace-nowrap text-center  bg-green-50">
-                      <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-700 font-bold text-lg">
-                        {item.totalLabour || '0'}
-                      </span>
-                    </td>
+               
                     
                     {/* Date Required */}
                     <td className="px-4 py-4 whitespace-nowrap  bg-green-50">
@@ -498,12 +443,7 @@ const Approvel2 = () => {
                       </span>
                     </td>
                     
-                    {/* Head of Contractor */}
-                    <td className="px-4 py-4 whitespace-nowrap  bg-green-50">
-                      <span className="text-sm text-gray-700">
-                        {item.headOfContractor || 'N/A'}
-                      </span>
-                    </td>
+                 
                     
                     {/* Name of Contractor */}
                     <td className="px-4 py-4 whitespace-nowrap  bg-green-50">
@@ -701,21 +641,49 @@ const Approvel2 = () => {
                   Step 3 Summary (From Management)
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+
                   <div>
-                    <span className="text-xs text-gray-500">Labour Contractor</span>
-                    <p className="font-semibold text-gray-800">{selectedItem.Labouar_Contractor_Name_3 || 'N/A'}</p>
+                    <span className="text-xs text-gray-500">Labour Category 1</span>
+                    <p className="font-semibold text-gray-800">{selectedItem.Labour_Category_1_3 || 'N/A'}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Total Labour (Cat 1)</span>
                     <p className="font-bold text-blue-600">{selectedItem.Number_Of_Labour_1_3 || '0'}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-gray-500">Total Labour (Cat 2)</span>
-                    <p className="font-bold text-cyan-600">{selectedItem.Number_Of_Labour_2_3 || '0'}</p>
+                    <span className="text-xs text-gray-500">Rate 1</span> 
+                    <p className="font-bold text-cyan-600">{selectedItem.Labour_Rate_1_3 || '0'}</p>
                   </div>
+
+
+                   <div>
+                    <span className="text-xs text-gray-500">Labour Category 2</span>
+                    <p className="font-semibold text-gray-800">{selectedItem.Labour_Category_2_3 || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Total Labour (Cat 2)</span>
+                    <p className="font-bold text-blue-600">{selectedItem.Number_Of_Labour_2_3 || '0'}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500">Rate 2</span> 
+                    <p className="font-bold text-cyan-600">{selectedItem.Labour_Rate_2_3 || '0'}</p>
+                  </div>
+
+                 
+
+
+                  <div>
+                    <span className="text-xs text-gray-500">Labour Contractor</span>
+                    <p className="font-semibold text-gray-800">{selectedItem.Labouar_Contractor_Name_3 || 'N/A'}</p>
+                  </div>
+                 
                   <div>
                     <span className="text-xs text-gray-500">Total Wages</span>
                     <p className="font-bold text-green-700">₹{selectedItem.Total_Wages_3 || '0'}</p>
+                  </div>
+  <div>
+                    <span className="text-xs text-gray-500">Conveyanance</span>
+                    <p className="font-bold text-green-700">₹{selectedItem.Conveyanance_3 || '0'}</p>
                   </div>
                   <div>
                     <span className="text-xs text-gray-500">Total Paid Amount</span>
@@ -725,6 +693,12 @@ const Approvel2 = () => {
                     <span className="text-xs text-gray-500">Approved Head</span>
                     <p className="font-semibold text-purple-600">{selectedItem.Approved_Head_2 || 'N/A'}</p>
                   </div>
+
+                   <div>
+                    <span className="text-xs text-gray-500">Contractor Name</span>
+                    <p className="font-semibold text-purple-600">{selectedItem.nameOfContractor || 'N/A'}</p>
+                  </div>
+                 
                 </div>
               </div>
 
@@ -755,7 +729,8 @@ const Approvel2 = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none bg-white cursor-pointer"
                   >
                     <option value="">-- Select Status --</option>
-                    <option value="Done">✅ Done</option>
+                    <option value="Deployed ">✅ Deployed </option>
+                    <option value="Not Deployed ">Not Deployed </option>
                    
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />

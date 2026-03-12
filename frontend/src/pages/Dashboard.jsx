@@ -66,10 +66,10 @@ const Dashboard = () => {
 
   // Labour Pages
   const allLabourPages = [
-    { id: 'Approvel1', name: 'Approval 1', icon: FileText, component: Approvel1, path: '/dashboard/Approvel1', allowedUserTypes: ['admin', 'Anish', 'Labour Manager'] },
-    { id: 'Labourmanagement', name: 'Labour Management', icon: FileText, component: LabourManagment, path: '/dashboard/Labourmanagement', allowedUserTypes: ['admin', 'Labour Manager'] },
-    { id: 'Approvel2', name: 'Approval 2', icon: FileText, component: Approvel2, path: '/dashboard/Approvel2', allowedUserTypes: ['admin', 'Labour Manager'] },
-    { id: 'PaidAmount', name: 'Paid Amount', icon: FileText, component: PaidAmount, path: '/dashboard/PaidAmount', allowedUserTypes: ['admin', 'Labour Manager'] },
+    { id: 'Approvel1', name: 'Labour Approval ', icon: FileText, component: Approvel1, path: '/dashboard/Approvel1', allowedUserTypes: ['admin',  'Aakash Chouhan'] },
+    { id: 'Labourmanagement', name: 'Labour Management', icon: FileText, component: LabourManagment, path: '/dashboard/Labourmanagement', allowedUserTypes: ['admin', 'Vinod Gayakwad'] },
+    { id: 'Deployed', name:  ' Labour Deployed', icon: FileText, component: Approvel2, path: '/dashboard/Approvel2', allowedUserTypes: ['admin', 'Ashok Pandey'] },
+    { id: 'PaidAmount', name: 'Labour Payment', icon: FileText, component: PaidAmount, path: '/dashboard/PaidAmount', allowedUserTypes: ['admin', 'Govind Ram Nagar'] },
   ];
 
   const getPurchasePages = () => {
@@ -114,8 +114,8 @@ const Dashboard = () => {
     'Payment': { title: 'Payment', content: 'Payment management.' },
     'Bill_Checked_18Step': { title: 'Bill_Checked_18Step', content: 'Bill checked 18 step management.' },
     'Approvel1': { title: 'Labour Approval 1', content: 'First level approval for labour management.' },
-    'Labourmanagement': { title: 'Labour Approval 2', content: 'Second level approval for labour management.' },
-    'Approvel2': { title: 'Labour Approval 3', content: 'Third level approval for labour management.' },
+    'Labourmanagement': { title: 'Labour Management ', content: 'Second level approval for labour management.' },
+    'Deployed': { title: 'Labour Deployed', content: 'Third level approval for labour management.' },
     'PaidAmount': { title: 'PaidAmount', content: 'Fourth level approval for labour management.' },
     'no-access': { title: 'No Access', content: 'You do not have permission to access any pages.' },
   };
