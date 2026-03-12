@@ -28,12 +28,27 @@ import ContractorPurchseForm from './components/ContractorPurchase/ContractorPur
 
 import OutStanding from './components/purchase/OutStanding';
 
+///// office Expenses Form
+
+import SiteExpensesForm from './pages/SiteExpensesForm';
+
+
+/////// labour 
+
+import Approvel1 from './components/Labour/Approvel1';
+import LabourManagment from './components/Labour/LabourManagment';
+import Approvel2 from './components/Labour/Approvel2';
+import PaidAmount from './components/Labour/PaidAmount';
+
+
+
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/SiteExpensesform" element={<SiteExpensesForm />} />
         <Route path="/dashboard" element={<Dashboard />}>
           <Route path="requirement-received" element={<RequirementReceived />} />
           <Route path="approve-required" element={<ApproveRequired />} />
@@ -51,8 +66,16 @@ const App = () => {
           <Route path='BillTallyData' element={<BillTallyData/>}/>
           <Route path='Payment' element={<Payment/>}/>
           <Route path='Bill_Checked_18Step' element={Bill_Checked_18Step}/>
-          <Route path='contractor-purchase-form' element={ContractorPurchseForm}/>
-          <Route path='outstanding' element={OutStanding}/>
+          <Route path='contractor-purchase-form' element={<ContractorPurchseForm/>}/>
+          <Route path='outstanding' element={<OutStanding/>}/>
+
+
+          ///// labour 
+
+          <Route path='Approvel1' element={<Approvel1/>}/> 
+          <Route path='Labourmanagement' element={<LabourManagment/>}/>
+          <Route path='Approvel2' element={<Approvel2/>}/>
+          <Route path='PaidAmount' element={<PaidAmount/>}/>
           {/* <Route path="procurement-reports" element={<ProcurementReports />} /> */}
 
           <Route path="invoice-generation" element={<BillingFMS selectedPage="invoice-generation" />} />
