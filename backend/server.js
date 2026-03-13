@@ -26,6 +26,8 @@ const contractorForm = require('./All_Fms_Api/ContractorForm/ContractorForm')
 
 ////// Site expeses api 
 
+const Form= require('./SiteExpenses/SiteExpensesForm')
+
 const DebitApprovel1=require('./SiteExpenses/Debit/DebitApprovel1')
 
 const SiteApprovels= require('./SiteExpenses/SiteExpenses/SiteApprovels')
@@ -89,6 +91,8 @@ app.use('/api/contractor',contractorForm)
 app.use('/api/outStading',OutStanding)
 
 //// // Site Expenses 
+
+app.use('/api',Form)
 
 app.use('/api/DebitExpenses',DebitApprovel1)
 

@@ -87,10 +87,9 @@ router.get('/get-project-dropdown', async (req, res) => {
           engineer: (row[1] || '').trim(),                    // B - Engineer
           contractorName: (row[2] || '').trim(),              // C - Contractor Name
           contractorFirmName: (row[3] || '').trim(),          // D - Firm Name
-          expenseWorkType: (row[4] || '').trim(),             // E - Site Exp / Work Type
-          labourWorkType: (row[9] || '').trim(),              // J (index 9) - Labour Work Type
-          // labourCategory: (row[10] || '').trim(),          // K - agar chahiye to uncomment
-          // ... add other columns similarly
+          expenseWorkType: (row[8] || '').trim(),             // E - Site Exp / Work Type
+          labourWorkType: (row[14] || '').trim(),              // J (index 9) - Labour Work Type
+          labourCategory: (row[15] || '').trim(),          // K - agar chahiye to uncomment
           bankName: (row[20] || '').trim(),                   // U column (index 20) - Bank names/accounts
           label: `${projectName}${row[1] ? ` - ${row[1].trim()}` : ''}`.trim(),
           value: projectName,

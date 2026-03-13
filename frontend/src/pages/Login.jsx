@@ -70,17 +70,18 @@ const Login = () => {
         // Map backend userType to frontend roles
         const userTypeMap = {
           'Admin': 'admin',
-          'Anish': 'Anish',
-          'Aakash Chouhan': 'Aakash Chouhan',
+          'Site Engineer': 'Site Engineer',
+          'Ravindra Singh': 'Ravindra Singh',
           'Ravi Rajak': 'Ravi Rajak',
           'Anjali Malviya': 'Anjali Malviya',
           'Neha Masani': 'Neha Masani',
-          'Gourav Singh': 'Gourav Singh',
-          'Somesh Chadhar': 'Somesh Chadhar',
+          'Material Received': 'Material Received',
+          'Varsha Kahar': 'Varsha Kahar',
           'Abhishek Sharma':'Abhishek Sharma',
           'Govind Ram Nagar':'Govind Ram Nagar',
           'Ashok Pandey':'Ashok Pandey',
-          'Vinod Gayakwad':'Vinod Gayakwad',
+          'Labour Managment':'Labour Managment',
+          'Final Material Received':'Final Material Received'
         };
         const frontendUserType = userTypeMap[result.userType] || 'user';
 
