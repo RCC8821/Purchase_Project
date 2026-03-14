@@ -121,7 +121,7 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    const storedUserType = localStorage.getItem('userType');
+    const storedUserType = sessionStorage.getItem('userType');
     if (storedUserType) {
       setUserType(storedUserType);
       const allowedPages = getAllowedPages();
@@ -195,8 +195,8 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userType');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('userType');
     setUserType(null);
     setSelectedPage('no-access');
     navigate('/');
