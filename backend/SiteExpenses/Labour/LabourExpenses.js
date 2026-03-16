@@ -8,54 +8,53 @@ const router = express.Router();
 
 // router.get('/get-project-dropdown', async (req, res) => {
 //   try {
-//     // Fetch C, D columns and U column separately (ya ek saath bhi kar sakte hain)
-//     const [cdResponse, uResponse] = await Promise.all([
-//       sheets.spreadsheets.values.get({
-//         spreadsheetId: SiteExpeseSheetId,
-//         range: 'Project_Data!C3:D', // C and D columns
-//       }),
-//       sheets.spreadsheets.values.get({
-//         spreadsheetId: SiteExpeseSheetId,
-//         range: 'Project_Data!U3:U', // U column
-//       })
-//     ]);
+//     const response = await sheets.spreadsheets.values.get({
+//       spreadsheetId: SiteExpeseSheetId,
+//       range: 'Project_Data!A3:U1000',   // A se U tak (U = 21st column, index 20)
+//     });
 
-//     const cdRows = cdResponse.data.values || [];
-//     const uRows = uResponse.data.values || [];
+//     const rows = response.data.values || [];
 
-//     // Combine data from both ranges
-//     const projectDropdownData = cdRows
-//       .map((row, index) => {
-//         const uValue = uRows[index] ? uRows[index][0] : ''; // Get U column value
-//         return {
-//           id: index + 1,
-//           projectName: row[0] || '',      // Column C
-//           projectEngineer: row[1] || '',  // Column D
-//           extraField: uValue || '',        // Column U
-//           // Combined label for dropdown display
-//           label: `${row[0] || ''} - ${row[1] || ''}`.trim(),
-//           value: row[0] || ''  // Use project name as value
-//         };
-//       })
-//       .filter(item => item.projectName || item.projectEngineer || item.extraField);
+//     const projectMap = new Map(); // projectName (A column) → object (duplicates avoid)
 
-//     // Remove duplicates based on projectName
-//     const uniqueProjects = projectDropdownData.filter(
-//       (project, index, self) =>
-//         index === self.findIndex(p => p.projectName === project.projectName)
-//     );
+//     rows.forEach((row, index) => {
+//       const projectName = (row[0] || '').trim(); // Column A (index 0)
+//       if (!projectName) return; // empty project skip
+
+//       const key = projectName.toLowerCase();
+
+//       if (!projectMap.has(key)) {
+//         projectMap.set(key, {
+//           id: index + 3, // sheet row number (starts from 3)
+//           projectName: projectName,
+//           engineer: (row[1] || '').trim(),                    // B - Engineer
+//           contractorName: (row[2] || '').trim(),              // C - Contractor Name
+//           contractorFirmName: (row[3] || '').trim(),          // D - Firm Name
+//           expenseWorkType: (row[8] || '').trim(),             // E - Site Exp / Work Type
+//           labourWorkType: (row[14] || '').trim(),              // J (index 9) - Labour Work Type
+//           labourCategory: (row[15] || '').trim(),          // K - agar chahiye to uncomment
+//           bankName: (row[20] || '').trim(),                   // U column (index 20) - Bank names/accounts
+//           label: `${projectName}${row[1] ? ` - ${row[1].trim()}` : ''}`.trim(),
+//           value: projectName,
+//         });
+//       }
+//       // Optional: agar same project ke multiple entries hain to latest update karna
+//       // else { projectMap.set(key, { ...updated fields }) }
+//     });
+
+//     const projects = Array.from(projectMap.values());
 
 //     res.json({
 //       success: true,
-//       count: uniqueProjects.length,
-//       data: uniqueProjects
+//       count: projects.length,
+//       data: projects
 //     });
 
 //   } catch (error) {
 //     console.error('Error fetching project dropdown data:', error);
 //     res.status(500).json({
 //       success: false,
-//       message: 'Failed to fetch project dropdown data',
+//       message: 'Failed to fetch project data',
 //       error: error.message
 //     });
 //   }
@@ -67,55 +66,86 @@ router.get('/get-project-dropdown', async (req, res) => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SiteExpeseSheetId,
-      range: 'Project_Data!A3:U1000',   // A se U tak (U = 21st column, index 20)
+      range: 'Project_Data!A3:U5000',
     });
 
     const rows = response.data.values || [];
+    console.log('Raw rows fetched from API:', rows.length);
 
-    const projectMap = new Map(); // projectName (A column) → object (duplicates avoid)
-
-    rows.forEach((row, index) => {
-      const projectName = (row[0] || '').trim(); // Column A (index 0)
-      if (!projectName) return; // empty project skip
-
-      const key = projectName.toLowerCase();
-
-      if (!projectMap.has(key)) {
-        projectMap.set(key, {
-          id: index + 3, // sheet row number (starts from 3)
-          projectName: projectName,
-          engineer: (row[1] || '').trim(),                    // B - Engineer
-          contractorName: (row[2] || '').trim(),              // C - Contractor Name
-          contractorFirmName: (row[3] || '').trim(),          // D - Firm Name
-          expenseWorkType: (row[8] || '').trim(),             // E - Site Exp / Work Type
-          labourWorkType: (row[14] || '').trim(),              // J (index 9) - Labour Work Type
-          labourCategory: (row[15] || '').trim(),          // K - agar chahiye to uncomment
-          bankName: (row[20] || '').trim(),                   // U column (index 20) - Bank names/accounts
-          label: `${projectName}${row[1] ? ` - ${row[1].trim()}` : ''}`.trim(),
-          value: projectName,
-        });
-      }
-      // Optional: agar same project ke multiple entries hain to latest update karna
-      // else { projectMap.set(key, { ...updated fields }) }
+    // Pad rows to 21 columns
+    const fullRows = rows.map(row => {
+      const padded = [...row];
+      while (padded.length < 21) padded.push('');
+      return padded;
     });
 
-    const projects = Array.from(projectMap.values());
+    // ─── FIX: projectMap nahi, direct array banao ───────────────────────────
+    // Pehle wala code projectName ko key maanke duplicate skip karta tha
+    // Isliye ek project ke multiple contractors chhoot jaate the
+    // Ab har row ek alag entry hogi
+    const result = [];
+
+    // Track unique contractors (contractorName lowercase) for deduplication
+    // Project entries alag hain, contractor entries alag hain — dono independent
+    const seenContractors = new Set();
+
+    fullRows.forEach((row, index) => {
+      const projectName       = (row[0]  || '').trim();
+      const engineer          = (row[1]  || '').trim();
+      const contractorName    = (row[2]  || '').trim();
+      const contractorFirmName= (row[3]  || '').trim();
+      const expenseWorkType   = (row[8]  || '').trim();
+      const labourWorkType    = (row[14] || '').trim();
+      const labourCategory    = (row[15] || '').trim();
+      const bankName          = (row[20] || '').trim();
+
+      // Completely empty row — skip
+      if (!projectName && !contractorName && !contractorFirmName) return;
+
+      const entry = {
+        id:               index + 3,
+        projectName:      projectName || '(No Project Name)',
+        engineer,
+        contractorName,
+        contractorFirmName,
+        expenseWorkType,
+        labourWorkType,
+        labourCategory,
+        bankName,
+        label: projectName
+          ? `${projectName}${engineer ? ` - ${engineer}` : ''}`.trim()
+          : `${contractorName || contractorFirmName || 'Unknown'} (No Project)`,
+        value: projectName || contractorName || contractorFirmName || 'unknown',
+      };
+
+      result.push(entry);
+    });
+
+    console.log('Total entries returned:', result.length);
+
+    // ─── Contractor uniqueness check for debug ──────────────────────────────
+    const uniqueContractors = [...new Set(
+      result.map(r => r.contractorName).filter(Boolean)
+    )];
+    console.log('Unique contractors:', uniqueContractors.length);
 
     res.json({
       success: true,
-      count: projects.length,
-      data: projects
+      count: result.length,
+      data: result,
+      debug: {
+        rawRowsFromApi:    rows.length,
+        totalEntries:      result.length,
+        uniqueContractors: uniqueContractors.length,
+      }
     });
 
   } catch (error) {
-    console.error('Error fetching project dropdown data:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch project data',
-      error: error.message
-    });
+    console.error('Error fetching dropdown:', error);
+    res.status(500).json({ success: false, message: 'Failed', error: error.message });
   }
 });
+
 
 
 router.get('/get-Labour-Approve', async (req, res) => {
