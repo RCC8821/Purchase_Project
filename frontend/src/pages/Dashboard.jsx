@@ -44,14 +44,14 @@ const Dashboard = () => {
 
   // Purchase Pages
   const allPurchasePages = [
-    { id: 'requirement-received', name: 'Requirement Received', icon: FileText, component: RequirementReceived, path: '/dashboard/requirement-received', allowedUserTypes: ['admin', 'Site Engineer'] },
+    { id: 'requirement-received', name: 'Requirement Received', icon: FileText, component: RequirementReceived, path: '/dashboard/requirement-received', allowedUserTypes: ['admin', 'Site Engineer','Material Received'] },
     { id: 'approve-required', name: 'Approve Required', icon: Package, component: ApproveRequired, path: '/dashboard/approve-required', allowedUserTypes: ['admin', 'Ravindra Singh'] },
     { id: 'indent-to-get-quotation', name: 'Indent (To Get Quotation)', icon: Truck, component: IndentToGetQuotation, path: '/dashboard/indent-to-get-quotation', allowedUserTypes: ['admin', 'Ravi Rajak'] },
     { id: 'Take_Quotation', name: 'Take Quotation', icon: Truck, component: Take_Quotation, path: '/dashboard/Take_Quotation', allowedUserTypes: ['admin', 'Anjali Malviya','Neha Masani'] },
     { id: 'Approval_Quotation', name: 'Approval Quotation', icon: Truck, component: Approval_Quotation, path: '/dashboard/Approval_Quotation', allowedUserTypes: ['admin', 'Ravi Rajak'] },
     { id: 'PO', name: 'PO', icon: Truck, component: PO, path: '/dashboard/PO', allowedUserTypes: ['admin', 'Ravi Rajak'] },
     { id: 'Vendor_FollowUp_Material', name: 'Vendor Follow Up Material', icon: Truck, component: Vendor_FollowUp_Material, path: '/dashboard/Vendor_FollowUp_Material', allowedUserTypes: ['admin', 'Neha Masani'] },
-    { id: 'Material_Received', name: 'Material Received', icon: Truck, component: Material_Received, path: '/dashboard/Material_Received', allowedUserTypes: ['admin', 'Material Received', 'Neha Masani'] },
+    { id: 'Material_Received', name: 'Material Received', icon: Truck, component: Material_Received, path: '/dashboard/Material_Received', allowedUserTypes: ['admin', 'Material Received', 'Neha Masani','Site Engineer'] },
     { id: 'Final_Material_Received', name: 'Final Material Received', icon: Truck, component: Final_Material_Received, path: '/dashboard/Final_Material_Received', allowedUserTypes: ['admin', 'Final Material Received'] },
     { id: 'MRN', name: 'MRN', icon: Truck, component: MRN, path: '/dashboard/MRN', allowedUserTypes: ['admin', 'Varsha Kahar'] },
     { id: 'Vendor_followup_billing', name: 'Vendor_followup_billing', icon: Truck, component: Vendor_followup_billing, path: '/dashboard/Vendor_followup_billing', allowedUserTypes: ['admin', 'Neha Masani'] },

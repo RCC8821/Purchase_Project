@@ -6,8 +6,8 @@ export const labourApi = createApi({
   reducerPath: 'labourApi',
   
   baseQuery: fetchBaseQuery({
-    baseUrl: 'https://purchase-project-3iia.vercel.app',
-    // baseUrl: 'http://localhost:5000',
+    // baseUrl: 'https://purchase-project-3iia.vercel.app',
+    baseUrl: 'http://localhost:5000',
     prepareHeaders: (headers) => {
       // Agar token chahiye to yahan add karo
       // const token = localStorage.getItem('token');
