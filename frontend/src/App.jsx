@@ -40,8 +40,10 @@ import LabourManagment from './components/Labour/LabourManagment';
 import Approvel2 from './components/Labour/Approvel2';
 import PaidAmount from './components/Labour/PaidAmount';
 
+//////// Site Expenses /////
 
-
+import SiteApprovel from './components/SiteExpenses/SiteApprovel';
+import SitePaidAmount from './components/SiteExpenses/SitePaidAmount';
 
 const App = () => {
   return (
@@ -76,6 +78,11 @@ const App = () => {
           <Route path='Labourmanagement' element={<LabourManagment/>}/>
           <Route path='Approvel2' element={<Approvel2/>}/>
           <Route path='PaidAmount' element={<PaidAmount/>}/>
+
+          /////// site Expenses
+
+          <Route path='SiteApprovel' element={<SiteApprovel/>}/>
+          <Route path='SitePaidAmount' element={<SitePaidAmount/>}/>
           {/* <Route path="procurement-reports" element={<ProcurementReports />} /> */}
 
           <Route path="invoice-generation" element={<BillingFMS selectedPage="invoice-generation" />} />

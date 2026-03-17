@@ -12,10 +12,8 @@ router.get("/Site-Approvel-1", async (req, res) => {
 
     const rows = response.data.values || [];
 
-    // If row 7 (index 0) is header → we skip it
-    // Adjust slice(0) or slice(1) depending on whether A7 is header or data
-    const dataRows = rows.slice(1); // most common case: skip header row
-
+  
+    const dataRows = rows.slice(1); 
     const pendingApprovals = dataRows
       .filter((row) => {
         // Make sure row has at least 15 columns (A to O)
