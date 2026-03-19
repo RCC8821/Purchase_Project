@@ -295,14 +295,14 @@ router.post('/site-expense', async (req, res) => {
         Rcc_Bill_No_1,                              // C - Rcc_Bill_No._1
         common.Vendor_Payee_Name_1     || '',       // D - Vendor/Payee_Name_1
         common.Project_Name_1          || '',       // E - Project_Name_1
-        common.Project_Engineer_Name_1 || '',       // F - Project_Engineer_Name_1
-        common.Head_Type_1             || '',       // G - Head_Type_1
+        common.Project_Engineer_Name_1 || '',       // F - Project_Engineer_Name_1          || '',       // G - Head_Type_1
+        Exp_Head_1,   
         Details_of_Work_1,                          // H - Details_of_Work_1
         Amount_1,                                   // I - Amount_1
         common.Bill_No_1               || '',       // J - Bill_No._1
         common.Bill_Date_1             || '',       // K - Bill_Date_1
         billPhotoUrl,                               // L - Bill_Photo_1 ✅ Drive URL
-        Exp_Head_1,                                 // M - Exp._Head_1
+       common.Head_Type_1               || '',                  // M - Exp._Head_1
         common.Contractor_Name_1       || '',       // N - Contractor_Name_1
         common.Contractor_Firm_Name_1  || '',       // O - Contractor_Firm_Name_1
         common.Remark_1                || '',       // P - Remark_1
