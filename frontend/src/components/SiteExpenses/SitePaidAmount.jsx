@@ -1,8 +1,18 @@
+
+
+
+
+
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   useGetSitePaidStepQuery,
   usePostSitePaidStepMutation,
 } from '../../redux/SiteExpenses/SiteExpensesSlice';
+import {
+  useGetProjectDropdownQuery,
+} from '../../redux/Labour/LabourSlice';
 import {
   Loader2,
   RefreshCw,
@@ -114,6 +124,14 @@ const SearchableDropdown = ({
       selected: 'bg-blue-100 text-blue-800',
       ring: 'ring-blue-200',
       border: 'border-blue-500'
+    },
+    orange: {
+      bg: 'bg-orange-50',
+      text: 'text-orange-700',
+      hover: 'hover:bg-orange-100',
+      selected: 'bg-orange-100 text-orange-800',
+      ring: 'ring-orange-200',
+      border: 'border-orange-500'
     }
   };
 
@@ -229,25 +247,26 @@ const SitePaidAmount = () => {
   const { data = [], isLoading, isError, refetch, isFetching } = useGetSitePaidStepQuery();
   const [postSitePaidStep, { isLoading: isSubmitting }] = usePostSitePaidStepMutation();
 
+  // ✅ Bank dropdown from same API as Labour module
+  const {
+    data: bankList = [],
+    isLoading: isBankLoading
+  } = useGetProjectDropdownQuery();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProject, setSelectedProject] = useState('');
-  const [selectedContractor, setSelectedContractor] = useState('');
+  const [selectedRccBillNo, setSelectedRccBillNo] = useState(''); // ✅ RccBillNo filter
   const [selectedItems, setSelectedItems] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
   const [formData, setFormData] = useState({
     STATUS_3: '',
-    TIME_DELAY_3: '',
-    TOTAL_PAID_AMOUNT_3: '',
-    BASIC_AMOUNT_WITHOUT_GST_3: '',
-    CGST_3: '',
-    SGST_3: '',
-    NET_AMOUNT_3: '',
     PAYMENT_MODE_3: '',
     BANK_DETAILS_3: '',
     PAYMENT_DETAILS_3: '',
     PAYMENT_DATE_3: new Date().toISOString().split('T')[0],
-    Remark_3: '',
+    Receiver_Name: '',
+    Remark_Blank: '',
   });
 
   // Unique values
@@ -255,35 +274,31 @@ const SitePaidAmount = () => {
     return [...new Set(data.map(item => item.projectName).filter(Boolean))].sort();
   }, [data]);
 
-  const uniqueContractorNames = useMemo(() => {
-    return [...new Set(data.map(item => item.ContractorName).filter(Boolean))].sort();
+  // ✅ Unique RccBillNo from API data
+  const uniqueRccBillNos = useMemo(() => {
+    return [...new Set(data.map(item => item.RccBillNo).filter(Boolean))].sort();
   }, [data]);
 
+  // ✅ Dynamic bank names from API (extraField) — same as Labour module
   const uniqueBankNames = useMemo(() => {
-    return [
-      'State Bank of India',
-      'HDFC Bank',
-      'ICICI Bank',
-      'Axis Bank',
-      'Punjab National Bank',
-      'Bank of Baroda',
-      'Canara Bank',
-      'Union Bank of India'
-    ];
-  }, []);
+    if (!bankList || !Array.isArray(bankList)) return [];
+    const names = bankList
+      .map(item => item.extraField || item.bankName || item.name || item.bank_name || '')
+      .filter(name => name && typeof name === 'string' && name.trim() !== '');
+    return [...new Set(names)].sort();
+  }, [bankList]);
 
   const paymentModeOptions = [
     { value: '', label: '-- Select Payment Mode --' },
     { value: 'NEFT', label: '📱 NEFT' },
     { value: 'RTGS', label: '📋 RTGS' },
-    { value: 'IMPS', label: '💳 IMPS' },
-    { value: 'UPI', label: '📲 UPI' },
     { value: 'Cheque', label: '📄 Cheque' },
     { value: 'Cash', label: '💵 Cash' },
-    { value: 'DD', label: '📜 DD' }
+    { value: 'UPI', label: '📲 UPI' },
+   
   ];
 
-  // Filtered data
+  // Filtered data — ✅ Contractor filter removed, RccBillNo filter added
   const filteredData = useMemo(() => {
     return data.filter(item => {
       const searchLower = searchTerm.toLowerCase();
@@ -295,19 +310,19 @@ const SitePaidAmount = () => {
         (item.detailsOfWork || '').toLowerCase().includes(searchLower);
 
       const matchesProject = !selectedProject || item.projectName === selectedProject;
-      const matchesContractor = !selectedContractor || item.ContractorName === selectedContractor;
+      const matchesRccBillNo = !selectedRccBillNo || item.RccBillNo === selectedRccBillNo;
 
-      return matchesSearch && matchesProject && matchesContractor;
+      return matchesSearch && matchesProject && matchesRccBillNo;
     });
-  }, [data, searchTerm, selectedProject, selectedContractor]);
+  }, [data, searchTerm, selectedProject, selectedRccBillNo]);
 
   const clearAllFilters = () => {
     setSearchTerm('');
     setSelectedProject('');
-    setSelectedContractor('');
+    setSelectedRccBillNo('');
   };
 
-  const hasActiveFilters = searchTerm || selectedProject || selectedContractor;
+  const hasActiveFilters = searchTerm || selectedProject || selectedRccBillNo;
 
   const handleCardSelect = (item) => {
     setSelectedItems(prev =>
@@ -336,18 +351,13 @@ const SitePaidAmount = () => {
       return;
     }
     setFormData({
-      STATUS_3: 'Paid',
-      TIME_DELAY_3: '',
-      TOTAL_PAID_AMOUNT_3: '',
-      BASIC_AMOUNT_WITHOUT_GST_3: '',
-      CGST_3: '',
-      SGST_3: '',
-      NET_AMOUNT_3: '',
+      STATUS_3: '',
       PAYMENT_MODE_3: '',
       BANK_DETAILS_3: '',
       PAYMENT_DETAILS_3: '',
       PAYMENT_DATE_3: new Date().toISOString().split('T')[0],
-      Remark_3: '',
+      Receiver_Name: '',
+      Remark_Blank: '',
     });
     setShowModal(true);
   };
@@ -356,21 +366,15 @@ const SitePaidAmount = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const calculateNetAmount = () => {
-    const basic = parseFloat(formData.BASIC_AMOUNT_WITHOUT_GST_3) || 0;
-    const cgst = parseFloat(formData.CGST_3) || 0;
-    const sgst = parseFloat(formData.SGST_3) || 0;
-    const net = basic + cgst + sgst;
-    setFormData(prev => ({ ...prev, NET_AMOUNT_3: net.toString() }));
-  };
-
   const handleSubmit = async () => {
     if (selectedItems.length === 0) return;
 
     if (!formData.STATUS_3) return alert('Please select Payment Status');
-    if (!formData.TOTAL_PAID_AMOUNT_3) return alert('Please enter Total Paid Amount');
     if (!formData.PAYMENT_MODE_3) return alert('Please select Payment Mode');
     if (!formData.BANK_DETAILS_3) return alert('Please select Bank');
+    if (!formData.PAYMENT_DETAILS_3) return alert('Please enter Payment Details / Reference');
+    if (!formData.PAYMENT_DATE_3) return alert('Please select Payment Date');
+    if (!formData.Receiver_Name) return alert('Please enter Receiver Name');
 
     let success = 0;
     let failed = 0;
@@ -379,8 +383,14 @@ const SitePaidAmount = () => {
     for (const item of selectedItems) {
       try {
         const payload = {
-          uid: item.uid,
-          ...formData
+          RccBillNo: item.RccBillNo,   // ✅ API expects RccBillNo
+          STATUS_3: formData.STATUS_3,
+          PAYMENT_MODE_3: formData.PAYMENT_MODE_3,
+          BANK_DETAILS_3: formData.BANK_DETAILS_3,
+          PAYMENT_DETAILS_3: formData.PAYMENT_DETAILS_3,
+          PAYMENT_DATE_3: formData.PAYMENT_DATE_3,
+          Receiver_Name: formData.Receiver_Name,
+          Remark_Blank: formData.Remark_Blank,
         };
 
         const result = await postSitePaidStep(payload).unwrap();
@@ -388,12 +398,12 @@ const SitePaidAmount = () => {
           success++;
         } else {
           failed++;
-          errors.push(`${item.uid}: ${result?.message || 'Unknown error'}`);
+          errors.push(`${item.RccBillNo}: ${result?.message || 'Unknown error'}`);
         }
       } catch (err) {
         console.error(err);
         failed++;
-        errors.push(`${item.uid}: ${err?.data?.message || err?.message || 'Failed'}`);
+        errors.push(`${item.RccBillNo}: ${err?.data?.message || err?.message || 'Failed'}`);
       }
     }
 
@@ -509,7 +519,9 @@ const SitePaidAmount = () => {
           )}
         </div>
 
+        {/* ✅ 3 columns: Search | Project | RccBillNo */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Search */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <Search className="w-4 h-4" />
@@ -535,6 +547,7 @@ const SitePaidAmount = () => {
             </div>
           </div>
 
+          {/* Project Name */}
           <SearchableDropdown
             label="Project Name"
             icon={Building}
@@ -545,17 +558,19 @@ const SitePaidAmount = () => {
             color="purple"
           />
 
+          {/* ✅ RCC Bill No (replaces Contractor) */}
           <SearchableDropdown
-            label="Contractor"
-            icon={HardHat}
-            options={uniqueContractorNames}
-            value={selectedContractor}
-            onChange={setSelectedContractor}
-            placeholder="Search & select contractor..."
-            color="emerald"
+            label="RCC Bill No"
+            icon={FileText}
+            options={uniqueRccBillNos}
+            value={selectedRccBillNo}
+            onChange={setSelectedRccBillNo}
+            placeholder="Search & select RCC bill..."
+            color="orange"
           />
         </div>
 
+        {/* Active filter tags */}
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
             <span className="text-xs text-gray-500">Active:</span>
@@ -576,11 +591,12 @@ const SitePaidAmount = () => {
                 </button>
               </span>
             )}
-            {selectedContractor && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
-                <HardHat className="w-3 h-3" />
-                {selectedContractor}
-                <button onClick={() => setSelectedContractor('')} className="hover:text-emerald-900">
+            {/* ✅ RccBillNo active tag */}
+            {selectedRccBillNo && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                <FileText className="w-3 h-3" />
+                {selectedRccBillNo}
+                <button onClick={() => setSelectedRccBillNo('')} className="hover:text-orange-900">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -658,6 +674,7 @@ const SitePaidAmount = () => {
                   {isSelected ? <Check className="w-4 h-4" /> : <span className="text-xs">{index + 1}</span>}
                 </div>
 
+                {/* ── Card Header ── */}
                 <div className={`p-4 rounded-t-2xl ${isSelected ? 'bg-emerald-50' : 'bg-gray-50'}`}>
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -666,14 +683,17 @@ const SitePaidAmount = () => {
                       </span>
                     </div>
                     <div className="flex-1 min-w-0 pr-8">
+                      {/* UID Badge */}
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold mb-1">
                         <Hash className="w-3 h-3 mr-1" />
                         {item.uid || 'N/A'}
                       </span>
-                      <h3 className="font-semibold text-gray-800 truncate">
+                      {/* Project Name */}
+                      <h3 className="font-bold text-gray-800 truncate text-sm">
                         {item.projectName || 'N/A'}
                       </h3>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                      {/* Bill Date */}
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
                         <Clock className="w-3 h-3" />
                         <span>Bill Date: {item.BillDate || 'N/A'}</span>
                       </div>
@@ -681,65 +701,119 @@ const SitePaidAmount = () => {
                   </div>
                 </div>
 
+                {/* ── Card Body ── */}
                 <div className="p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <User className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-400">Payee</p>
-                        <p className="font-medium text-gray-700 truncate">{item.payeeName || 'N/A'}</p>
-                      </div>
-                    </div>
 
+                  {/* Cost Amount — highlighted */}
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                        <HardHat className="w-4 h-4 text-green-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-400">Contractor</p>
-                        <p className="font-medium text-gray-700 truncate">{item.ContractorName || 'N/A'}</p>
-                      </div>
+                      <CircleDollarSign className="w-4 h-4 text-emerald-600" />
+                      <span className="text-xs font-semibold text-emerald-700">Cost Amount</span>
                     </div>
+                    <span className="font-bold text-emerald-800 text-base">₹{formatAmount(item.costAmount)}</span>
+                  </div>
 
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Wrench className="w-4 h-4 text-orange-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-400">Head Type</p>
-                        <p className="font-medium text-gray-700 truncate">{item.headType || 'N/A'}</p>
-                      </div>
+                  {/* Row 1: Payee | Contractor */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-blue-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <User className="w-3 h-3" /> Payee
+                      </p>
+                      <p className="font-semibold text-gray-700 truncate">{item.payeeName || 'N/A'}</p>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <FileText className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-400">RCC Bill No</p>
-                        <p className="font-medium text-gray-700">{item.RccBillNo || 'N/A'}</p>
-                      </div>
+                    <div className="bg-green-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <HardHat className="w-3 h-3" /> Contractor
+                      </p>
+                      <p className="font-semibold text-gray-700 truncate">{item.ContractorName || 'N/A'}</p>
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-100 pt-3">
-                    <div className="grid grid-cols-1 gap-2 mb-2">
-                      <div className="bg-emerald-50 rounded-lg p-2">
-                        <p className="text-xs text-emerald-600">💰 Cost Amount</p>
-                        <p className="font-bold text-emerald-700">
-                          ₹{formatAmount(item.costAmount)}
-                        </p>
-                      </div>
+                  {/* Row 2: Head Type | EXP Head */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-orange-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <Wrench className="w-3 h-3" /> Head Type
+                      </p>
+                      <p className="font-semibold text-gray-700 truncate">{item.headType || 'N/A'}</p>
+                    </div>
+                    <div className="bg-yellow-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <Receipt className="w-3 h-3" /> EXP Head
+                      </p>
+                      <p className="font-semibold text-gray-700 truncate">{item.EXPHead || 'N/A'}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs bg-gray-50 rounded-lg px-3 py-2">
-                    <span className="text-gray-500">Bill No: {item.BillNO || 'N/A'}</span>
-                    <span className="text-gray-400">|</span>
-                    <span className="text-gray-500">Firm: {item.ContractorFirmName || 'N/A'}</span>
+                  {/* Row 3: RCC Bill No | Bill No */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-purple-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <FileText className="w-3 h-3" /> RCC Bill No
+                      </p>
+                      <p className="font-semibold text-gray-700">{item.RccBillNo || 'N/A'}</p>
+                    </div>
+                    <div className="bg-pink-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <Hash className="w-3 h-3" /> Bill No
+                      </p>
+                      <p className="font-semibold text-gray-700">{item.BillNO || 'N/A'}</p>
+                    </div>
                   </div>
+
+                  {/* Row 4: Contractor Firm | Project Engineer */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-teal-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <Building2 className="w-3 h-3" /> Firm Name
+                      </p>
+                      <p className="font-semibold text-gray-700 truncate">{item.ContractorFirmName || 'N/A'}</p>
+                    </div>
+                    <div className="bg-cyan-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <User className="w-3 h-3" /> Project Engineer
+                      </p>
+                      <p className="font-semibold text-gray-700 truncate">{item.projectEngineerName || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  {/* Details of Work — full width */}
+                  <div className="bg-gray-50 rounded-lg p-2 text-xs">
+                    <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                      <Wrench className="w-3 h-3" /> Details of Work
+                    </p>
+                    <p className="font-semibold text-gray-700 line-clamp-2">{item.detailsOfWork || 'N/A'}</p>
+                  </div>
+
+                  {/* Remark + Planned — full width */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-slate-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <MessageSquare className="w-3 h-3" /> Remark
+                      </p>
+                      <p className="font-semibold text-gray-700 truncate">{item.remark || 'N/A'}</p>
+                    </div>
+                    <div className="bg-indigo-50 rounded-lg p-2">
+                      <p className="text-gray-400 flex items-center gap-1 mb-0.5">
+                        <Calendar className="w-3 h-3" /> Planned
+                      </p>
+                      <p className="font-semibold text-gray-700 truncate">{item.planned2 || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  {/* Bill Photo link — only if exists */}
+                  {item.billPhoto && (
+                    <a
+                      href={item.billPhoto}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-2 transition-colors font-medium"
+                    >
+                      <FileText className="w-3 h-3" />
+                      View Bill Photo
+                    </a>
+                  )}
                 </div>
 
                 {isSelected && (
@@ -818,114 +892,27 @@ const SitePaidAmount = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Payment Status <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={formData.STATUS_3}
-                      onChange={e => handleFormChange('STATUS_3', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white cursor-pointer"
-                    >
-                      <option value="">-- Select Status --</option>
-                      <option value="Paid">💰 Paid</option>
-                      <option value="Partial Paid">⚠️ Partial Paid</option>
-                      <option value="Hold">⏸️ Hold</option>
-                      <option value="Rejected">❌ Rejected</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Time Delay
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.TIME_DELAY_3}
-                    onChange={e => handleFormChange('TIME_DELAY_3', e.target.value)}
-                    placeholder="e.g. 2 days"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Payment Status <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={formData.STATUS_3}
+                    onChange={e => handleFormChange('STATUS_3', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white cursor-pointer"
+                  >
+                    <option value="">-- Select Status --</option>
+                    <option value="Done">💰 Done</option>
+                
+                    <option value="Rejected">❌ Rejected</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                 </div>
               </div>
 
-              <div className="border border-emerald-100 rounded-xl p-4 bg-emerald-50/30 space-y-4">
-                <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Amount Details</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Total Paid Amount <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.TOTAL_PAID_AMOUNT_3}
-                      onChange={e => handleFormChange('TOTAL_PAID_AMOUNT_3', e.target.value)}
-                      placeholder="Enter total paid amount"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Basic Amount (Without GST)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.BASIC_AMOUNT_WITHOUT_GST_3}
-                      onChange={e => handleFormChange('BASIC_AMOUNT_WITHOUT_GST_3', e.target.value)}
-                      onBlur={calculateNetAmount}
-                      placeholder="Basic amount"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      CGST
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.CGST_3}
-                      onChange={e => handleFormChange('CGST_3', e.target.value)}
-                      onBlur={calculateNetAmount}
-                      placeholder="CGST amount"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      SGST
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.SGST_3}
-                      onChange={e => handleFormChange('SGST_3', e.target.value)}
-                      onBlur={calculateNetAmount}
-                      placeholder="SGST amount"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Net Amount (Auto Calculated)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.NET_AMOUNT_3}
-                      onChange={e => handleFormChange('NET_AMOUNT_3', e.target.value)}
-                      placeholder="Basic + CGST + SGST"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
+              {/* Payment Mode */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <CreditCard className="w-4 h-4 inline mr-1" />
@@ -947,22 +934,29 @@ const SitePaidAmount = () => {
                 </div>
               </div>
 
+              {/* Bank Details */}
               <SearchableDropdown
                 label="Bank Details"
                 icon={Building2}
                 options={uniqueBankNames}
                 value={formData.BANK_DETAILS_3}
                 onChange={val => handleFormChange('BANK_DETAILS_3', val)}
-                placeholder="Search & select bank..."
+                placeholder={isBankLoading ? "Loading banks..." : "Search & select bank..."}
                 color="blue"
                 required={true}
               />
+              {uniqueBankNames.length === 0 && !isBankLoading && (
+                <p className="text-xs text-emerald-600 -mt-2">
+                  ⚠️ No banks found. Check API extraField.
+                </p>
+              )}
 
+              {/* Payment Details & Date */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     <Receipt className="w-4 h-4 inline mr-1" />
-                    Payment Details / Reference
+                    Payment Details / Reference <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -975,7 +969,7 @@ const SitePaidAmount = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-1" />
-                    Payment Date
+                    Payment Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -986,14 +980,30 @@ const SitePaidAmount = () => {
                 </div>
               </div>
 
+              {/* Receiver Name */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <User className="w-4 h-4 inline mr-1" />
+                  Receiver Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.Receiver_Name}
+                  onChange={e => handleFormChange('Receiver_Name', e.target.value)}
+                  placeholder="Enter receiver name..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {/* Remark */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <MessageSquare className="w-4 h-4 inline mr-1" />
                   Remark <span className="text-gray-400 font-normal">(Optional)</span>
                 </label>
                 <textarea
-                  value={formData.Remark_3}
-                  onChange={e => handleFormChange('Remark_3', e.target.value)}
+                  value={formData.Remark_Blank}
+                  onChange={e => handleFormChange('Remark_Blank', e.target.value)}
                   rows={3}
                   placeholder="Enter any payment remarks..."
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
@@ -1017,7 +1027,7 @@ const SitePaidAmount = () => {
               
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting || !formData.STATUS_3 || !formData.TOTAL_PAID_AMOUNT_3 || !formData.PAYMENT_MODE_3 || !formData.BANK_DETAILS_3}
+                disabled={isSubmitting || !formData.STATUS_3 || !formData.PAYMENT_MODE_3 || !formData.BANK_DETAILS_3 || !formData.PAYMENT_DETAILS_3 || !formData.PAYMENT_DATE_3 || !formData.Receiver_Name}
                 className="px-4 sm:px-6 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-md hover:shadow-lg"
               >
                 {isSubmitting ? (
