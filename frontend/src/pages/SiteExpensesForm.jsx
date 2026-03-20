@@ -27,8 +27,6 @@
 //     isError: isDropdownError,
 //   } = useGetProjectDropdownQuery();
 
-//   // dropdownData ab directly array hoga (transformResponse ke baad)
-//   // Safety: agar undefined/null aaye toh empty array use karo
 //   const safeDropdown = Array.isArray(dropdownData) ? dropdownData : [];
 
 //   const [postSiteExpense,    { isLoading: isSiteLoading  }] = usePostSiteExpenseMutation();
@@ -50,6 +48,9 @@
 //     Contractor_Firm_Name_1: '',
 //     Remark_1: '',
 //   });
+
+//   // ✅ Photo preview ke liye alag state
+//   const [billPhotoName, setBillPhotoName] = useState('');
 
 //   const [siteExpenseItems, setSiteExpenseItems] = useState([
 //     { Exp_Head_1: '', Details_of_Work_1: '', Amount_1: '' }
@@ -102,9 +103,7 @@
 //     setDebitData(prev => ({ ...prev, Amount_1: (qty * rate).toFixed(2) }));
 //   }, [debitData.Qty_1, debitData.Rate_Wages_1]);
 
-//   // ─── Dropdown Options (FIX: safeDropdown use karo) ───────────────────────
-
-//   // Project Options — "(No Project Name)" wale skip
+//   // ─── Dropdown Options ─────────────────────────────────────────────────────
 //   const projectOptions = useMemo(() => {
 //     const seen = new Set();
 //     return safeDropdown
@@ -128,18 +127,13 @@
 //       .sort((a, b) => a.label.localeCompare(b.label));
 //   }, [safeDropdown]);
 
-//   // ─── FIX: Contractor Options — PURI 51 rows se contractors lo ────────────
-//   // Pehle "(No Project Name)" filter tha — ab wo nahi hai
 //   const contractorOptions = useMemo(() => {
 //     const seen = new Map();
-
 //     safeDropdown.forEach(item => {
 //       const cName = (item.contractorName || '').trim();
-//       if (!cName) return; // blank contractor name skip karo
-
+//       if (!cName) return;
 //       const lowerC = cName.toLowerCase();
 //       const fName  = (item.contractorFirmName || '').trim();
-
 //       if (!seen.has(lowerC)) {
 //         seen.set(lowerC, {
 //           value:    cName,
@@ -147,7 +141,6 @@
 //           label:    fName ? `${cName} (${fName})` : cName,
 //         });
 //       } else {
-//         // Agar firm name pehle empty tha aur ab mila, update karo
 //         const existing = seen.get(lowerC);
 //         if (fName && !existing.firmName) {
 //           existing.firmName = fName;
@@ -155,7 +148,6 @@
 //         }
 //       }
 //     });
-
 //     return Array.from(seen.values()).sort((a, b) => a.label.localeCompare(b.label));
 //   }, [safeDropdown]);
 
@@ -213,6 +205,24 @@
 //   const handleLabourChange      = (field, value) => setLabourData(prev => ({ ...prev, [field]: value }));
 //   const handleDebitChange       = (field, value) => setDebitData(prev => ({ ...prev, [field]: value }));
 
+//   // ✅ Photo handler — FileReader se base64 with data URI
+//   const handlePhotoChange = (e) => {
+//     const file = e.target.files[0];
+//     if (file) {
+//       setBillPhotoName(file.name);
+//       const reader = new FileReader();
+//       reader.readAsDataURL(file); // data:image/jpeg;base64,.... format
+//       reader.onload = () => {
+//         handleSiteExpenseChange('Bill_Photo_1', reader.result);
+//       };
+//       reader.onerror = () => {
+//         console.error('File read karne mein error');
+//         setBillPhotoName('');
+//         handleSiteExpenseChange('Bill_Photo_1', '');
+//       };
+//     }
+//   };
+
 //   const handleItemChange = (index, field, value) => {
 //     setSiteExpenseItems(prev => {
 //       const updated = [...prev];
@@ -242,19 +252,19 @@
 //       return;
 //     }
 
-//  const payload = {
-//   Vendor_Payee_Name_1:      siteExpensesData.Vendor_Payee_Name_1,
-//   Project_Name_1:           siteExpensesData.Project_Name_1,
-//   Project_Engineer_Name_1:  siteExpensesData.Project_Engineer_Name_1,
-//   Head_Type_1:              siteExpensesData.Head_Type_1,        // ✅ ADD
-//   Bill_No_1:                siteExpensesData.Bill_No_1,
-//   Bill_Date_1:              siteExpensesData.Bill_Date_1,
-//   Bill_Photo_1:             siteExpensesData.Bill_Photo_1,       // ✅ ADD
-//   Contractor_Name_1:        siteExpensesData.Contractor_Name_1,
-//   Contractor_Firm_Name_1:   siteExpensesData.Contractor_Firm_Name_1,
-//   Remark_1:                 siteExpensesData.Remark_1,
-//   items:                    validItems,
-// };
+//     const payload = {
+//       Vendor_Payee_Name_1:      siteExpensesData.Vendor_Payee_Name_1,
+//       Project_Name_1:           siteExpensesData.Project_Name_1,
+//       Project_Engineer_Name_1:  siteExpensesData.Project_Engineer_Name_1,
+//       Head_Type_1:              siteExpensesData.Head_Type_1,
+//       Bill_No_1:                siteExpensesData.Bill_No_1,
+//       Bill_Date_1:              siteExpensesData.Bill_Date_1,
+//       Bill_Photo_1:             siteExpensesData.Bill_Photo_1, // ✅ base64 data URI
+//       Contractor_Name_1:        siteExpensesData.Contractor_Name_1,
+//       Contractor_Firm_Name_1:   siteExpensesData.Contractor_Firm_Name_1,
+//       Remark_1:                 siteExpensesData.Remark_1,
+//       items:                    validItems,
+//     };
 
 //     try {
 //       const result = await postSiteExpense(payload).unwrap();
@@ -271,9 +281,7 @@
 //       showAlert('error', 'Project Name aur Work Type required hain');
 //       return;
 //     }
-
 //     const payload = { ...labourData };
-
 //     try {
 //       const result = await postLabourRequest(payload).unwrap();
 //       showAlert('success', `${result.message} | UID: ${result.uid}`);
@@ -289,9 +297,7 @@
 //       showAlert('error', 'Project Name aur Contractor Name required hain');
 //       return;
 //     }
-
 //     const payload = { ...debitData };
-
 //     try {
 //       const result = await postContractorDebit(payload).unwrap();
 //       showAlert('success', `${result.message} | UID: ${result.uid}`);
@@ -308,9 +314,8 @@
 //       Head_Type_1: '', Bill_No_1: '', Bill_Date_1: '', Bill_Photo_1: '',
 //       Contractor_Name_1: '', Contractor_Firm_Name_1: '', Remark_1: '',
 //     });
-//     setSiteExpenseItems([
-//       { Exp_Head_1: '', Details_of_Work_1: '', Amount_1: '' }
-//     ]);
+//     setSiteExpenseItems([{ Exp_Head_1: '', Details_of_Work_1: '', Amount_1: '' }]);
+//     setBillPhotoName(''); // ✅ Photo name bhi reset
 //   };
 
 //   const resetLabourForm = () => setLabourData({
@@ -509,22 +514,19 @@
 //                 </div>
 //               </div>
 
-//               {/* Bill Photo — Head Type ke neeche */}
+//               {/* ✅ Bill Photo — FileReader se base64 */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <Camera className="w-4 h-4 inline mr-1" />Bill Photo
 //                 </label>
 //                 <input
 //                   type="file"
-//                   accept="image/*"
-//                   onChange={(e) => {
-//                     const file = e.target.files[0];
-//                     if (file) handleSiteExpenseChange('Bill_Photo_1', file.name);
-//                   }}
+//                   accept="image/*,application/pdf"
+//                   onChange={handlePhotoChange}
 //                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
 //                 />
-//                 {siteExpensesData.Bill_Photo_1 && (
-//                   <p className="text-xs text-green-600 mt-1">✅ {siteExpensesData.Bill_Photo_1}</p>
+//                 {billPhotoName && (
+//                   <p className="text-xs text-green-600 mt-1">✅ {billPhotoName} — Ready to upload</p>
 //                 )}
 //               </div>
 
@@ -563,7 +565,7 @@
 //                 </div>
 //               )}
 
-//               {/* Expense Items — sirf Exp Head + Details + Amount */}
+//               {/* Expense Items */}
 //               <div className="border border-blue-200 rounded-xl overflow-hidden">
 //                 <div className="bg-blue-50 px-4 py-3 flex items-center justify-between border-b border-blue-200">
 //                   <h3 className="font-semibold text-blue-800 flex items-center gap-2">
@@ -593,8 +595,6 @@
 //                       <p className="text-sm font-semibold text-gray-600 mb-3">Item {index + 1}</p>
 
 //                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-//                         {/* Expense Head */}
 //                         <div>
 //                           <label className="block text-xs font-medium text-gray-600 mb-1">
 //                             Expense Head <span className="text-red-500">*</span>
@@ -614,7 +614,6 @@
 //                           </div>
 //                         </div>
 
-//                         {/* Amount */}
 //                         <div>
 //                           <label className="block text-xs font-medium text-gray-600 mb-1">
 //                             Amount (₹) <span className="text-red-500">*</span>
@@ -628,7 +627,6 @@
 //                           />
 //                         </div>
 
-//                         {/* Details of Work — full width */}
 //                         <div className="md:col-span-2">
 //                           <label className="block text-xs font-medium text-gray-600 mb-1">Details of Work</label>
 //                           <input
@@ -639,13 +637,11 @@
 //                             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
 //                           />
 //                         </div>
-
 //                       </div>
 //                     </div>
 //                   ))}
 //                 </div>
 
-//                 {/* Items Footer */}
 //                 <div className="bg-blue-50 px-4 py-3 border-t border-blue-200 flex items-center justify-between">
 //                   <span className="text-sm font-semibold text-blue-800">
 //                     Total Items: {siteExpenseItems.filter(i => i.Exp_Head_1 && i.Amount_1).length} valid
@@ -692,7 +688,6 @@
 //           {activeTab === 'labour' && (
 //             <form onSubmit={handleSubmitLabour} className="p-6 space-y-6">
 
-//               {/* Project & Engineer */}
 //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //                 <SelectField
 //                   label="Project Name" icon={Building} required
@@ -711,7 +706,6 @@
 //                 </div>
 //               </div>
 
-//               {/* Work Type */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <Wrench className="w-4 h-4 inline mr-1" />Work Type <span className="text-red-500">*</span>
@@ -730,7 +724,6 @@
 //                 </div>
 //               </div>
 
-//               {/* Work Description */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <FileText className="w-4 h-4 inline mr-1" />Work Description
@@ -742,13 +735,11 @@
 //                 />
 //               </div>
 
-//               {/* Labour Details */}
 //               <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200 space-y-4">
 //                 <h3 className="font-semibold text-emerald-800 flex items-center gap-2">
 //                   <Users className="w-5 h-5" />Labour Details
 //                 </h3>
 //                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                   {/* Cat 1 */}
 //                   <div>
 //                     <label className="block text-sm font-medium text-gray-700 mb-2">Labour Category 1</label>
 //                     <div className="relative">
@@ -772,7 +763,6 @@
 //                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
 //                     />
 //                   </div>
-//                   {/* Cat 2 */}
 //                   <div>
 //                     <label className="block text-sm font-medium text-gray-700 mb-2">Labour Category 2</label>
 //                     <div className="relative">
@@ -798,7 +788,6 @@
 //                   </div>
 //                 </div>
 
-//                 {/* Total Labour */}
 //                 <div className="bg-white p-4 rounded-xl border border-emerald-300 flex items-center justify-between">
 //                   <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
 //                     <Calculator className="w-4 h-4" />Total Labour (Auto)
@@ -809,7 +798,6 @@
 //                 </div>
 //               </div>
 
-//               {/* Date of Required */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <Calendar className="w-4 h-4 inline mr-1" />Date of Required
@@ -820,7 +808,6 @@
 //                 />
 //               </div>
 
-//               {/* Head of Contractor / Company */}
 //               <div className={`grid grid-cols-1 gap-4 ${isLabourContractorHead ? 'md:grid-cols-3' : ''}`}>
 //                 <div>
 //                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -879,7 +866,6 @@
 //                 )}
 //               </div>
 
-//               {/* Remark */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <MessageSquare className="w-4 h-4 inline mr-1" />Remark
@@ -891,7 +877,6 @@
 //                 />
 //               </div>
 
-//               {/* Buttons */}
 //               <div className="flex gap-4 pt-4 border-t">
 //                 <button type="button" onClick={resetLabourForm}
 //                   className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2"
@@ -914,7 +899,6 @@
 //           {activeTab === 'debit' && (
 //             <form onSubmit={handleSubmitDebit} className="p-6 space-y-6">
 
-//               {/* Project & Engineer */}
 //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //                 <SelectField
 //                   label="Project Name" icon={Building} required
@@ -933,7 +917,6 @@
 //                 </div>
 //               </div>
 
-//               {/* Contractor & Firm */}
 //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //                 <div>
 //                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -963,7 +946,6 @@
 //                 </div>
 //               </div>
 
-//               {/* Work Type & Date */}
 //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //                 <div>
 //                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -993,7 +975,6 @@
 //                 </div>
 //               </div>
 
-//               {/* Work Description */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <FileText className="w-4 h-4 inline mr-1" />Work Description
@@ -1005,7 +986,6 @@
 //                 />
 //               </div>
 
-//               {/* Amount Calculation */}
 //               <div className="bg-purple-50 p-4 rounded-xl border border-purple-200 space-y-4">
 //                 <h3 className="font-semibold text-purple-800 flex items-center gap-2">
 //                   <Calculator className="w-5 h-5" />Amount Calculation
@@ -1061,7 +1041,6 @@
 //                 </div>
 //               </div>
 
-//               {/* Buttons */}
 //               <div className="flex gap-4 pt-4 border-t">
 //                 <button type="button" onClick={resetDebitForm}
 //                   className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2"
@@ -1087,8 +1066,6 @@
 // };
 
 // export default SiteExpensesForm;
-
-
 
 
 
@@ -1304,7 +1281,7 @@ const SiteExpensesForm = () => {
     if (file) {
       setBillPhotoName(file.name);
       const reader = new FileReader();
-      reader.readAsDataURL(file); // data:image/jpeg;base64,.... format
+      reader.readAsDataURL(file);
       reader.onload = () => {
         handleSiteExpenseChange('Bill_Photo_1', reader.result);
       };
@@ -1335,13 +1312,49 @@ const SiteExpensesForm = () => {
   };
 
   // ─── Submit Handlers ──────────────────────────────────────────────────────
+
+  // ✅ UPDATED: Site Expenses — required fields validation (Bill No. & Remark optional)
   const handleSubmitSiteExpenses = async (e) => {
     e.preventDefault();
-    if (!siteExpensesData.Project_Name_1) { showAlert('error', 'Project Name required hai'); return; }
 
-    const validItems = siteExpenseItems.filter(item => item.Exp_Head_1 && item.Amount_1);
+    // Required field checks
+    if (!siteExpensesData.Vendor_Payee_Name_1.trim()) {
+      showAlert('error', 'Vendor/Payee Name required hai');
+      return;
+    }
+    if (!siteExpensesData.Project_Name_1) {
+      showAlert('error', 'Project Name required hai');
+      return;
+    }
+    if (!siteExpensesData.Head_Type_1) {
+      showAlert('error', 'Head Type required hai');
+      return;
+    }
+    if (!siteExpensesData.Bill_Date_1) {
+      showAlert('error', 'Bill Date required hai');
+      return;
+    }
+    if (!siteExpensesData.Bill_Photo_1) {
+      showAlert('error', 'Bill Photo required hai');
+      return;
+    }
+    // Contractor fields required when Contractor Head selected
+    if (isSiteContractorHead && !siteExpensesData.Contractor_Name_1) {
+      showAlert('error', 'Contractor Name required hai');
+      return;
+    }
+
+    const validItems = siteExpenseItems.filter(item => item.Exp_Head_1 && item.Amount_1 && item.Details_of_Work_1.trim());
     if (validItems.length === 0) {
-      showAlert('error', 'Kam se kam ek item mein Expense Head aur Amount fill karo');
+      showAlert('error', 'Kam se kam ek item mein Expense Head, Amount aur Details of Work fill karo');
+      return;
+    }
+    const incompleteItem = siteExpenseItems.find(item =>
+      (item.Exp_Head_1 || item.Amount_1 || item.Details_of_Work_1.trim()) &&
+      (!item.Exp_Head_1 || !item.Amount_1 || !item.Details_of_Work_1.trim())
+    );
+    if (incompleteItem) {
+      showAlert('error', 'Har item mein Expense Head, Amount aur Details of Work teeno required hain');
       return;
     }
 
@@ -1352,7 +1365,7 @@ const SiteExpensesForm = () => {
       Head_Type_1:              siteExpensesData.Head_Type_1,
       Bill_No_1:                siteExpensesData.Bill_No_1,
       Bill_Date_1:              siteExpensesData.Bill_Date_1,
-      Bill_Photo_1:             siteExpensesData.Bill_Photo_1, // ✅ base64 data URI
+      Bill_Photo_1:             siteExpensesData.Bill_Photo_1,
       Contractor_Name_1:        siteExpensesData.Contractor_Name_1,
       Contractor_Firm_Name_1:   siteExpensesData.Contractor_Firm_Name_1,
       Remark_1:                 siteExpensesData.Remark_1,
@@ -1368,12 +1381,45 @@ const SiteExpensesForm = () => {
     }
   };
 
+  // ✅ UPDATED: Labour — required fields validation
+  // Optional: Labour Category 2, Number of Labour Cat 2, Remark
   const handleSubmitLabour = async (e) => {
     e.preventDefault();
-    if (!labourData.Project_Name_1 || !labourData.Work_Type_1) {
-      showAlert('error', 'Project Name aur Work Type required hain');
+
+    if (!labourData.Project_Name_1) {
+      showAlert('error', 'Project Name required hai');
       return;
     }
+    if (!labourData.Work_Type_1) {
+      showAlert('error', 'Work Type required hai');
+      return;
+    }
+    if (!labourData.Work_Description_1.trim()) {
+      showAlert('error', 'Work Description required hai');
+      return;
+    }
+    if (!labourData.Labour_Category_1) {
+      showAlert('error', 'Labour Category 1 required hai');
+      return;
+    }
+    if (!labourData.Number_Of_Labour_1 || parseInt(labourData.Number_Of_Labour_1) <= 0) {
+      showAlert('error', 'Number of Labour (Cat 1) required hai aur 0 se zyada hona chahiye');
+      return;
+    }
+    if (!labourData.Date_Of_Required_1) {
+      showAlert('error', 'Date of Required required hai');
+      return;
+    }
+    if (!labourData.Head_Of_Contractor_Company_1) {
+      showAlert('error', 'Head Of Contractor/Company required hai');
+      return;
+    }
+    // Contractor fields required when Contractor Head selected
+    if (isLabourContractorHead && !labourData.Name_Of_Contractor_1) {
+      showAlert('error', 'Name of Contractor required hai');
+      return;
+    }
+
     const payload = { ...labourData };
     try {
       const result = await postLabourRequest(payload).unwrap();
@@ -1408,7 +1454,7 @@ const SiteExpensesForm = () => {
       Contractor_Name_1: '', Contractor_Firm_Name_1: '', Remark_1: '',
     });
     setSiteExpenseItems([{ Exp_Head_1: '', Details_of_Work_1: '', Amount_1: '' }]);
-    setBillPhotoName(''); // ✅ Photo name bhi reset
+    setBillPhotoName('');
   };
 
   const resetLabourForm = () => setLabourData({
@@ -1523,8 +1569,9 @@ const SiteExpensesForm = () => {
               {/* Vendor & Project */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                  {/* ✅ Required */}
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <User className="w-4 h-4 inline mr-1" />Vendor/Payee Name
+                    <User className="w-4 h-4 inline mr-1" />Vendor/Payee Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -1556,6 +1603,7 @@ const SiteExpensesForm = () => {
                   />
                 </div>
                 <div>
+                  {/* Bill No — optional (no * star) */}
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     <Hash className="w-4 h-4 inline mr-1" />Bill No.
                   </label>
@@ -1568,8 +1616,9 @@ const SiteExpensesForm = () => {
                   />
                 </div>
                 <div>
+                  {/* ✅ Required */}
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-1" />Bill Date
+                    <Calendar className="w-4 h-4 inline mr-1" />Bill Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -1580,10 +1629,10 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
-              {/* Head Type */}
+              {/* Head Type — ✅ Required */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <Briefcase className="w-4 h-4 inline mr-1" />Head Type
+                  <Briefcase className="w-4 h-4 inline mr-1" />Head Type <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <select
@@ -1607,10 +1656,10 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
-              {/* ✅ Bill Photo — FileReader se base64 */}
+              {/* ✅ Bill Photo — Required */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <Camera className="w-4 h-4 inline mr-1" />Bill Photo
+                  <Camera className="w-4 h-4 inline mr-1" />Bill Photo <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="file"
@@ -1627,8 +1676,9 @@ const SiteExpensesForm = () => {
               {isSiteContractorHead && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
+                    {/* ✅ Required when Contractor Head */}
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      <HardHat className="w-4 h-4 inline mr-1" />Contractor Name
+                      <HardHat className="w-4 h-4 inline mr-1" />Contractor Name <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <select
@@ -1662,7 +1712,7 @@ const SiteExpensesForm = () => {
               <div className="border border-blue-200 rounded-xl overflow-hidden">
                 <div className="bg-blue-50 px-4 py-3 flex items-center justify-between border-b border-blue-200">
                   <h3 className="font-semibold text-blue-800 flex items-center gap-2">
-                    <FileText className="w-5 h-5" />Expense Items
+                    <FileText className="w-5 h-5" />Expense Items <span className="text-red-500">*</span>
                     <span className="text-xs text-blue-600 font-normal">(har item alag row banega sheet mein)</span>
                   </h3>
                   <button
@@ -1721,7 +1771,7 @@ const SiteExpensesForm = () => {
                         </div>
 
                         <div className="md:col-span-2">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Details of Work</label>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Details of Work <span className="text-red-500">*</span></label>
                           <input
                             type="text"
                             value={item.Details_of_Work_1}
@@ -1737,7 +1787,7 @@ const SiteExpensesForm = () => {
 
                 <div className="bg-blue-50 px-4 py-3 border-t border-blue-200 flex items-center justify-between">
                   <span className="text-sm font-semibold text-blue-800">
-                    Total Items: {siteExpenseItems.filter(i => i.Exp_Head_1 && i.Amount_1).length} valid
+                    Total Items: {siteExpenseItems.filter(i => i.Exp_Head_1 && i.Amount_1 && i.Details_of_Work_1.trim()).length} valid
                   </span>
                   <span className="text-lg font-bold text-blue-700">
                     ₹{siteExpenseItems.reduce((sum, i) => sum + (parseFloat(i.Amount_1) || 0), 0).toFixed(2)}
@@ -1745,7 +1795,7 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
-              {/* Remark */}
+              {/* Remark — optional (no * star) */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <MessageSquare className="w-4 h-4 inline mr-1" />Remark
@@ -1799,6 +1849,7 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
+              {/* ✅ Required */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <Wrench className="w-4 h-4 inline mr-1" />Work Type <span className="text-red-500">*</span>
@@ -1817,9 +1868,10 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
+              {/* ✅ Required */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <FileText className="w-4 h-4 inline mr-1" />Work Description
+                  <FileText className="w-4 h-4 inline mr-1" />Work Description <span className="text-red-500">*</span>
                 </label>
                 <textarea value={labourData.Work_Description_1} rows={3}
                   onChange={(e) => handleLabourChange('Work_Description_1', e.target.value)}
@@ -1833,8 +1885,11 @@ const SiteExpensesForm = () => {
                   <Users className="w-5 h-5" />Labour Details
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* ✅ Required */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Labour Category 1</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Labour Category 1 <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
                       <select value={labourData.Labour_Category_1}
                         onChange={(e) => handleLabourChange('Labour_Category_1', e.target.value)}
@@ -1848,14 +1903,18 @@ const SiteExpensesForm = () => {
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     </div>
                   </div>
+                  {/* ✅ Required */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Number of Labour (Cat 1)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Number of Labour (Cat 1) <span className="text-red-500">*</span>
+                    </label>
                     <input type="number" min="0" placeholder="0"
                       value={labourData.Number_Of_Labour_1}
                       onChange={(e) => handleLabourChange('Number_Of_Labour_1', e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
+                  {/* Optional — no * */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Labour Category 2</label>
                     <div className="relative">
@@ -1871,6 +1930,7 @@ const SiteExpensesForm = () => {
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     </div>
                   </div>
+                  {/* Optional — no * */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Number of Labour (Cat 2)</label>
                     <input type="number" min="0" placeholder="0"
@@ -1891,9 +1951,10 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
+              {/* ✅ Required */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-1" />Date of Required
+                  <Calendar className="w-4 h-4 inline mr-1" />Date of Required <span className="text-red-500">*</span>
                 </label>
                 <input type="date" value={labourData.Date_Of_Required_1}
                   onChange={(e) => handleLabourChange('Date_Of_Required_1', e.target.value)}
@@ -1901,10 +1962,11 @@ const SiteExpensesForm = () => {
                 />
               </div>
 
+              {/* ✅ Required */}
               <div className={`grid grid-cols-1 gap-4 ${isLabourContractorHead ? 'md:grid-cols-3' : ''}`}>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Briefcase className="w-4 h-4 inline mr-1" />Head Of Contractor/Company
+                    <Briefcase className="w-4 h-4 inline mr-1" />Head Of Contractor/Company <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <select value={labourData.Head_Of_Contractor_Company_1}
@@ -1929,9 +1991,10 @@ const SiteExpensesForm = () => {
 
                 {isLabourContractorHead && (
                   <>
+                    {/* ✅ Required when Contractor Head */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        <HardHat className="w-4 h-4 inline mr-1" />Name of Contractor
+                        <HardHat className="w-4 h-4 inline mr-1" />Name of Contractor <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <select value={labourData.Name_Of_Contractor_1}
@@ -1959,6 +2022,7 @@ const SiteExpensesForm = () => {
                 )}
               </div>
 
+              {/* Remark — optional (no * star) */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <MessageSquare className="w-4 h-4 inline mr-1" />Remark
@@ -2159,4 +2223,3 @@ const SiteExpensesForm = () => {
 };
 
 export default SiteExpensesForm;
-

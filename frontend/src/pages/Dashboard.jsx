@@ -499,7 +499,7 @@ const Dashboard = () => {
   // Site Expenses Pages
   const allSiteExpensesPages = [
     { id: 'SiteApprovel', name: 'Site Approval', icon: FileText, component: SiteApprovel, path: '/dashboard/SiteApprovel', allowedUserTypes: ['admin', 'Ravindra Singh'] },
-    { id: 'SitePaidAmount', name: 'Site Paid Amount', icon: DollarSign, component: SitePaidAmount, path: '/dashboard/SitePaidAmount', allowedUserTypes: ['admin', 'Govind Ram Nagar', 'Varsha Kahar'] },
+    { id: 'SitePaidAmount', name: 'Site Paid Amount', icon: DollarSign, component: SitePaidAmount, path: '/dashboard/SitePaidAmount', allowedUserTypes: ['admin', 'Govind Ram Nagar', 'Varsha Kahar','Final Material Received'] },
   ];
 
   const getPurchasePages = () => {
