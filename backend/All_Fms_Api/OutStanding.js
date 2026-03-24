@@ -107,13 +107,125 @@ router.get('/dropdowns', async (req, res) => {
   }
 });
 
+
+
+
+// async function prepareBillRow(data) {
+//   const {
+//             // ← Yeh frontend se aayega (bill date ya entry date)
+//     siteName,
+//     vendorName,
+//     billNo,
+//     billDate,      // optional – agar alag chahiye toh, warna date hi use kar lenge
+//     billPdf,
+//     expHead,
+//     basicAmount,
+//     cgst,
+//     sgst,
+//     netAmount,
+//   } = data;
+
+//   // Required fields check
+//   if ( !siteName || !vendorName || !billNo || !netAmount) {
+//     throw new Error('Required fields missing: date, siteName, vendorName, billNo, netAmount');
+//   }
+
+//   // Use billDate if provided, else fallback to the main date
+//   const finalBillDate = billDate?.trim() || date.trim();
+
+//   // India (IST) timestamp – jab request aayi us time ka
+//   const now = new Date().toLocaleString('en-IN', {
+//     timeZone: 'Asia/Kolkata',
+//     day: '2-digit',
+//     month: '2-digit',
+//     year: 'numeric',
+//     hour: '2-digit',
+//     minute: '2-digit',
+//     second: '2-digit',
+//     hour12: false,
+//   }).replace(/,/, '');   // "27/02/2025 15:42:18" format
+
+//   return [
+//                 // A - Date (bill/entry date from frontend)
+//     now,                      // L - Submitted At (India IST timestamp)
+//     siteName.trim(),          // B - Site Name
+//     vendorName.trim(),        // C - Vendor Name
+//     billNo.trim(),            // D - Bill. No
+//     finalBillDate,            // E - Bill Date
+//     billPdf?.trim() || '',    // F - Bill pdf (link)
+//     expHead?.trim() || '',    // G - Exp. Head
+//     basicAmount || '0',       // H - Basic Amount
+//     cgst || '0',              // I - CGST
+//     sgst || '0',              // J - SGST
+//     netAmount || '0',         // K - Net Amount
+//   ];
+// }
+
+// // POST: Submit bill entry
+// router.post('/submit-Outstanding-data', async (req, res) => {
+//   try {
+//     const row = await prepareBillRow(req.body);
+
+//     await sheets.spreadsheets.values.append({
+//       spreadsheetId,
+//       range: 'Purchase_Outstanding!A:K',               // ← Ab L column tak ja raha hai
+//       valueInputOption: 'USER_ENTERED',
+//       resource: { values: [row] },
+//     });
+
+//     res.json({
+//       success: true,
+//       message: 'Bill entry saved successfully!'
+//     });
+
+//   } catch (error) {
+//     console.error('Bill submit error:', error);
+//     res.status(400).json({
+//       success: false,
+//       error: error.message || 'Failed to save bill'
+//     });
+//   }
+// });
+
+
+
+
+// Helper function to find first completely empty row in Purchase_Outstanding sheet
+async function findFirstEmptyRow() {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Purchase_Outstanding!A:K',   // poora range jahan data ja raha hai
+      majorDimension: 'ROWS',
+    });
+
+    const rows = response.data.values || [];
+
+    // Pehli row jo completely empty ho (sab cells empty)
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      // Agar row mein koi bhi value hai (string, number, etc.)
+      const isEmpty = !row || row.every(cell => !cell || String(cell).trim() === '');
+      if (isEmpty) {
+        return i + 1;   // row number (1-based)
+      }
+    }
+
+    // Agar koi empty row nahi mila toh last row ke baad
+    return rows.length + 1;
+  } catch (err) {
+    console.error('Error finding empty row:', err);
+    throw err;
+  }
+}
+
+// Updated prepareBillRow - ab date ka issue bhi fix kar dete hain
 async function prepareBillRow(data) {
   const {
-            // ← Yeh frontend se aayega (bill date ya entry date)
     siteName,
     vendorName,
     billNo,
-    billDate,      // optional – agar alag chahiye toh, warna date hi use kar lenge
+    billDate,
     billPdf,
     expHead,
     basicAmount,
@@ -122,15 +234,12 @@ async function prepareBillRow(data) {
     netAmount,
   } = data;
 
-  // Required fields check
-  if ( !siteName || !vendorName || !billNo || !netAmount) {
-    throw new Error('Required fields missing: date, siteName, vendorName, billNo, netAmount');
+  if (!siteName || !vendorName || !billNo || !netAmount) {
+    throw new Error('Required fields missing: siteName, vendorName, billNo, netAmount');
   }
 
-  // Use billDate if provided, else fallback to the main date
-  const finalBillDate = billDate?.trim() || date.trim();
+  const finalBillDate = (billDate && billDate.trim()) || new Date().toLocaleDateString('en-IN');
 
-  // India (IST) timestamp – jab request aayi us time ka
   const now = new Date().toLocaleString('en-IN', {
     timeZone: 'Asia/Kolkata',
     day: '2-digit',
@@ -140,40 +249,56 @@ async function prepareBillRow(data) {
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
-  }).replace(/,/, '');   // "27/02/2025 15:42:18" format
+  }).replace(/,/, '');
 
   return [
-                // A - Date (bill/entry date from frontend)
-    now,                      // L - Submitted At (India IST timestamp)
-    siteName.trim(),          // B - Site Name
-    vendorName.trim(),        // C - Vendor Name
-    billNo.trim(),            // D - Bill. No
-    finalBillDate,            // E - Bill Date
-    billPdf?.trim() || '',    // F - Bill pdf (link)
-    expHead?.trim() || '',    // G - Exp. Head
-    basicAmount || '0',       // H - Basic Amount
-    cgst || '0',              // I - CGST
-    sgst || '0',              // J - SGST
-    netAmount || '0',         // K - Net Amount
+    now,                          // A - Submitted At
+    siteName.trim(),              // B
+    vendorName.trim(),            // C
+    billNo.trim(),                // D
+    finalBillDate,                // E
+    billPdf?.trim() || '',        // F
+    expHead?.trim() || '',        // G
+    basicAmount || '0',           // H
+    cgst || '0',                  // I
+    sgst || '0',                  // J
+    netAmount || '0',             // K
   ];
 }
 
-// POST: Submit bill entry
+// POST Route - Ab sahi logic ke saath
 router.post('/submit-Outstanding-data', async (req, res) => {
   try {
-    const row = await prepareBillRow(req.body);
+    const rowData = await prepareBillRow(req.body);
+    const emptyRowNumber = await findFirstEmptyRow();
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: 'Purchase_Outstanding!A:K',               // ← Ab L column tak ja raha hai
-      valueInputOption: 'USER_ENTERED',
-      resource: { values: [row] },
-    });
+    // Agar empty row mila toh update karo, warna append
+    if (emptyRowNumber <= 10000) {   // safety limit
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Purchase_Outstanding!A${emptyRowNumber}:K${emptyRowNumber}`,
+        valueInputOption: 'USER_ENTERED',
+        resource: { values: [rowData] },
+      });
 
-    res.json({
-      success: true,
-      message: 'Bill entry saved successfully!'
-    });
+      res.json({
+        success: true,
+        message: `Bill saved in row ${emptyRowNumber} (overwritten empty row)`
+      });
+    } else {
+      // fallback append
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: 'Purchase_Outstanding!A:K',
+        valueInputOption: 'USER_ENTERED',
+        resource: { values: [rowData] },
+      });
+
+      res.json({
+        success: true,
+        message: 'Bill appended at the bottom'
+      });
+    }
 
   } catch (error) {
     console.error('Bill submit error:', error);
@@ -183,4 +308,5 @@ router.post('/submit-Outstanding-data', async (req, res) => {
     });
   }
 });
+
 module.exports = router;

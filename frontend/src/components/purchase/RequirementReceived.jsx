@@ -144,6 +144,8 @@ const RequirementReceived = () => {
 
         const data = res.data;
 
+        console.log(data)
+
         setDropdownOptions({
           siteNames: data.siteNames || [],
           materialTypes: data.materialTypes || [],
@@ -486,3 +488,4 @@ const RequirementReceived = () => {
 };
 
 export default RequirementReceived;
+
