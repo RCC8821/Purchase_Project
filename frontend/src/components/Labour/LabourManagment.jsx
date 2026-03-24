@@ -270,6 +270,11 @@
 //     }
 //   };
 
+//   // ── Approved Head check ──
+//   // true  → "Company Head"   → Contractor Head Amount input DISABLED
+//   // false → "Contractor Head" → Contractor Head Amount input ENABLED
+//   const isCompanyHead = selectedItem?.Approved_Head_2 === 'Company Head';
+
 //   // ── Loading ──
 //   if (isLoading) {
 //     return (
@@ -712,23 +717,48 @@
 //                   <Building2 className="w-4 h-4" /> Amount Distribution
 //                 </h4>
 //                 <div className="grid grid-cols-2 gap-3">
+//                   {/* Company Head Amount – always auto/disabled */}
 //                   <div>
 //                     <label className="block text-xs text-gray-600 mb-1">
 //                       🏢 Company Head Amount
 //                       <span className="text-purple-500 ml-1">(Auto)</span>
 //                     </label>
-//                     <input type="number" value={formData.Company_Head_Amount_3} disabled
+//                     <input
+//                       type="number"
+//                       value={formData.Company_Head_Amount_3}
+//                       disabled
 //                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-purple-100 text-purple-700 font-bold cursor-not-allowed"
 //                     />
 //                     <p className="text-xs text-purple-500 mt-1">= Total Paid Amount</p>
 //                   </div>
+
+//                   {/* Contractor Head Amount – disabled when Approved Head is "Company Head" */}
 //                   <div>
-//                     <label className="block text-xs text-gray-600 mb-1">👷 Contractor Head Amount (₹)</label>
-//                     <input type="number" value={formData.Contractor_Head_Amount_3}
+//                     <label className="block text-xs text-gray-600 mb-1">
+//                       👷 Contractor Head Amount (₹)
+//                     </label>
+//                     <input
+//                       type="number"
+//                       value={formData.Contractor_Head_Amount_3}
 //                       onChange={(e) => handleFormChange('Contractor_Head_Amount_3', e.target.value)}
-//                       placeholder="0"
-//                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+//                       placeholder={isCompanyHead ? 'N/A – Company Head' : '0'}
+//                       disabled={isCompanyHead}
+//                       className={`w-full px-3 py-2 border rounded-lg text-sm transition-colors
+//                         ${isCompanyHead
+//                           ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+//                           : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-800'
+//                         }`}
 //                     />
+//                     {/* Hint text below the input */}
+//                     {isCompanyHead ? (
+//                       <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+//                         🔒 Disabled — Approved Head is <span className="font-medium text-purple-600">Company Head</span>
+//                       </p>
+//                     ) : (
+//                       <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
+//                         ✅ Enabled — Approved Head is <span className="font-medium text-blue-700">Contractor Head</span>
+//                       </p>
+//                     )}
 //                   </div>
 //                 </div>
 //               </div>
@@ -798,9 +828,6 @@
 // );
 
 // export default LabourManagement;
-
-
-
 
 
 
@@ -963,7 +990,8 @@ const LabourManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  
+  const [formError, setFormError] = useState('');
+
   const [formData, setFormData] = useState({
     Status_3: '',
     Labouar_Contractor_Name_3: '',
@@ -990,6 +1018,7 @@ const LabourManagement = () => {
     item.workType?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
+  // Auto calculate Total Wages and Total Paid Amount
   useEffect(() => {
     const num1 = parseFloat(formData.Number_Of_Labour_1_3) || 0;
     const rate1 = parseFloat(formData.Labour_Rate_1_3) || 0;
@@ -1014,8 +1043,11 @@ const LabourManagement = () => {
     formData.Conveyanance_3
   ]);
 
+  const isCompanyHead = selectedItem?.Approved_Head_2 === 'Company Head';
+
   const handleAction = (item) => {
     setSelectedItem(item);
+    setFormError('');
     setFormData({
       Status_3: item.Status_3 || '',
       Labouar_Contractor_Name_3: '',
@@ -1037,21 +1069,48 @@ const LabourManagement = () => {
 
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (formError) setFormError(''); // Clear error when user types
   };
 
   const resetForm = () => {
     setFormData({
-      Status_3: '', Labouar_Contractor_Name_3: '',
-      Labour_Category_1_3: '', Number_Of_Labour_1_3: '', Labour_Rate_1_3: '',
-      Labour_Category_2_3: '', Number_Of_Labour_2_3: '', Labour_Rate_2_3: '',
-      Total_Wages_3: '', Conveyanance_3: '', Total_Paid_Amount_3: '',
-      Company_Head_Amount_3: '', Contractor_Head_Amount_3: '', Remark_3: ''
+      Status_3: '', 
+      Labouar_Contractor_Name_3: '',
+      Labour_Category_1_3: '', 
+      Number_Of_Labour_1_3: '', 
+      Labour_Rate_1_3: '',
+      Labour_Category_2_3: '', 
+      Number_Of_Labour_2_3: '', 
+      Labour_Rate_2_3: '',
+      Total_Wages_3: '', 
+      Conveyanance_3: '', 
+      Total_Paid_Amount_3: '',
+      Company_Head_Amount_3: '', 
+      Contractor_Head_Amount_3: '', 
+      Remark_3: ''
     });
+    setFormError('');
+  };
+
+  // Form Validation
+  const validateForm = () => {
+    if (!formData.Status_3) {
+      setFormError('Please select Status');
+      return false;
+    }
+
+    // Contractor Head Amount is required only when Approved Head is "Contractor Head"
+    if (!isCompanyHead && (!formData.Contractor_Head_Amount_3 || formData.Contractor_Head_Amount_3.trim() === '')) {
+      setFormError('Contractor Head Amount is required when Approved Head is "Contractor Head"');
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async () => {
     if (!selectedItem) return;
-    if (!formData.Status_3) { alert('Please select Status'); return; }
+    if (!validateForm()) return;
 
     try {
       const payload = {
@@ -1075,12 +1134,7 @@ const LabourManagement = () => {
     }
   };
 
-  // ── Approved Head check ──
-  // true  → "Company Head"   → Contractor Head Amount input DISABLED
-  // false → "Contractor Head" → Contractor Head Amount input ENABLED
-  const isCompanyHead = selectedItem?.Approved_Head_2 === 'Company Head';
-
-  // ── Loading ──
+  // Loading State
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -1092,7 +1146,7 @@ const LabourManagement = () => {
     );
   }
 
-  // ── Error ──
+  // Error State
   if (isError) {
     return (
       <div className="flex items-center justify-center h-64 p-4">
@@ -1111,7 +1165,7 @@ const LabourManagement = () => {
   return (
     <div className="space-y-4 p-3 sm:p-4 lg:p-6">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Labour Management</h2>
@@ -1127,7 +1181,7 @@ const LabourManagement = () => {
         </button>
       </div>
 
-      {/* ── Search & Count ── */}
+      {/* Search & Count */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -1145,7 +1199,7 @@ const LabourManagement = () => {
         </div>
       </div>
 
-      {/* ── Empty State ── */}
+      {/* Empty State */}
       {filteredData.length === 0 ? (
         <div className="bg-gray-50 rounded-xl p-10 text-center border-2 border-dashed border-gray-200">
           <FileText className="w-14 h-14 text-gray-300 mx-auto mb-3" />
@@ -1154,7 +1208,7 @@ const LabourManagement = () => {
         </div>
       ) : (
         <>
-          {/* ── MOBILE: Card View (< md) ── */}
+          {/* Mobile Card View */}
           <div className="block md:hidden">
             {filteredData.map((item, index) => (
               <MobileCard
@@ -1168,7 +1222,7 @@ const LabourManagement = () => {
             </p>
           </div>
 
-          {/* ── DESKTOP: Table View (≥ md) ── */}
+          {/* Desktop Table View */}
           <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1600px]">
@@ -1310,23 +1364,14 @@ const LabourManagement = () => {
         </>
       )}
 
-      {/* ══════════════════════════════════════════
-          MODAL  – fully responsive (bottom-sheet on mobile)
-      ══════════════════════════════════════════ */}
+      {/* MODAL */}
       {showModal && selectedItem && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
-          {/* Backdrop tap to close */}
           <div className="absolute inset-0" onClick={() => setShowModal(false)} />
 
-          <div className="relative bg-white w-full sm:w-[95%] sm:max-w-2xl
-            rounded-t-3xl sm:rounded-2xl
-            max-h-[92vh] sm:max-h-[95vh]
-            flex flex-col
-            shadow-2xl
-            animate-slide-up sm:animate-none
-          ">
+          <div className="relative bg-white w-full sm:w-[95%] sm:max-w-2xl rounded-t-3xl sm:rounded-2xl max-h-[92vh] sm:max-h-[95vh] flex flex-col shadow-2xl animate-slide-up sm:animate-none">
 
-            {/* Drag handle – mobile only */}
+            {/* Drag handle for mobile */}
             <div className="flex-shrink-0 flex justify-center pt-3 pb-1 sm:hidden">
               <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
@@ -1349,7 +1394,10 @@ const LabourManagement = () => {
                     </span>
                   </div>
                 </div>
-                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0 ml-2">
+                <button 
+                  onClick={() => { setShowModal(false); resetForm(); }}
+                  className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0 ml-2"
+                >
                   <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
@@ -1429,7 +1477,6 @@ const LabourManagement = () => {
                     <label className="block text-xs text-gray-600 mb-1">Category</label>
                     <input disabled type="text" value={formData.Labour_Category_1_3}
                       onChange={(e) => handleFormChange('Labour_Category_1_3', e.target.value)}
-                      placeholder="e.g. Mistri"
                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm bg-gray-50"
                     />
                   </div>
@@ -1437,7 +1484,6 @@ const LabourManagement = () => {
                     <label className="block text-xs text-gray-600 mb-1">No. of Labour</label>
                     <input type="number" value={formData.Number_Of_Labour_1_3}
                       onChange={(e) => handleFormChange('Number_Of_Labour_1_3', e.target.value)}
-                      placeholder="0"
                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                     />
                   </div>
@@ -1445,7 +1491,6 @@ const LabourManagement = () => {
                     <label className="block text-xs text-gray-600 mb-1">Rate (₹)</label>
                     <input type="number" value={formData.Labour_Rate_1_3}
                       onChange={(e) => handleFormChange('Labour_Rate_1_3', e.target.value)}
-                      placeholder="0"
                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
                     />
                   </div>
@@ -1462,7 +1507,6 @@ const LabourManagement = () => {
                     <label className="block text-xs text-gray-600 mb-1">Category</label>
                     <input disabled type="text" value={formData.Labour_Category_2_3}
                       onChange={(e) => handleFormChange('Labour_Category_2_3', e.target.value)}
-                      placeholder="e.g. Helper"
                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm bg-gray-50"
                     />
                   </div>
@@ -1470,7 +1514,6 @@ const LabourManagement = () => {
                     <label className="block text-xs text-gray-600 mb-1">No. of Labour</label>
                     <input type="number" value={formData.Number_Of_Labour_2_3}
                       onChange={(e) => handleFormChange('Number_Of_Labour_2_3', e.target.value)}
-                      placeholder="0"
                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm"
                     />
                   </div>
@@ -1478,7 +1521,6 @@ const LabourManagement = () => {
                     <label className="block text-xs text-gray-600 mb-1">Rate (₹)</label>
                     <input type="number" value={formData.Labour_Rate_2_3}
                       onChange={(e) => handleFormChange('Labour_Rate_2_3', e.target.value)}
-                      placeholder="0"
                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm"
                     />
                   </div>
@@ -1503,7 +1545,6 @@ const LabourManagement = () => {
                     </label>
                     <input type="number" value={formData.Conveyanance_3}
                       onChange={(e) => handleFormChange('Conveyanance_3', e.target.value)}
-                      placeholder="0"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                     />
                   </div>
@@ -1522,11 +1563,10 @@ const LabourManagement = () => {
                   <Building2 className="w-4 h-4" /> Amount Distribution
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Company Head Amount – always auto/disabled */}
+                  {/* Company Head Amount */}
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">
-                      🏢 Company Head Amount
-                      <span className="text-purple-500 ml-1">(Auto)</span>
+                      🏢 Company Head Amount <span className="text-purple-500">(Auto)</span>
                     </label>
                     <input
                       type="number"
@@ -1537,10 +1577,11 @@ const LabourManagement = () => {
                     <p className="text-xs text-purple-500 mt-1">= Total Paid Amount</p>
                   </div>
 
-                  {/* Contractor Head Amount – disabled when Approved Head is "Company Head" */}
+                  {/* Contractor Head Amount - REQUIRED when Contractor Head */}
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">
                       👷 Contractor Head Amount (₹)
+                      {!isCompanyHead && <span className="text-red-500 ml-1">*</span>}
                     </label>
                     <input
                       type="number"
@@ -1554,15 +1595,8 @@ const LabourManagement = () => {
                           : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-800'
                         }`}
                     />
-                    {/* Hint text below the input */}
-                    {isCompanyHead ? (
-                      <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                        🔒 Disabled — Approved Head is <span className="font-medium text-purple-600">Company Head</span>
-                      </p>
-                    ) : (
-                      <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
-                        ✅ Enabled — Approved Head is <span className="font-medium text-blue-700">Contractor Head</span>
-                      </p>
+                    {!isCompanyHead && (
+                      <p className="text-xs text-blue-600 mt-1">This field is required</p>
                     )}
                   </div>
                 </div>
@@ -1582,14 +1616,21 @@ const LabourManagement = () => {
                 />
               </div>
 
-              {/* Bottom spacing for mobile safe area */}
+              {/* Form Error Message */}
+              {formError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm">{formError}</p>
+                </div>
+              )}
+
               <div className="h-2" />
             </div>
 
             {/* Modal Footer */}
             <div className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-t bg-gray-50 flex gap-3 justify-end sm:rounded-b-2xl">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); resetForm(); }}
                 className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors font-medium text-sm"
               >
                 Cancel
@@ -1610,7 +1651,7 @@ const LabourManagement = () => {
         </div>
       )}
 
-      {/* slide-up animation for mobile modal */}
+      {/* Slide-up animation for mobile modal */}
       <style>{`
         @keyframes slideUp {
           from { transform: translateY(100%); }
@@ -1624,7 +1665,7 @@ const LabourManagement = () => {
   );
 };
 
-// Helper for modal quick-info cells
+// Helper Component
 const InfoCell = ({ label, value, valueClass = 'text-gray-800 font-medium' }) => (
   <div>
     <span className="text-xs text-gray-400">{label}</span>
