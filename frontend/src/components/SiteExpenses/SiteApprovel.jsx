@@ -850,7 +850,7 @@ const SiteApprovel = () => {
                       {row.detailsOfWork || '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="font-bold text-green-700">{formatCurrency(row.costAmount)}</span>
+                      <span className="font-bold text-green-700">{(row.costAmount)}</span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{row.BillNO || '—'}</td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{row.BillDate || '—'}</td>
