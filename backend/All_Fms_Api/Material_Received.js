@@ -4,34 +4,6 @@ const { sheets, drive, spreadsheetId } = require('../config/googleSheet');
 const { Readable } = require('stream');
 const router = express.Router();
 
-// router.get('/dropdowns', async (req, res) => {
-//   try {
-//     const ranges = [
-//       'Project_Data!D2:D', // Site Names
-//       'Project_Data!A2:A', // Supervisor Names
-//     ];
-
-//     const response = await sheets.spreadsheets.values.batchGet({
-//       spreadsheetId,
-//       ranges,
-//     });
-
-//     const [siteNames, supervisorNames] = response.data.valueRanges.map(
-//       (range) => range.values?.flat() || []
-//     );
-
-//     res.json({
-//       siteNames: siteNames || [],
-//       supervisorNames: supervisorNames || [],
-//     });
-//   } catch (error) {
-//     console.error('Error fetching Google Sheet data:', error);
-//     res.status(500).json({ error: 'Failed to fetch dropdown data' });
-//   }
-// });
-
-
-
 
 router.get('/dropdowns', async (req, res) => {
   try {
@@ -93,6 +65,7 @@ router.get('/dropdowns', async (req, res) => {
     res.status(500).json({ error: 'Failed to load dropdown data' });
   }
 });
+
 
 
 router.post('/save-material-receipt', async (req, res) => {

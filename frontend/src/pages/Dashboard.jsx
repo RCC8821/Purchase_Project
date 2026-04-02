@@ -485,7 +485,7 @@ const Dashboard = () => {
     { id: 'Payment', name: 'Payment', icon: Truck, component: Payment, path: '/dashboard/Payment', allowedUserTypes: ['admin', 'Govind Ram Nagar'] },
     { id: 'Bill_Checked_18Step', name: 'Bill_Checked_18Step', icon: Truck, component: Bill_Checked_18Step, path: '/dashboard/Bill_Checked_18Step', allowedUserTypes: ['admin', 'Ravi Rajak'] },
     { id: 'contractor-purchase-form', name: 'Contractor Purchase Form', icon: FileText, component: ContractorPurchseForm, path: '/dashboard/contractor-purchase-form', allowedUserTypes: ['admin', 'Site Engineer', 'Material Received'] },
-    { id: 'outstanding', name: 'Outstanding Form', icon: DollarSign, component: OutStanding, path: '/dashboard/outstanding', allowedUserTypes: ['admin', 'Govind Ram Nagar'] },
+    { id: 'outstanding', name: 'Without System Bill Entry', icon: DollarSign, component: OutStanding, path: '/dashboard/outstanding', allowedUserTypes: ['admin', 'Govind Ram Nagar'] },
   ];
 
   // Labour Pages
@@ -533,7 +533,7 @@ const Dashboard = () => {
 
   const pageContent = {
     'contractor-purchase-form': { title: 'Contractor Purchase Form', content: 'Create and manage contractor purchase requests and documentation.' },
-    'outstanding': { title: 'Outstanding Form', content: 'View and manage outstanding payments, vendor dues, follow-ups and balances.' },
+    'outstanding': { title: 'Without System Bill Entry', content: 'View and manage outstanding payments, vendor dues, follow-ups and balances.' },
     'requirement-received': { title: 'Requirement Form', content: 'View and manage received procurement requirements.' },
     'approve-required': { title: 'Approve Required', content: 'Review and approve required requests.' },
     'indent-to-get-quotation': { title: 'Indent (To Get Quotation)', content: 'Manage indents to request quotations.' },
