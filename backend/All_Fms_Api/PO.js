@@ -1,5 +1,4 @@
 
-
 // const express = require('express');
 // const { sheets, spreadsheetId, drive } = require('../config/googleSheet');
 // const router = express.Router();
@@ -45,8 +44,6 @@
 //   throw new Error('jsPDF instance initialization with autoTable failed');
 // }
 
-
-
 // router.get('/get-othersheet-data', async (req, res) => {
 //   try {
 //     const range = 'Project_Data!A3:E';
@@ -85,10 +82,6 @@
 //     return res.status(500).json({ error: 'Failed to fetch data', details: error.message });
 //   }
 // });
-
-
-
-
 
 // router.get('/get-po-data', async (req, res) => {
 //   try {
@@ -216,9 +209,6 @@
 //   }
 // });
 
-
-
-
 // async function generatePONumber(spreadsheetId, sheetName) {
 //   try {
 //     const response = await sheets.spreadsheets.values.get({
@@ -246,6 +236,7 @@
 // }
 
 
+
 // const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDeliveryDate, poNumber, siteName, siteLocation, supervisorName, supervisorContact, vendorName, vendorAddress, vendorGST, vendorContact, companyLogoBase64 = null) => {
 //   console.log('Current working directory:', process.cwd());
 //   console.log(`Generating PDF: PO ${poNumber}, Quotation ${quotationNo}, Indent ${indentNo}, Items: ${approvedItems.length}, Delivery Date: ${expectedDeliveryDate}`);
@@ -262,10 +253,26 @@
 //   const pageHeight = doc.internal.pageSize.getHeight();
 //   const bottomMargin = 30;
 
+//   // const extractEnglish = (text) => {
+//   //   if (!text) return 'N/A';
+//   //   return String(text).split(/[/\p{Script=Devanagari}\p{So}\p{S}]/u)[0].trim() || 'N/A';
+//   // };
+
+
 //   const extractEnglish = (text) => {
-//     if (!text) return 'N/A';
-//     return String(text).split(/[/\p{Script=Devanagari}\p{So}\p{S}]/u)[0].trim() || 'N/A';
-//   };
+//   if (!text) return 'N/A';
+  
+//   let str = String(text).trim();
+  
+//   // हिंदी (Devanagari) को हटाओ, लेकिन / , numbers, inches आदि सब रखो
+//   str = str.replace(/[\p{Script=Devanagari}]+/gu, ' ');
+  
+//   // extra spaces को क्लीन करो
+//   str = str.replace(/\s+/g, ' ').trim();
+  
+//   return str || 'N/A';
+// };
+
 
 //   const checkPageBreak = (currentY, requiredSpace) => {
 //     if (currentY + requiredSpace > pageHeight - bottomMargin) {
@@ -304,7 +311,7 @@
 //   }
 
 //   // Address Block
-//   const addressStartY = headerY + 10;
+//   const addressStartY = headerY + 8;
 //   doc.setFontSize(8);
 //   doc.setFont('helvetica', 'bold');
 //   doc.setTextColor(0, 0, 0);
@@ -394,14 +401,15 @@
 //   doc.text('Vendor Address:', keyLeft, currentY);
 //   doc.setFont('helvetica', 'normal');
 //   const addressLines = doc.splitTextToSize(finalVendorAddress, pageWidth / 2 - 30);
-//   doc.text(addressLines, keyLeft + doc.getTextWidth('Vendor Address:') + gap, currentY);
+//   doc.text(addressLines, keyLeft + doc.getTextWidth('Vendor Address : ') + gap, currentY);
 
 //   doc.setFont('helvetica', 'bold');
 //   doc.text('Vendor Contact:', keyRight, currentY);
 //   doc.setFont('helvetica', 'normal');
-//   doc.text(finalVendorContact, keyRight + doc.getTextWidth('Vendor Contact:') + gap, currentY);
+//   doc.text(finalVendorContact, keyRight + doc.getTextWidth('Vendor Contact : ') + gap, currentY);
 
-//   currentY += Math.max(addressLines.length, 1) * lineHeight + 5;
+//   // currentY += Math.max(addressLines.length, 1) * lineHeight + 5;
+//   currentY += lineHeight;
 
 //   doc.setFont('helvetica', 'bold');
 //   doc.text('Site Name:', keyLeft, currentY);
@@ -412,26 +420,27 @@
 //   doc.text('Site Location:', keyRight, currentY);
 //   doc.setFont('helvetica', 'normal');
 //   const locationLines = doc.splitTextToSize(finalSiteLocation, pageWidth / 2 - 30);
-//   doc.text(locationLines, keyRight + doc.getTextWidth('Site Location:') + gap, currentY);
+//   doc.text(locationLines, keyRight + doc.getTextWidth('Site Location :') + gap, currentY);
 
-//   currentY += Math.max(locationLines.length, 1) * lineHeight + 5;
+//   // currentY += Math.max(locationLines.length, 1) * lineHeight + 5;
+//  currentY += lineHeight;
 
 //   doc.setFont('helvetica', 'bold');
 //   doc.text('Supervisor Name:', keyLeft, currentY);
 //   doc.setFont('helvetica', 'normal');
-//   doc.text(finalSupervisorName, keyLeft + doc.getTextWidth('Supervisor Name:') + gap, currentY);
+//   doc.text(finalSupervisorName, keyLeft + doc.getTextWidth('Supervisor Name :') + gap, currentY);
 
 //   doc.setFont('helvetica', 'bold');
 //   doc.text('Supervisor Contact:', keyRight, currentY);
 //   doc.setFont('helvetica', 'normal');
-//   doc.text(finalSupervisorContact, keyRight + doc.getTextWidth('Supervisor Contact:') + gap, currentY);
+//   doc.text(finalSupervisorContact, keyRight + doc.getTextWidth('Supervisor Contactb: ') + gap, currentY);
 
-//   currentY += lineHeight + 5;
+//   currentY += lineHeight + 1;
 
 //   doc.setFont('helvetica', 'bold');
 //   doc.text('Expected Delivery:', keyLeft, currentY);
 //   doc.setFont('helvetica', 'normal');
-//   doc.text(extractEnglish(expectedDeliveryDate), keyLeft + doc.getTextWidth('Expected Delivery:') + gap, currentY);
+//   doc.text(extractEnglish(expectedDeliveryDate), keyLeft + doc.getTextWidth('Expected Delivery :') + gap, currentY);
 
 //   currentY += 10;
 
@@ -447,6 +456,7 @@
 //   currentY += 5;
 
 //   // ==================== FINAL SAFE TABLE - MATERIAL NAME + REMARK BELOW ====================
+
 //   const tableBody = approvedItems.map((item, index) => {
 //     let materialName = extractEnglish(item.Material_Name || item.materialName || 'N/A');
 
@@ -489,13 +499,13 @@
 //   }, 0);
 
 //   doc.autoTable({
-//     head: [['S.No', 'UID', 'Material Name', 'Quantity', 'Unit', 'Rate', 'Discount', 'CGST', 'SGST', 'IGST', 'Final Rate', 'Total Value']],
+//     head: [['No', 'UID', 'Material Name', 'Quantity', 'Unit', 'Rate', 'Discount', 'CGST', 'SGST', 'IGST', 'Final Rate', 'Total Value']],
 //     body: tableBody,
 //     startY: currentY,
 //     theme: 'grid',
 //     styles: {
 //       fontSize: 9.2,
-//       cellPadding: 3,
+//       cellPadding: 2,
 //       font: 'helvetica',
 //       lineColor: [0, 0, 0],
 //       lineWidth: 0.35,
@@ -512,20 +522,20 @@
 //       fontStyle: 'bold',
 //       fontSize: 8.3,
 //       halign: 'center',
-//       cellPadding: 3,
+//       cellPadding: 2,
 //       lineWidth: 0.4,
 //     },
 //     columnStyles: {
 //       0: { cellWidth: 8, halign: 'center' },
 //       1: { cellWidth: 16, halign: 'center' },
-//       2: { cellWidth: 30, halign: 'left', valign: 'top' }, // width बढ़ाया + top align
+//       2: { cellWidth: 34, halign: 'left', valign: 'top' }, // width बढ़ाया + top align
 //       3: { cellWidth: 13, halign: 'center' },
 //       4: { cellWidth: 12, halign: 'center' },
 //       5: { cellWidth: 16, halign: 'right' },
 //       6: { cellWidth: 13, halign: 'center' },
-//       7: { cellWidth: 10, halign: 'center' },
-//       8: { cellWidth: 10, halign: 'center' },
-//       9: { cellWidth: 10, halign: 'center' },
+//       7: { cellWidth: 12, halign: 'center' },
+//       8: { cellWidth: 12, halign: 'center' },
+//       9: { cellWidth: 12, halign: 'center' },
 //       10: { cellWidth: 16, halign: 'right' },
 //       11: { cellWidth: 19, halign: 'right', fontStyle: 'bold' },
 //     },
@@ -653,6 +663,11 @@
 
 
 
+// ////////////////////////////////
+
+
+
+
 // router.post('/create-po', async (req, res) => {
 //   console.log('=== CREATE PO START ===');
 //   console.log('Received request:', req.body);
@@ -679,7 +694,7 @@
 
 //     const supervisorResponse = await sheets.spreadsheets.values.get({
 //       spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
-//       range: 'Site_Supervisor!A2:E',
+//       range: 'Site_Supervisor!A2:E',   // ← note: you have 'Project_Data' in get-othersheet-data and here 'Site_Supervisor'
 //     });
 //     const supervisorRows = supervisorResponse.data.values || [];
 //     const supervisors = supervisorRows.map(row => ({
@@ -705,7 +720,21 @@
 //     const rows = sheetResponse.data.values || [];
 
 //     const allIndents = [...new Set(items.map(item => item.indentNo))].join(', ');
-//     const pdfDataUri = generatePODocument(items, quotationNo, allIndents, expectedDeliveryDate, poNumber, siteName, finalSiteLocation, finalSupervisorName, finalSupervisorContact, vendorName, vendorAddress, vendorGST, vendorContact);
+//     const pdfDataUri = generatePODocument(
+//       items,
+//       quotationNo,
+//       allIndents,
+//       expectedDeliveryDate,
+//       poNumber,
+//       siteName,
+//       finalSiteLocation,           // ← FIXED: now using matched value
+//       finalSupervisorName,         // ← already correct
+//       finalSupervisorContact,      // ← already correct
+//       vendorName,
+//       vendorAddress,
+//       vendorGST,
+//       vendorContact
+//     );
 //     console.log(`PDF data URI length: ${pdfDataUri.length}`);
 
 //     const base64Prefix = 'data:application/pdf;base64,';
@@ -787,6 +816,9 @@
 // module.exports = router;
 
 
+
+
+///////// po pdf update //////
 
 
 
@@ -1602,6 +1634,286 @@ router.post('/create-po', async (req, res) => {
     res.status(500).json({ error: 'Failed to create PO: ' + error.message, details: error.stack });
   }
   console.log('=== CREATE PO END ===');
+});
+
+
+////////////////////////////////
+// ========== ADMIN ROUTES (NEW - original code above is 100% untouched) ==========
+////////////////////////////////
+
+function parseDate(dateStr) {
+  if (!dateStr) return null;
+  const parts1 = dateStr.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+  if (parts1) return new Date(parts1[3], parts1[2] - 1, parts1[1]);
+  const parts2 = dateStr.match(/(\d{1,2})[-\s](\w{3})[-\s](\d{4})/);
+  if (parts2) return new Date(`${parts2[2]} ${parts2[1]}, ${parts2[3]}`);
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+router.get('/get-po-data-admin', async (req, res) => {
+  try {
+    const range = 'Purchase_FMS!B7:BK';
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
+      range,
+    });
+    const rows = response.data.values || [];
+    if (!rows.length) return res.status(404).json({ error: 'No data found' });
+
+    const dataRows = rows.slice(1);
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+    const headers = [
+      { key: 'UID', column: 0 },
+      { key: 'Req_No', column: 1 },
+      { key: 'Site_Name', column: 2 },
+      { key: 'Site_Location', column: 3 },
+      { key: 'Material_Type', column: 4 },
+      { key: 'SKU_Code', column: 5 },
+      { key: 'Material_Name', column: 6 },
+      { key: 'Unit_Name', column: 8 },
+      { key: 'Require_Date', column: 10 },
+      { key: 'REVISED_QUANTITY_2', column: 15 },
+      { key: 'INDENT_NUMBER_3', column: 23 },
+      { key: 'QUOTATION_NO_5', column: 36 },
+      { key: 'Vendor_Name_5', column: 37 },
+      { key: 'Vendor_Firm_Name_5', column: 38 },
+      { key: 'Vendor_Address_5', column: 39 },
+      { key: 'Vendor_Contact_5', column: 40 },
+      { key: 'Vendor_GST_No_5', column: 41 },
+      { key: 'Rate_5', column: 42 },
+      { key: 'DISCOUNT_5', column: 43 },
+      { key: 'CGST_5', column: 44 },
+      { key: 'SGST_5', column: 45 },
+      { key: 'IGST_5', column: 46 },
+      { key: 'FINAL_RATE_5', column: 47 },
+      { key: 'TOTAL_VALUE_5', column: 48 },
+      { key: 'IS_TRANSPORT_REQUIRED', column: 50 },
+      { key: 'EXPECTED_TRANSPORT_CHARGES', column: 51 },
+      { key: 'FREIGHT_CHARGES', column: 52 },
+      { key: 'Remark5', column: 55 },
+      { key: 'PLANNED_7', column: 56 },
+      { key: 'ACTUAL_7', column: 57 },
+      { key: 'PO_NUMBER', column: 59 },
+      { key: 'PO_PDF_URL', column: 60 },
+      { key: 'DELIVERY_DATE', column: 61 },
+    ];
+
+    const poColumnIndex = 59;
+    const actual7Index = 57;
+
+    const formData = dataRows
+      .map((row) => {
+        if (!row || row.every(cell => !cell || cell.trim() === '')) return null;
+        const poNum = row[poColumnIndex]?.trim() || '';
+        if (!poNum || !poNum.startsWith('PO_')) return null;
+        const actual7Date = row[actual7Index]?.trim() || '';
+        if (actual7Date) {
+          try {
+            const rowDate = parseDate(actual7Date);
+            if (rowDate && rowDate < twoMonthsAgo) return null;
+          } catch (e) {}
+        }
+        const obj = {};
+        headers.forEach(({ key, column }) => { obj[key] = row[column]?.trim() || ''; });
+        return obj;
+      })
+      .filter(obj => obj !== null);
+
+    if (!formData.length) return res.status(404).json({ error: 'No PO data found in last 2 months' });
+
+    const groupedByPO = {};
+    formData.forEach(item => {
+      const po = item.PO_NUMBER;
+      if (!groupedByPO[po]) {
+        groupedByPO[po] = {
+          poNumber: po,
+          pdfUrl: item.PO_PDF_URL,
+          quotationNo: item.QUOTATION_NO_5,
+          siteName: item.Site_Name,
+          vendorName: item.Vendor_Firm_Name_5 || item.Vendor_Name_5,
+          deliveryDate: item.DELIVERY_DATE,
+          items: [],
+        };
+      }
+      groupedByPO[po].items.push(item);
+    });
+
+    return res.json({
+      data: formData,
+      grouped: Object.values(groupedByPO),
+      totalPOs: Object.keys(groupedByPO).length,
+      totalItems: formData.length,
+    });
+  } catch (error) {
+    console.error('Error fetching admin PO data:', error.message, error.stack);
+    return res.status(500).json({ error: 'Failed to fetch data', details: error.message });
+  }
+});
+
+router.put('/update-po-pdf', async (req, res) => {
+  console.log('=== UPDATE PO PDF START ===');
+  const { poNumber } = req.body;
+  if (!poNumber) return res.status(400).json({ error: 'PO Number is required' });
+
+  try {
+    const sheetResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID,
+      range: 'Purchase_FMS!B7:BK',
+    });
+    const allRows = sheetResponse.data.values || [];
+    const dataRows = allRows.slice(1);
+
+    const poColumnIndex = 59;
+    const deliveryDateColumnIndex = 61;
+
+    const matchedRows = [];
+    const matchedSheetRowNumbers = [];
+    dataRows.forEach((row, index) => {
+      if (row[poColumnIndex] && row[poColumnIndex].trim() === poNumber.trim()) {
+        matchedRows.push(row);
+        matchedSheetRowNumbers.push(index + 8);
+      }
+    });
+
+    if (matchedRows.length === 0) return res.status(404).json({ error: `No rows found for PO: ${poNumber}` });
+
+    const headers = [
+      { key: 'UID', column: 0 },
+      { key: 'Site_Name', column: 2 },
+      { key: 'Site_Location', column: 3 },
+      { key: 'Material_Name', column: 6 },
+      { key: 'Unit_Name', column: 8 },
+      { key: 'REVISED_QUANTITY_2', column: 15 },
+      { key: 'INDENT_NUMBER_3', column: 23 },
+      { key: 'QUOTATION_NO_5', column: 36 },
+      { key: 'Vendor_Name_5', column: 37 },
+      { key: 'Vendor_Firm_Name_5', column: 38 },
+      { key: 'Vendor_Address_5', column: 39 },
+      { key: 'Vendor_Contact_5', column: 40 },
+      { key: 'Vendor_GST_No_5', column: 41 },
+      { key: 'Rate_5', column: 42 },
+      { key: 'DISCOUNT_5', column: 43 },
+      { key: 'CGST_5', column: 44 },
+      { key: 'SGST_5', column: 45 },
+      { key: 'IGST_5', column: 46 },
+      { key: 'FINAL_RATE_5', column: 47 },
+      { key: 'TOTAL_VALUE_5', column: 48 },
+      { key: 'IS_TRANSPORT_REQUIRED', column: 50 },
+      { key: 'EXPECTED_TRANSPORT_CHARGES', column: 51 },
+      { key: 'FREIGHT_CHARGES', column: 52 },
+      { key: 'Remark5', column: 55 },
+    ];
+
+    const items = matchedRows.map(row => {
+      const obj = {};
+      headers.forEach(({ key, column }) => { obj[key] = row[column]?.trim() || ''; });
+      return obj;
+    });
+
+    const firstItem = items[0];
+    const quotationNo = firstItem.QUOTATION_NO_5 || 'N/A';
+    const allIndents = [...new Set(items.map(item => item.INDENT_NUMBER_3))].join(', ');
+    const expectedDeliveryDate = matchedRows[0][deliveryDateColumnIndex] || 'N/A';
+
+    // EXACT SAME supervisor code as create-po - copy paste
+    const supervisorResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SPREADSHEET_ID || spreadsheetId,
+      range: 'Site_Supervisor!A2:E',
+    });
+    const supervisorRows = supervisorResponse.data.values || [];
+    const supervisors = supervisorRows.map(row => ({
+      Supervisor: row[0] || null,
+      Contact_No: row[1] || null,
+      Site_Name: row[3] || null,
+      Site_Location: row[4] || null,
+    }));
+
+    const matchedSite = supervisors.find(s => {
+      if (!s.Site_Name || !firstItem.Site_Name) return false;
+      const supervisorSiteName = s.Site_Name.split('/')[0].trim();
+      const purchaseSiteName = firstItem.Site_Name.split('/')[0].trim();
+      return supervisorSiteName === purchaseSiteName || s.Site_Name === firstItem.Site_Name;
+    });
+    const finalSiteLocation = matchedSite ? matchedSite.Site_Location : firstItem.Site_Location || 'N/A';
+    const finalSupervisorName = matchedSite ? matchedSite.Supervisor : 'N/A';
+    const finalSupervisorContact = matchedSite ? matchedSite.Contact_No : 'N/A';
+
+    console.log('Matched Site Location:', finalSiteLocation);
+    console.log('Matched Supervisor Name:', finalSupervisorName);
+    console.log('Matched Supervisor Contact:', finalSupervisorContact);
+
+    // EXACT SAME generatePODocument call as create-po
+    const pdfDataUri = generatePODocument(
+      items,
+      quotationNo,
+      allIndents,
+      expectedDeliveryDate,
+      poNumber,
+      firstItem.Site_Name,
+      finalSiteLocation,
+      finalSupervisorName,
+      finalSupervisorContact,
+      firstItem.Vendor_Firm_Name_5 || firstItem.Vendor_Name_5 || 'N/A',
+      firstItem.Vendor_Address_5 || 'N/A',
+      firstItem.Vendor_GST_No_5 || 'N/A',
+      firstItem.Vendor_Contact_5 || 'N/A'
+    );
+
+    const base64Prefix = 'data:application/pdf;base64,';
+    const base64Data = pdfDataUri.replace(base64Prefix, '');
+    const pdfBuffer = Buffer.from(base64Data, 'base64');
+
+    const Readable = require('stream').Readable;
+    const fileMetadata = {
+      name: `${poNumber}_UPDATED_${Date.now()}.pdf`,
+      parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
+      mimeType: 'application/pdf',
+    };
+    const media = {
+      mimeType: 'application/pdf',
+      body: Readable.from(pdfBuffer),
+    };
+
+    const file = await drive.files.create({
+      resource: fileMetadata,
+      media,
+      fields: 'id, webViewLink',
+      supportsAllDrives: true,
+    });
+    const newPdfUrl = file.data.webViewLink;
+
+    await drive.permissions.create({
+      fileId: file.data.id,
+      requestBody: { role: 'reader', type: 'anyone' },
+      supportsAllDrives: true,
+    });
+    console.log(`✅ New PDF uploaded: ${newPdfUrl}`);
+
+    // ONLY BJ column update
+    for (const rowNumber of matchedSheetRowNumbers) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: process.env.SPREADSHEET_ID,
+        range: `Purchase_FMS!BJ${rowNumber}`,
+        valueInputOption: 'RAW',
+        resource: { values: [[newPdfUrl]] },
+      });
+      console.log(`✅ Updated row ${rowNumber} with new PDF URL`);
+    }
+
+    res.status(200).json({
+      message: `PO PDF updated successfully for ${poNumber}`,
+      poNumber,
+      newPdfUrl,
+      updatedRows: matchedSheetRowNumbers.length,
+    });
+  } catch (error) {
+    console.error('=== UPDATE PO PDF ERROR ===', error.message, error.stack);
+    res.status(500).json({ error: 'Failed to update PO PDF: ' + error.message });
+  }
+  console.log('=== UPDATE PO PDF END ===');
 });
 
 module.exports = router;
