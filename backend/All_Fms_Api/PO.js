@@ -821,7 +821,6 @@
 ///////// po pdf update //////
 
 
-
 const express = require('express');
 const { sheets, spreadsheetId, drive } = require('../config/googleSheet');
 const router = express.Router();
@@ -1604,11 +1603,11 @@ router.post('/create-po', async (req, res) => {
       const row = rows[i];
       if (row && row[quotationColumnIndex] && row[quotationColumnIndex].trim() === quotationNo.trim()) {
         const rowNumber = i + 1;
-        const values = [[poNumber, pdfUrl, expectedDeliveryDate]];
+        const values = [['Done', poNumber, pdfUrl, expectedDeliveryDate]];
 
         await sheets.spreadsheets.values.update({
           spreadsheetId: process.env.SPREADSHEET_ID,
-          range: `Purchase_FMS!BI${rowNumber}:BK${rowNumber}`,
+          range: `Purchase_FMS!BH${rowNumber}:BK${rowNumber}`,
           valueInputOption: 'RAW',
           resource: { values },
         });
