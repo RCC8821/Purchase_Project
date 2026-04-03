@@ -1077,6 +1077,8 @@ const Payment = () => {
                     <option value="HDFC Madhav Gupta (375)">HDFC Madhav Gupta (375)</option>
                     <option value="HDFC Scope Clg(215)">HDFC Scope Clg(215)</option>
                     <option value="ICICI RNTU(914)">ICICI RNTU(914)</option>
+                    <option value="HDFC Alka Upadhyay(902)">HDFC Alka Upadhyay(902)</option>
+                    <option value="SVC Udit Agrawal(696)">SVC Udit Agrawal(696)</option>
                   </select>
                 </div>
                 <div>
