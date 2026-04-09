@@ -153,7 +153,6 @@ router.post('/Post-labour-Approvel-1', async (req, res) => {
   const { 
     uid, 
     Status_2, 
-
     Approved_Head_2, 
     Name_Of_Contractor_2,
     Contractor_Firm_Name_2,

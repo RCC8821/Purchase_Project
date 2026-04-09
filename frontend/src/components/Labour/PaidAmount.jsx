@@ -1,5 +1,4 @@
 
-
 // import React, { useState, useEffect, useRef, useMemo } from 'react';
 // import { 
 //   useGetPaidStepQuery, 
@@ -36,11 +35,24 @@
 //   CheckSquare,
 //   Square,
 //   ListChecks,
-//   MapPin,
-//   Briefcase,
 //   Check,
 //   ChevronUp
 // } from 'lucide-react';
+
+// // ========== Helper Functions ==========
+// const formatAmount = (value) => {
+//   if (value == null || value === '') return '0';
+  
+//   const cleaned = String(value).replace(/[^0-9.-]/g, '');
+//   const num = parseFloat(cleaned);
+  
+//   if (isNaN(num)) return '0';
+  
+//   return num.toLocaleString('en-IN', {
+//     maximumFractionDigits: 0,
+//     minimumFractionDigits: 0
+//   });
+// };
 
 // // ========== Searchable Dropdown Component ==========
 // const SearchableDropdown = ({ 
@@ -57,7 +69,6 @@
 //   const [searchTerm, setSearchTerm] = useState('');
 //   const dropdownRef = useRef(null);
 
-//   // ✅ Safe filtering - ensure all options are strings
 //   const filteredOptions = useMemo(() => {
 //     return options.filter(option => {
 //       if (typeof option !== 'string') return false;
@@ -90,38 +101,10 @@
 //   };
 
 //   const colorClasses = {
-//     amber: {
-//       bg: 'bg-amber-50',
-//       text: 'text-amber-700',
-//       hover: 'hover:bg-amber-100',
-//       selected: 'bg-amber-100 text-amber-800',
-//       ring: 'ring-amber-200',
-//       border: 'border-amber-500'
-//     },
-//     purple: {
-//       bg: 'bg-purple-50',
-//       text: 'text-purple-700',
-//       hover: 'hover:bg-purple-100',
-//       selected: 'bg-purple-100 text-purple-800',
-//       ring: 'ring-purple-200',
-//       border: 'border-purple-500'
-//     },
-//     green: {
-//       bg: 'bg-green-50',
-//       text: 'text-green-700',
-//       hover: 'hover:bg-green-100',
-//       selected: 'bg-green-100 text-green-800',
-//       ring: 'ring-green-200',
-//       border: 'border-green-500'
-//     },
-//     blue: {
-//       bg: 'bg-blue-50',
-//       text: 'text-blue-700',
-//       hover: 'hover:bg-blue-100',
-//       selected: 'bg-blue-100 text-blue-800',
-//       ring: 'ring-blue-200',
-//       border: 'border-blue-500'
-//     }
+//     amber: { bg: 'bg-amber-50', text: 'text-amber-700', hover: 'hover:bg-amber-100', selected: 'bg-amber-100 text-amber-800', ring: 'ring-amber-200', border: 'border-amber-500' },
+//     purple: { bg: 'bg-purple-50', text: 'text-purple-700', hover: 'hover:bg-purple-100', selected: 'bg-purple-100 text-purple-800', ring: 'ring-purple-200', border: 'border-purple-500' },
+//     green:  { bg: 'bg-green-50',  text: 'text-green-700',  hover: 'hover:bg-green-100',  selected: 'bg-green-100 text-green-800',  ring: 'ring-green-200',  border: 'border-green-500' },
+//     blue:   { bg: 'bg-blue-50',   text: 'text-blue-700',   hover: 'hover:bg-blue-100',   selected: 'bg-blue-100 text-blue-800',   ring: 'ring-blue-200',   border: 'border-blue-500' }
 //   };
 
 //   const colors = colorClasses[color] || colorClasses.amber;
@@ -173,11 +156,7 @@
 //                 <X className="w-4 h-4 text-gray-500" />
 //               </button>
 //             )}
-//             {isOpen ? (
-//               <ChevronUp className="w-5 h-5 text-gray-400" />
-//             ) : (
-//               <ChevronDown className="w-5 h-5 text-gray-400" />
-//             )}
+//             {isOpen ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
 //           </div>
 //         </div>
 //       </div>
@@ -204,9 +183,7 @@
 //             <button
 //               onClick={() => handleSelect('')}
 //               className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-//                 !value 
-//                   ? colors.selected 
-//                   : 'hover:bg-gray-50 text-gray-700'
+//                 !value ? colors.selected : 'hover:bg-gray-50 text-gray-700'
 //               }`}
 //             >
 //               -- Select --
@@ -218,15 +195,11 @@
 //                   key={`${option}-${index}`}
 //                   onClick={() => handleSelect(option)}
 //                   className={`w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between ${
-//                     value === option 
-//                       ? colors.selected 
-//                       : `${colors.hover} text-gray-700`
+//                     value === option ? colors.selected : `${colors.hover} text-gray-700`
 //                   }`}
 //                 >
 //                   <span className="truncate">{option}</span>
-//                   {value === option && (
-//                     <Check className="w-4 h-4 flex-shrink-0" />
-//                   )}
+//                   {value === option && <Check className="w-4 h-4 flex-shrink-0" />}
 //                 </button>
 //               ))
 //             ) : (
@@ -243,7 +216,6 @@
 
 // // ========== Main Component ==========
 // const PaidAmount = () => {
-//   // ========== API Hooks ==========
 //   const { 
 //     data: paidData, 
 //     isLoading, 
@@ -255,97 +227,80 @@
 
 //   const [postPaid, { isLoading: isSubmitting }] = usePostLabourPaidMutation();
 
-//   // ✅ Fetch Bank Names from API
 //   const { 
 //     data: bankList = [], 
 //     isLoading: isBankLoading 
 //   } = useGetProjectDropdownQuery();
 
 //   useEffect(() => {
-//     console.log('=== Paid Step Data ===');
-//     console.log('Data:', paidData);
-//     console.log('Bank List:', bankList);
+//     console.log('=== Paid Step Data ===', paidData);
+//     console.log('=== Bank Dropdown API Response ===', bankList);
+//     console.log('First few bank items:', bankList?.slice(0, 5));
 //   }, [paidData, bankList]);
 
-//   // ========== Local State ==========
 //   const [searchTerm, setSearchTerm] = useState('');
 //   const [selectedProject, setSelectedProject] = useState('');
 //   const [selectedContractor, setSelectedContractor] = useState('');
 //   const [selectedItems, setSelectedItems] = useState([]);
 //   const [showModal, setShowModal] = useState(false);
   
-//   // ========== Form State ==========
 //   const [formData, setFormData] = useState({
 //     Status_5: '',
 //     PAYMENT_MODE_5: '',
 //     BANK_DETAILS_5: '',
 //     PAYMENT_DETAILS_5: '',
-//     Payment_Date_5: '',
+//     Payment_Date_5: new Date().toISOString().split('T')[0],
 //     Remark_5: ''
 //   });
 
-//   // ========== Unique Values ==========
 //   const uniqueProjectNames = useMemo(() => {
 //     if (!paidData || !Array.isArray(paidData)) return [];
 //     return [...new Set(
-//       paidData
-//         .map(item => item.projectName)
-//         .filter(name => name && String(name).trim() !== '')
+//       paidData.map(item => item.projectName).filter(Boolean)
 //     )].sort();
 //   }, [paidData]);
 
 //   const uniqueContractorNames = useMemo(() => {
 //     if (!paidData || !Array.isArray(paidData)) return [];
 //     return [...new Set(
-//       paidData
-//         .map(item => item.Labouar_Contractor_Name_3)
-//         .filter(name => name && String(name).trim() !== '')
+//       paidData.map(item => item.Labouar_Contractor_Name_3).filter(Boolean)
 //     )].sort();
 //   }, [paidData]);
 
-//   // ✅ FIXED: Get unique bank names from extraField - only where extraField exists
 //   const uniqueBankNames = useMemo(() => {
 //     if (!bankList || !Array.isArray(bankList)) return [];
     
-//     const bankNames = bankList
-//       .map(item => item.extraField) // ✅ Get extraField
-//       .filter(name => name && String(name).trim() !== ''); // ✅ Only non-empty values
+//     // Change field name if needed: 'extraField' / 'bankName' / 'name' / 'bank_name'
+//     const field = 'extraField';
+
+//     const names = bankList
+//       .map(item => item[field] || item.bankName || item.name || item.bank_name || '')
+//       .filter(name => name && typeof name === 'string' && name.trim() !== '');
     
-//     // Remove duplicates and sort
-//     return [...new Set(bankNames)].sort();
+//     return [...new Set(names)].sort();
 //   }, [bankList]);
 
-//   // Debug log
-//   useEffect(() => {
-//     console.log('=== Bank Names Debug ===');
-//     console.log('Raw Bank List:', bankList);
-//     console.log('Extracted Bank Names (extraField):', uniqueBankNames);
-//   }, [bankList, uniqueBankNames]);
-
-//   // ========== Payment Mode Options ==========
 //   const paymentModeOptions = [
-//      { value: '', label: '-- Select Payment Mode --' },
-//    { value: 'Cheque', label: '📄 Cheque' },
+//     { value: '', label: '-- Select Payment Mode --' },
+//     { value: 'Cheque', label: '📄 Cheque' },
 //     { value: 'Cash', label: '💵 Cash' },
-//    { value: 'NEFT', label: '📱 NEFT' },
+//     { value: 'NEFT', label: '📱 NEFT' },
 //     { value: 'RTGS', label: '📋 RTGS' },
-//  { value: 'IMPS', label: '💳 IMPS' }
+    
 //   ];
 
-//   // ========== Filter Data ==========
 //   const filteredData = useMemo(() => {
 //     if (!paidData || !Array.isArray(paidData)) return [];
     
 //     return paidData.filter(item => {
 //       const searchLower = searchTerm.toLowerCase();
 //       const matchesSearch = 
-//         item.uid?.toLowerCase().includes(searchLower) ||
-//         item.projectName?.toLowerCase().includes(searchLower) ||
-//         item.nameOfContractor?.toLowerCase().includes(searchLower) ||
-//         item.projectEngineer?.toLowerCase().includes(searchLower) ||
-//         item.workDescription?.toLowerCase().includes(searchLower) ||
-//         item.workType?.toLowerCase().includes(searchLower) ||
-//         item.Labouar_Contractor_Name_3?.toLowerCase().includes(searchLower);
+//         (item.uid || '').toLowerCase().includes(searchLower) ||
+//         (item.projectName || '').toLowerCase().includes(searchLower) ||
+//         (item.Labouar_Contractor_Name_3 || '').toLowerCase().includes(searchLower) ||
+//         (item.projectEngineer || '').toLowerCase().includes(searchLower) ||
+//         (item.workDescription || '').toLowerCase().includes(searchLower) ||
+//         (item.workType || '').toLowerCase().includes(searchLower);
 
 //       const matchesProject = !selectedProject || item.projectName === selectedProject;
 //       const matchesContractor = !selectedContractor || item.Labouar_Contractor_Name_3 === selectedContractor;
@@ -354,7 +309,6 @@
 //     });
 //   }, [paidData, searchTerm, selectedProject, selectedContractor]);
 
-//   // ========== Helpers ==========
 //   const clearAllFilters = () => {
 //     setSearchTerm('');
 //     setSelectedProject('');
@@ -364,94 +318,46 @@
 //   const hasActiveFilters = searchTerm || selectedProject || selectedContractor;
 
 //   const handleCardSelect = (item) => {
-//     const isSelected = selectedItems.find(selected => selected.uid === item.uid);
-    
-//     if (isSelected) {
-//       setSelectedItems(selectedItems.filter(selected => selected.uid !== item.uid));
-//     } else {
-//       setSelectedItems([...selectedItems, item]);
-//     }
+//     setSelectedItems(prev => 
+//       prev.some(s => s.uid === item.uid)
+//         ? prev.filter(s => s.uid !== item.uid)
+//         : [...prev, item]
+//     );
 //   };
 
 //   const handleSelectAll = () => {
-//     if (selectedItems.length === filteredData.length) {
-//       setSelectedItems([]);
-//     } else {
-//       setSelectedItems([...filteredData]);
-//     }
+//     setSelectedItems(
+//       selectedItems.length === filteredData.length ? [] : [...filteredData]
+//     );
 //   };
 
-//   const getTotalSelectedAmount = () => {
-//     return selectedItems.reduce((total, item) => {
-//       const companyAmt = parseFloat(item.Revised_Company_Head_Amount_4) || 0;
-//       const contractorAmt = parseFloat(item.Revised_Contractor_Head_Amount_4) || 0;
-//       return total + companyAmt + contractorAmt;
-//     }, 0);
-//   };
-
-//   const getTotalCompanyAmount = () => {
-//     return selectedItems.reduce((total, item) => {
-//       return total + (parseFloat(item.Revised_Company_Head_Amount_4) || 0);
-//     }, 0);
-//   };
-
-//   const getTotalContractorAmount = () => {
-//     return selectedItems.reduce((total, item) => {
-//       return total + (parseFloat(item.Revised_Contractor_Head_Amount_4) || 0);
-//     }, 0);
-//   };
+//   // Only company amount is considered now
+//   const getTotalSelectedAmount = () => selectedItems.reduce((sum, item) => {
+//     const val = String(item.Revised_Company_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '');
+//     return sum + (parseFloat(val) || 0);
+//   }, 0);
 
 //   const handleBulkPayment = () => {
 //     if (selectedItems.length === 0) {
 //       alert('Please select at least one record');
 //       return;
 //     }
-    
-//     setFormData({
-//       Status_5: '',
-//       PAYMENT_MODE_5: '',
-//       BANK_DETAILS_5: '',
-//       PAYMENT_DETAILS_5: '',
-//       Payment_Date_5: new Date().toISOString().split('T')[0],
-//       Remark_5: ''
-//     });
-    
 //     setShowModal(true);
 //   };
 
 //   const handleFormChange = (field, value) => {
-//     setFormData(prev => ({
-//       ...prev,
-//       [field]: value
-//     }));
+//     setFormData(prev => ({ ...prev, [field]: value }));
 //   };
 
-//   // ========== Handle Submit ==========
 //   const handleSubmit = async () => {
 //     if (selectedItems.length === 0) return;
 
-//     // Validation
-//     if (!formData.Status_5) {
-//       alert('Please select Payment Status');
-//       return;
-//     }
+//     if (!formData.Status_5) return alert('Please select Payment Status');
+//     if (!formData.PAYMENT_MODE_5) return alert('Please select Payment Mode');
+//     if (!formData.BANK_DETAILS_5) return alert('Please select Bank');
 
-//     if (!formData.PAYMENT_MODE_5) {
-//       alert('Please select Payment Mode');
-//       return;
-//     }
-
-//     if (!formData.BANK_DETAILS_5) {
-//       alert('Please select Bank');
-//       return;
-//     }
-
-//     console.log('=== Submitting Bulk Payment ===');
-//     console.log('Selected Items:', selectedItems.length);
-//     console.log('Form Data:', formData);
-
-//     let successCount = 0;
-//     let errorCount = 0;
+//     let success = 0;
+//     let failed = 0;
 //     const errors = [];
 
 //     for (const item of selectedItems) {
@@ -466,61 +372,39 @@
 //           Remark_5: formData.Remark_5
 //         };
 
-//         console.log(`Processing UID: ${item.uid}`, payload);
-
 //         const result = await postPaid(payload).unwrap();
-        
-//         if (result.success) {
-//           successCount++;
-//           console.log(`✅ Success: ${item.uid}`);
+//         if (result?.success) {
+//           success++;
 //         } else {
-//           errorCount++;
-//           errors.push(`${item.uid}: ${result.message || 'Unknown error'}`);
+//           failed++;
+//           errors.push(`${item.uid}: ${result?.message || 'Unknown error'}`);
 //         }
-        
 //       } catch (err) {
-//         console.error(`Error for ${item.uid}:`, err);
-        
-//         // Handle regex error - data is still saved
-//         if (err?.status === 500 && err?.data?.error?.includes("Cannot read properties of null")) {
-//           successCount++;
-//           console.log(`✅ Success (response parse handled): ${item.uid}`);
-//         } else if (err?.data?.success === false) {
-//           errorCount++;
-//           errors.push(`${item.uid}: ${err?.data?.message || 'Failed'}`);
+//         console.error(err);
+//         if (err?.status === 500 && err?.data?.error?.includes('null')) {
+//           success++;
 //         } else {
-//           successCount++;
-//           console.warn(`⚠️ Possible success with warning: ${item.uid}`);
+//           failed++;
+//           errors.push(`${item.uid}: ${err?.data?.message || err?.message || 'Failed'}`);
 //         }
 //       }
 //     }
 
-//     if (successCount > 0 && errorCount === 0) {
-//       alert(`✅ Payment Successful!\n\nTotal Records: ${successCount}\nTotal Amount: ₹${getTotalSelectedAmount().toLocaleString()}`);
-//     } else if (successCount > 0 && errorCount > 0) {
-//       alert(`⚠️ Partial Success!\n\nSuccess: ${successCount}\nFailed: ${errorCount}\n\nErrors:\n${errors.join('\n')}`);
+//     let message = '';
+//     if (success > 0 && failed === 0) {
+//       message = `✅ Payment Successful!\nTotal: ${success} records\nAmount: ₹${formatAmount(getTotalSelectedAmount())}`;
+//     } else if (success > 0) {
+//       message = `⚠️ Partial Success\nSuccess: ${success}\nFailed: ${failed}\n\nErrors:\n${errors.join('\n')}`;
 //     } else {
-//       alert(`❌ Payment Failed!\n\nFailed: ${errorCount}\n\nErrors:\n${errors.join('\n')}`);
+//       message = `❌ Failed\n${failed} errors\n\n${errors.join('\n')}`;
 //     }
 
+//     alert(message);
 //     setShowModal(false);
 //     setSelectedItems([]);
-//     setFormData({
-//       Status_5: '',
-//       PAYMENT_MODE_5: '',
-//       BANK_DETAILS_5: '',
-//       PAYMENT_DETAILS_5: '',
-//       Payment_Date_5: '',
-//       Remark_5: ''
-//     });
 //     refetch();
 //   };
 
-//   const isItemSelected = (uid) => {
-//     return selectedItems.some(item => item.uid === uid);
-//   };
-
-//   // ========== Loading State ==========
 //   if (isLoading) {
 //     return (
 //       <div className="flex items-center justify-center h-64">
@@ -532,7 +416,6 @@
 //     );
 //   }
 
-//   // ========== Error State ==========
 //   if (isError) {
 //     return (
 //       <div className="flex items-center justify-center h-64">
@@ -554,7 +437,7 @@
 
 //   return (
 //     <div className="space-y-6 p-4 bg-gray-50 min-h-screen">
-//       {/* ========== Header Section ========== */}
+//       {/* Header */}
 //       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 //         <div>
 //           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -563,7 +446,6 @@
 //           </h2>
 //           <p className="text-gray-500 mt-1">Select multiple records and process bulk payments</p>
 //         </div>
-        
 //         <button 
 //           onClick={refetch}
 //           disabled={isFetching}
@@ -574,7 +456,7 @@
 //         </button>
 //       </div>
 
-//       {/* ========== Selection Summary Bar ========== */}
+//       {/* Selection Summary - only total */}
 //       {selectedItems.length > 0 && (
 //         <div className="sticky top-0 z-20 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-4 text-white shadow-lg">
 //           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -583,25 +465,14 @@
 //                 <ListChecks className="w-6 h-6" />
 //                 <span className="font-bold text-lg">{selectedItems.length} Selected</span>
 //               </div>
-              
 //               <div className="hidden sm:block h-8 w-px bg-white/30" />
-              
 //               <div className="flex flex-wrap gap-3 text-sm">
-//                 <div className="bg-white/20 px-3 py-1.5 rounded-lg">
-//                   <span className="opacity-75">🏢 Company:</span>
-//                   <span className="font-bold ml-1">₹{getTotalCompanyAmount().toLocaleString()}</span>
-//                 </div>
-//                 <div className="bg-white/20 px-3 py-1.5 rounded-lg">
-//                   <span className="opacity-75">👷 Contractor:</span>
-//                   <span className="font-bold ml-1">₹{getTotalContractorAmount().toLocaleString()}</span>
-//                 </div>
 //                 <div className="bg-white px-4 py-1.5 rounded-lg text-amber-600">
-//                   <span className="font-medium">💰 Total:</span>
-//                   <span className="font-bold ml-1">₹{getTotalSelectedAmount().toLocaleString()}</span>
+//                   <span className="font-medium">💰 Total Amount:</span>
+//                   <span className="font-bold ml-1">₹{formatAmount(getTotalSelectedAmount())}</span>
 //                 </div>
 //               </div>
 //             </div>
-            
 //             <div className="flex gap-2">
 //               <button
 //                 onClick={() => setSelectedItems([])}
@@ -621,7 +492,7 @@
 //         </div>
 //       )}
 
-//       {/* ========== Filters Section ========== */}
+//       {/* Filters */}
 //       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 space-y-4">
 //         <div className="flex items-center justify-between">
 //           <h3 className="font-semibold text-gray-700 flex items-center gap-2">
@@ -640,25 +511,24 @@
 //         </div>
 
 //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//           {/* Search Input */}
 //           <div>
 //             <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
 //               <Search className="w-4 h-4" />
 //               Search
 //             </label>
 //             <div className="relative">
-//               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+//               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
 //               <input
 //                 type="text"
 //                 placeholder="Search UID, engineer, work type..."
 //                 value={searchTerm}
-//                 onChange={(e) => setSearchTerm(e.target.value)}
-//                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+//                 onChange={e => setSearchTerm(e.target.value)}
+//                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
 //               />
 //               {searchTerm && (
 //                 <button
 //                   onClick={() => setSearchTerm('')}
-//                   className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full"
+//                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full"
 //                 >
 //                   <X className="w-4 h-4 text-gray-400" />
 //                 </button>
@@ -666,7 +536,6 @@
 //             </div>
 //           </div>
 
-//           {/* Project Name Dropdown */}
 //           <SearchableDropdown
 //             label="Project Name"
 //             icon={Building}
@@ -677,7 +546,6 @@
 //             color="purple"
 //           />
 
-//           {/* Labour Contractor Dropdown */}
 //           <SearchableDropdown
 //             label="Labour Contractor"
 //             icon={HardHat}
@@ -689,11 +557,9 @@
 //           />
 //         </div>
 
-//         {/* Active Filters Display */}
 //         {hasActiveFilters && (
-//           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
+//           <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
 //             <span className="text-xs text-gray-500">Active:</span>
-            
 //             {searchTerm && (
 //               <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
 //                 Search: "{searchTerm}"
@@ -702,7 +568,6 @@
 //                 </button>
 //               </span>
 //             )}
-            
 //             {selectedProject && (
 //               <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
 //                 <Building className="w-3 h-3" />
@@ -712,7 +577,6 @@
 //                 </button>
 //               </span>
 //             )}
-            
 //             {selectedContractor && (
 //               <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
 //                 <HardHat className="w-3 h-3" />
@@ -726,7 +590,7 @@
 //         )}
 //       </div>
 
-//       {/* ========== Results Count & Select All ========== */}
+//       {/* Results count & select all */}
 //       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 //         <div className="flex items-center gap-4">
 //           <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-gray-200">
@@ -735,7 +599,6 @@
 //               Showing: <span className="text-amber-600 font-bold">{filteredData.length}</span> of {paidData?.length || 0}
 //             </span>
 //           </div>
-          
 //           {selectedItems.length > 0 && (
 //             <span className="text-sm text-amber-600 font-medium">
 //               {selectedItems.length} selected
@@ -761,7 +624,7 @@
 //         </button>
 //       </div>
 
-//       {/* ========== Cards Grid ========== */}
+//       {/* Cards - only showing Company Paid Amount */}
 //       {filteredData.length === 0 ? (
 //         <div className="bg-white rounded-xl p-12 text-center border-2 border-dashed border-gray-200">
 //           <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -781,30 +644,21 @@
 //       ) : (
 //         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 //           {filteredData.map((item, index) => {
-//             const isSelected = isItemSelected(item.uid);
-//             const totalAmount = (parseFloat(item.Revised_Company_Head_Amount_4) || 0) + 
-//                                (parseFloat(item.Revised_Contractor_Head_Amount_4) || 0);
-            
+//             const isSelected = selectedItems.some(s => s.uid === item.uid);
 //             return (
 //               <div
 //                 key={item.uid || index}
 //                 onClick={() => handleCardSelect(item)}
 //                 className={`relative bg-white rounded-2xl shadow-sm border-2 transition-all cursor-pointer hover:shadow-lg ${
-//                   isSelected 
-//                     ? 'border-amber-500 ring-2 ring-amber-200' 
-//                     : 'border-gray-100 hover:border-amber-300'
+//                   isSelected ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-100 hover:border-amber-300'
 //                 }`}
 //               >
-//                 {/* Selection Indicator */}
 //                 <div className={`absolute top-4 right-4 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-//                   isSelected 
-//                     ? 'bg-amber-500 text-white' 
-//                     : 'bg-gray-100 text-gray-400'
+//                   isSelected ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-400'
 //                 }`}>
 //                   {isSelected ? <Check className="w-4 h-4" /> : <span className="text-xs">{index + 1}</span>}
 //                 </div>
 
-//                 {/* Card Header */}
 //                 <div className={`p-4 rounded-t-2xl ${isSelected ? 'bg-amber-50' : 'bg-gray-50'}`}>
 //                   <div className="flex items-start gap-3">
 //                     <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -812,17 +666,14 @@
 //                         {item.projectName?.charAt(0)?.toUpperCase() || 'P'}
 //                       </span>
 //                     </div>
-                    
 //                     <div className="flex-1 min-w-0 pr-8">
 //                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold mb-1">
 //                         <Hash className="w-3 h-3 mr-1" />
 //                         {item.uid}
 //                       </span>
-                      
 //                       <h3 className="font-semibold text-gray-800 truncate">
 //                         {item.projectName || 'N/A'}
 //                       </h3>
-                      
 //                       <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
 //                         <Clock className="w-3 h-3" />
 //                         <span>Planned: {item.planned5 || 'N/A'}</span>
@@ -831,7 +682,6 @@
 //                   </div>
 //                 </div>
 
-//                 {/* Card Body */}
 //                 <div className="p-4 space-y-3">
 //                   <div className="grid grid-cols-2 gap-3 text-sm">
 //                     <div className="flex items-center gap-2">
@@ -843,7 +693,7 @@
 //                         <p className="font-medium text-gray-700 truncate">{item.projectEngineer || 'N/A'}</p>
 //                       </div>
 //                     </div>
-                    
+
 //                     <div className="flex items-center gap-2">
 //                       <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
 //                         <HardHat className="w-4 h-4 text-green-600" />
@@ -853,7 +703,7 @@
 //                         <p className="font-medium text-gray-700 truncate">{item.Labouar_Contractor_Name_3 || 'N/A'}</p>
 //                       </div>
 //                     </div>
-                    
+
 //                     <div className="flex items-center gap-2">
 //                       <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
 //                         <Wrench className="w-4 h-4 text-orange-600" />
@@ -863,7 +713,7 @@
 //                         <p className="font-medium text-gray-700 truncate">{item.workType || 'N/A'}</p>
 //                       </div>
 //                     </div>
-                    
+
 //                     <div className="flex items-center gap-2">
 //                       <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
 //                         <Users className="w-4 h-4 text-purple-600" />
@@ -876,18 +726,14 @@
 //                   </div>
 
 //                   <div className="border-t border-gray-100 pt-3">
-//                     <div className="grid grid-cols-2 gap-2 mb-2">
+//                     <div className="grid grid-cols-1 gap-2 mb-2">
 //                       <div className="bg-purple-50 rounded-lg p-2">
-//                         <p className="text-xs text-purple-600">🏢  Paid Amount</p>
-//                         <p className="font-bold text-purple-700">₹{((item.Revised_Company_Head_Amount_4) || 0).toLocaleString()}</p>
-//                       </div>
-//                       <div className="bg-blue-50 rounded-lg p-2">
-//                         <p className="text-xs text-blue-600">👷 Contractor Head</p>
-//                         <p className="font-bold text-blue-700">₹{((item.Revised_Contractor_Head_Amount_4) || 0).toLocaleString()}</p>
+//                         <p className="text-xs text-purple-600">🏢 Paid Amount</p>
+//                         <p className="font-bold text-purple-700">
+//                           ₹{formatAmount(item.Revised_Company_Head_Amount_4)}
+//                         </p>
 //                       </div>
 //                     </div>
-                    
-
 //                   </div>
 
 //                   <div className="flex items-center justify-between text-xs bg-gray-50 rounded-lg px-3 py-2">
@@ -906,7 +752,7 @@
 //         </div>
 //       )}
 
-//       {/* ========== Footer Stats ========== */}
+//       {/* Footer stats */}
 //       <div className="bg-white rounded-xl p-4 border border-gray-200">
 //         <div className="flex flex-wrap items-center justify-between gap-4">
 //           <p className="text-sm text-gray-600">
@@ -923,12 +769,10 @@
 //         </div>
 //       </div>
 
-//       {/* ========== Bulk Payment Modal ========== */}
+//       {/* Bulk Payment Modal */}
 //       {showModal && (
 //         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
 //           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col">
-            
-//             {/* Modal Header */}
 //             <div className="flex-shrink-0 p-4 sm:p-6 border-b bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-2xl">
 //               <div className="flex items-center justify-between">
 //                 <div>
@@ -949,21 +793,17 @@
 //               </div>
 //             </div>
 
-//             {/* Modal Body */}
 //             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-              
-//               {/* Selected Items Summary */}
 //               <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
 //                 <h4 className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-3 flex items-center gap-2">
 //                   <ListChecks className="w-4 h-4" />
 //                   Selected Records Summary
 //                 </h4>
-                
 //                 <div className="max-h-24 overflow-y-auto mb-3 bg-white rounded-lg p-2 border border-amber-100">
 //                   <div className="flex flex-wrap gap-2">
-//                     {selectedItems.map((item, index) => (
+//                     {selectedItems.map((item, i) => (
 //                       <span 
-//                         key={item.uid || index}
+//                         key={item.uid || i}
 //                         className="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs font-medium"
 //                       >
 //                         {item.uid}
@@ -971,24 +811,14 @@
 //                     ))}
 //                   </div>
 //                 </div>
-
-//                 <div className="grid grid-cols-3 gap-3 text-sm">
-//                   <div className="bg-white p-3 rounded-lg border border-amber-100 text-center">
-//                     <span className="text-xs text-gray-500 block">🏢 Company</span>
-//                     <p className="font-bold text-purple-700">₹{getTotalCompanyAmount().toLocaleString()}</p>
-//                   </div>
-//                   <div className="bg-white p-3 rounded-lg border border-amber-100 text-center">
-//                     <span className="text-xs text-gray-500 block">👷 Contractor</span>
-//                     <p className="font-bold text-blue-700">₹{getTotalContractorAmount().toLocaleString()}</p>
-//                   </div>
-//                   <div className="bg-gradient-to-r from-amber-100 to-orange-100 p-3 rounded-lg border border-amber-200 text-center">
-//                     <span className="text-xs text-amber-700 block">💰 Total</span>
-//                     <p className="font-bold text-amber-800">₹{getTotalSelectedAmount().toLocaleString()}</p>
-//                   </div>
+//                 <div className="bg-white p-3 rounded-lg border border-amber-100 text-center">
+//                   <span className="text-xs text-gray-500 block">Total Amount (Selected Records)</span>
+//                   <p className="font-bold text-amber-800 text-xl mt-1">
+//                     ₹{formatAmount(getTotalSelectedAmount())}
+//                   </p>
 //                 </div>
 //               </div>
 
-//               {/* Payment Status Dropdown */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   Payment Status <span className="text-red-500">*</span>
@@ -996,18 +826,16 @@
 //                 <div className="relative">
 //                   <select
 //                     value={formData.Status_5}
-//                     onChange={(e) => handleFormChange('Status_5', e.target.value)}
-//                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+//                     onChange={e => handleFormChange('Status_5', e.target.value)}
+//                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none bg-white cursor-pointer"
 //                   >
 //                     <option value="">-- Select Status --</option>
 //                     <option value="Done">💰 Done</option>
-                 
 //                   </select>
-//                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+//                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
 //                 </div>
 //               </div>
 
-//               {/* Payment Mode Dropdown */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <CreditCard className="w-4 h-4 inline mr-1" />
@@ -1016,35 +844,35 @@
 //                 <div className="relative">
 //                   <select
 //                     value={formData.PAYMENT_MODE_5}
-//                     onChange={(e) => handleFormChange('PAYMENT_MODE_5', e.target.value)}
-//                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+//                     onChange={e => handleFormChange('PAYMENT_MODE_5', e.target.value)}
+//                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none bg-white cursor-pointer"
 //                   >
-//                     {paymentModeOptions.map((option) => (
-//                       <option key={option.value} value={option.value}>
-//                         {option.label}
+//                     {paymentModeOptions.map(opt => (
+//                       <option key={opt.value} value={opt.value}>
+//                         {opt.label}
 //                       </option>
 //                     ))}
 //                   </select>
-//                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+//                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
 //                 </div>
 //               </div>
 
-//               {/* ✅ Bank Details Dropdown - From API extraField */}
 //               <SearchableDropdown
 //                 label="Bank Details"
 //                 icon={Building2}
 //                 options={uniqueBankNames}
 //                 value={formData.BANK_DETAILS_5}
-//                 onChange={(value) => handleFormChange('BANK_DETAILS_5', value)}
+//                 onChange={val => handleFormChange('BANK_DETAILS_5', val)}
 //                 placeholder={isBankLoading ? "Loading banks..." : "Search & select bank..."}
 //                 color="blue"
 //                 required={true}
 //               />
 //               {uniqueBankNames.length === 0 && !isBankLoading && (
-//                 <p className="text-xs text-amber-600 -mt-3">⚠️ No banks with extraField found in API</p>
+//                 <p className="text-xs text-amber-600 -mt-2">
+//                   ⚠️ No banks found. Check console logs and field name.
+//                 </p>
 //               )}
 
-//               {/* Payment Details & Date */}
 //               <div className="grid grid-cols-2 gap-4">
 //                 <div>
 //                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1054,7 +882,7 @@
 //                   <input
 //                     type="text"
 //                     value={formData.PAYMENT_DETAILS_5}
-//                     onChange={(e) => handleFormChange('PAYMENT_DETAILS_5', e.target.value)}
+//                     onChange={e => handleFormChange('PAYMENT_DETAILS_5', e.target.value)}
 //                     placeholder="Enter transaction/reference no..."
 //                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
 //                   />
@@ -1067,13 +895,12 @@
 //                   <input
 //                     type="date"
 //                     value={formData.Payment_Date_5}
-//                     onChange={(e) => handleFormChange('Payment_Date_5', e.target.value)}
+//                     onChange={e => handleFormChange('Payment_Date_5', e.target.value)}
 //                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
 //                   />
 //                 </div>
 //               </div>
 
-//               {/* Remark */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <MessageSquare className="w-4 h-4 inline mr-1" />
@@ -1081,23 +908,20 @@
 //                 </label>
 //                 <textarea
 //                   value={formData.Remark_5}
-//                   onChange={(e) => handleFormChange('Remark_5', e.target.value)}
+//                   onChange={e => handleFormChange('Remark_5', e.target.value)}
 //                   rows={3}
 //                   placeholder="Enter any payment remarks..."
 //                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
 //                 />
 //               </div>
 
-//               {/* Info Note */}
 //               <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
 //                 <p className="text-xs text-blue-700">
 //                   ℹ️ <strong>Note:</strong> The same payment details will be applied to all {selectedItems.length} selected records.
 //                 </p>
 //               </div>
-
 //             </div>
 
-//             {/* Modal Footer */}
 //             <div className="flex-shrink-0 p-4 sm:p-6 border-t bg-gray-50 flex gap-3 justify-end rounded-b-2xl">
 //               <button
 //                 onClick={() => setShowModal(false)}
@@ -1134,6 +958,10 @@
 // export default PaidAmount;
 
 
+
+
+
+/////////
 
 
 
@@ -1174,7 +1002,8 @@ import {
   Square,
   ListChecks,
   Check,
-  ChevronUp
+  ChevronUp,
+  XCircle
 } from 'lucide-react';
 
 // ========== Helper Functions ==========
@@ -1201,7 +1030,8 @@ const SearchableDropdown = ({
   onChange, 
   placeholder,
   color = 'amber',
-  required = false
+  required = false,
+  disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1246,6 +1076,23 @@ const SearchableDropdown = ({
   };
 
   const colors = colorClasses[color] || colorClasses.amber;
+
+  if (disabled) {
+    return (
+      <div>
+        {label && (
+          <label className="block text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+            {Icon && <Icon className="w-4 h-4" />}
+            {label}
+            {required && <span className="text-red-500">*</span>}
+          </label>
+        )}
+        <div className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-400 cursor-not-allowed">
+          {placeholder}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={dropdownRef} className="relative">
@@ -1391,6 +1238,9 @@ const PaidAmount = () => {
     Remark_5: ''
   });
 
+  // ✅ Check if status is Reject
+  const isRejected = formData.Status_5 === 'Reject';
+
   const uniqueProjectNames = useMemo(() => {
     if (!paidData || !Array.isArray(paidData)) return [];
     return [...new Set(
@@ -1408,7 +1258,6 @@ const PaidAmount = () => {
   const uniqueBankNames = useMemo(() => {
     if (!bankList || !Array.isArray(bankList)) return [];
     
-    // Change field name if needed: 'extraField' / 'bankName' / 'name' / 'bank_name'
     const field = 'extraField';
 
     const names = bankList
@@ -1424,7 +1273,6 @@ const PaidAmount = () => {
     { value: 'Cash', label: '💵 Cash' },
     { value: 'NEFT', label: '📱 NEFT' },
     { value: 'RTGS', label: '📋 RTGS' },
-    
   ];
 
   const filteredData = useMemo(() => {
@@ -1469,7 +1317,6 @@ const PaidAmount = () => {
     );
   };
 
-  // Only company amount is considered now
   const getTotalSelectedAmount = () => selectedItems.reduce((sum, item) => {
     const val = String(item.Revised_Company_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '');
     return sum + (parseFloat(val) || 0);
@@ -1480,19 +1327,46 @@ const PaidAmount = () => {
       alert('Please select at least one record');
       return;
     }
+    // Reset form when opening modal
+    setFormData({
+      Status_5: '',
+      PAYMENT_MODE_5: '',
+      BANK_DETAILS_5: '',
+      PAYMENT_DETAILS_5: '',
+      Payment_Date_5: new Date().toISOString().split('T')[0],
+      Remark_5: ''
+    });
     setShowModal(true);
   };
 
+  // ✅ Updated handleFormChange
   const handleFormChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // ✅ If status is Reject, clear other fields
+      if (field === 'Status_5' && value === 'Reject') {
+        newData.PAYMENT_MODE_5 = '';
+        newData.BANK_DETAILS_5 = '';
+        newData.PAYMENT_DETAILS_5 = '';
+        newData.Payment_Date_5 = new Date().toISOString().split('T')[0];
+      }
+      
+      return newData;
+    });
   };
 
+  // ✅ Updated handleSubmit
   const handleSubmit = async () => {
     if (selectedItems.length === 0) return;
 
     if (!formData.Status_5) return alert('Please select Payment Status');
-    if (!formData.PAYMENT_MODE_5) return alert('Please select Payment Mode');
-    if (!formData.BANK_DETAILS_5) return alert('Please select Bank');
+    
+    // ✅ Only validate other fields if NOT rejected
+    if (formData.Status_5 !== 'Reject') {
+      if (!formData.PAYMENT_MODE_5) return alert('Please select Payment Mode');
+      if (!formData.BANK_DETAILS_5) return alert('Please select Bank');
+    }
 
     let success = 0;
     let failed = 0;
@@ -1500,15 +1374,23 @@ const PaidAmount = () => {
 
     for (const item of selectedItems) {
       try {
-        const payload = {
+        // ✅ Build payload based on status
+        let payload = {
           uid: item.uid,
           Status_5: formData.Status_5,
-          PAYMENT_MODE_5: formData.PAYMENT_MODE_5,
-          BANK_DETAILS_5: formData.BANK_DETAILS_5,
-          PAYMENT_DETAILS_5: formData.PAYMENT_DETAILS_5,
-          Payment_Date_5: formData.Payment_Date_5,
-          Remark_5: formData.Remark_5
+          Remark_5: formData.Remark_5 || ''
         };
+
+        // ✅ Only add other fields if NOT rejected
+        if (formData.Status_5 !== 'Reject') {
+          payload = {
+            ...payload,
+            PAYMENT_MODE_5: formData.PAYMENT_MODE_5,
+            BANK_DETAILS_5: formData.BANK_DETAILS_5,
+            PAYMENT_DETAILS_5: formData.PAYMENT_DETAILS_5,
+            Payment_Date_5: formData.Payment_Date_5
+          };
+        }
 
         const result = await postPaid(payload).unwrap();
         if (result?.success) {
@@ -1530,7 +1412,11 @@ const PaidAmount = () => {
 
     let message = '';
     if (success > 0 && failed === 0) {
-      message = `✅ Payment Successful!\nTotal: ${success} records\nAmount: ₹${formatAmount(getTotalSelectedAmount())}`;
+      if (formData.Status_5 === 'Reject') {
+        message = `✅ Rejection Successful!\nTotal: ${success} records rejected`;
+      } else {
+        message = `✅ Payment Successful!\nTotal: ${success} records\nAmount: ₹${formatAmount(getTotalSelectedAmount())}`;
+      }
     } else if (success > 0) {
       message = `⚠️ Partial Success\nSuccess: ${success}\nFailed: ${failed}\n\nErrors:\n${errors.join('\n')}`;
     } else {
@@ -1541,6 +1427,19 @@ const PaidAmount = () => {
     setShowModal(false);
     setSelectedItems([]);
     refetch();
+  };
+
+  // ✅ Check if submit should be disabled
+  const isSubmitDisabled = () => {
+    if (!formData.Status_5) return true;
+    
+    // If rejected, only status is required
+    if (formData.Status_5 === 'Reject') return false;
+    
+    // For Done, check other required fields
+    if (!formData.PAYMENT_MODE_5 || !formData.BANK_DETAILS_5) return true;
+    
+    return false;
   };
 
   if (isLoading) {
@@ -1594,7 +1493,7 @@ const PaidAmount = () => {
         </button>
       </div>
 
-      {/* Selection Summary - only total */}
+      {/* Selection Summary */}
       {selectedItems.length > 0 && (
         <div className="sticky top-0 z-20 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-4 text-white shadow-lg">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -1762,7 +1661,7 @@ const PaidAmount = () => {
         </button>
       </div>
 
-      {/* Cards - only showing Company Paid Amount */}
+      {/* Cards */}
       {filteredData.length === 0 ? (
         <div className="bg-white rounded-xl p-12 text-center border-2 border-dashed border-gray-200">
           <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -1932,6 +1831,7 @@ const PaidAmount = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+              {/* Selected Records Summary */}
               <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
                 <h4 className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <ListChecks className="w-4 h-4" />
@@ -1957,6 +1857,7 @@ const PaidAmount = () => {
                 </div>
               </div>
 
+              {/* Status Dropdown */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Payment Status <span className="text-red-500">*</span>
@@ -1968,77 +1869,101 @@ const PaidAmount = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none bg-white cursor-pointer"
                   >
                     <option value="">-- Select Status --</option>
-                    <option value="Done">💰 Done</option>
+                    <option value="Done">✅ Done</option>
+                    <option value="Reject">❌ Reject</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <CreditCard className="w-4 h-4 inline mr-1" />
-                  Payment Mode <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    value={formData.PAYMENT_MODE_5}
-                    onChange={e => handleFormChange('PAYMENT_MODE_5', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none bg-white cursor-pointer"
-                  >
-                    {paymentModeOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              {/* ✅ Show Reject Info Message */}
+              {isRejected && (
+                <div className="p-4 bg-red-50 rounded-xl border border-red-200 animate-fadeIn">
+                  <div className="flex items-center gap-2 text-red-700">
+                    <XCircle className="w-5 h-5" />
+                    <span className="text-sm font-semibold">Rejection Mode</span>
+                  </div>
+                  <p className="text-xs text-red-600 mt-2">
+                    Payment will be rejected for all {selectedItems.length} selected records. 
+                    You can add an optional remark. Other fields are not required.
+                  </p>
                 </div>
-              </div>
-
-              <SearchableDropdown
-                label="Bank Details"
-                icon={Building2}
-                options={uniqueBankNames}
-                value={formData.BANK_DETAILS_5}
-                onChange={val => handleFormChange('BANK_DETAILS_5', val)}
-                placeholder={isBankLoading ? "Loading banks..." : "Search & select bank..."}
-                color="blue"
-                required={true}
-              />
-              {uniqueBankNames.length === 0 && !isBankLoading && (
-                <p className="text-xs text-amber-600 -mt-2">
-                  ⚠️ No banks found. Check console logs and field name.
-                </p>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Receipt className="w-4 h-4 inline mr-1" />
-                    Payment Details / Reference
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.PAYMENT_DETAILS_5}
-                    onChange={e => handleFormChange('PAYMENT_DETAILS_5', e.target.value)}
-                    placeholder="Enter transaction/reference no..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-1" />
-                    Payment Date
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.Payment_Date_5}
-                    onChange={e => handleFormChange('Payment_Date_5', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-              </div>
+              {/* ✅ Only show these fields if NOT rejected */}
+              {!isRejected && (
+                <>
+                  {/* Payment Mode */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <CreditCard className="w-4 h-4 inline mr-1" />
+                      Payment Mode <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={formData.PAYMENT_MODE_5}
+                        onChange={e => handleFormChange('PAYMENT_MODE_5', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none bg-white cursor-pointer"
+                      >
+                        {paymentModeOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
 
+                  {/* Bank Details */}
+                  <SearchableDropdown
+                    label="Bank Details"
+                    icon={Building2}
+                    options={uniqueBankNames}
+                    value={formData.BANK_DETAILS_5}
+                    onChange={val => handleFormChange('BANK_DETAILS_5', val)}
+                    placeholder={isBankLoading ? "Loading banks..." : "Search & select bank..."}
+                    color="blue"
+                    required={true}
+                  />
+                  {uniqueBankNames.length === 0 && !isBankLoading && (
+                    <p className="text-xs text-amber-600 -mt-2">
+                      ⚠️ No banks found. Check console logs and field name.
+                    </p>
+                  )}
+
+                  {/* Payment Details & Date */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <Receipt className="w-4 h-4 inline mr-1" />
+                        Payment Details / Reference
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.PAYMENT_DETAILS_5}
+                        onChange={e => handleFormChange('PAYMENT_DETAILS_5', e.target.value)}
+                        placeholder="Enter transaction/reference no..."
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <Calendar className="w-4 h-4 inline mr-1" />
+                        Payment Date
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.Payment_Date_5}
+                        onChange={e => handleFormChange('Payment_Date_5', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Remark - Always visible */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <MessageSquare className="w-4 h-4 inline mr-1" />
@@ -2048,18 +1973,24 @@ const PaidAmount = () => {
                   value={formData.Remark_5}
                   onChange={e => handleFormChange('Remark_5', e.target.value)}
                   rows={3}
-                  placeholder="Enter any payment remarks..."
+                  placeholder={isRejected ? "Enter reason for rejection..." : "Enter any payment remarks..."}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
                 />
               </div>
 
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                <p className="text-xs text-blue-700">
-                  ℹ️ <strong>Note:</strong> The same payment details will be applied to all {selectedItems.length} selected records.
+              {/* Info Note */}
+              <div className={`p-3 rounded-lg border ${isRejected ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
+                <p className={`text-xs ${isRejected ? 'text-red-700' : 'text-blue-700'}`}>
+                  {isRejected ? (
+                    <>⚠️ <strong>Note:</strong> All {selectedItems.length} selected records will be marked as rejected.</>
+                  ) : (
+                    <>ℹ️ <strong>Note:</strong> The same payment details will be applied to all {selectedItems.length} selected records.</>
+                  )}
                 </p>
               </div>
             </div>
 
+            {/* Footer */}
             <div className="flex-shrink-0 p-4 sm:p-6 border-t bg-gray-50 flex gap-3 justify-end rounded-b-2xl">
               <button
                 onClick={() => setShowModal(false)}
@@ -2070,8 +2001,12 @@ const PaidAmount = () => {
               
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting || !formData.Status_5 || !formData.PAYMENT_MODE_5 || !formData.BANK_DETAILS_5}
-                className="px-4 sm:px-6 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-md hover:shadow-lg"
+                disabled={isSubmitting || isSubmitDisabled()}
+                className={`px-4 sm:px-6 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg ${
+                  isRejected 
+                    ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white hover:from-red-600 hover:to-rose-600'
+                    : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600'
+                }`}
               >
                 {isSubmitting ? (
                   <>
@@ -2080,8 +2015,8 @@ const PaidAmount = () => {
                   </>
                 ) : (
                   <>
-                    <BadgeCheck className="w-4 h-4" />
-                    Confirm Payment ({selectedItems.length})
+                    {isRejected ? <XCircle className="w-4 h-4" /> : <BadgeCheck className="w-4 h-4" />}
+                    <span>{isRejected ? `Reject (${selectedItems.length})` : `Confirm Payment (${selectedItems.length})`}</span>
                   </>
                 )}
               </button>
@@ -2089,6 +2024,23 @@ const PaidAmount = () => {
           </div>
         </div>
       )}
+
+      {/* Animation style */}
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };

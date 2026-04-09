@@ -158,7 +158,8 @@
 //   const [searchTerm, setSearchTerm] = useState('');
 //   const [selectedItem, setSelectedItem] = useState(null);
 //   const [showModal, setShowModal] = useState(false);
-  
+//   const [formError, setFormError] = useState('');
+
 //   const [formData, setFormData] = useState({
 //     Status_3: '',
 //     Labouar_Contractor_Name_3: '',
@@ -185,6 +186,7 @@
 //     item.workType?.toLowerCase().includes(searchTerm.toLowerCase())
 //   ) || [];
 
+//   // Auto calculate Total Wages and Total Paid Amount
 //   useEffect(() => {
 //     const num1 = parseFloat(formData.Number_Of_Labour_1_3) || 0;
 //     const rate1 = parseFloat(formData.Labour_Rate_1_3) || 0;
@@ -209,8 +211,11 @@
 //     formData.Conveyanance_3
 //   ]);
 
+//   const isCompanyHead = selectedItem?.Approved_Head_2 === 'Company Head';
+
 //   const handleAction = (item) => {
 //     setSelectedItem(item);
+//     setFormError('');
 //     setFormData({
 //       Status_3: item.Status_3 || '',
 //       Labouar_Contractor_Name_3: '',
@@ -232,21 +237,48 @@
 
 //   const handleFormChange = (field, value) => {
 //     setFormData(prev => ({ ...prev, [field]: value }));
+//     if (formError) setFormError(''); // Clear error when user types
 //   };
 
 //   const resetForm = () => {
 //     setFormData({
-//       Status_3: '', Labouar_Contractor_Name_3: '',
-//       Labour_Category_1_3: '', Number_Of_Labour_1_3: '', Labour_Rate_1_3: '',
-//       Labour_Category_2_3: '', Number_Of_Labour_2_3: '', Labour_Rate_2_3: '',
-//       Total_Wages_3: '', Conveyanance_3: '', Total_Paid_Amount_3: '',
-//       Company_Head_Amount_3: '', Contractor_Head_Amount_3: '', Remark_3: ''
+//       Status_3: '', 
+//       Labouar_Contractor_Name_3: '',
+//       Labour_Category_1_3: '', 
+//       Number_Of_Labour_1_3: '', 
+//       Labour_Rate_1_3: '',
+//       Labour_Category_2_3: '', 
+//       Number_Of_Labour_2_3: '', 
+//       Labour_Rate_2_3: '',
+//       Total_Wages_3: '', 
+//       Conveyanance_3: '', 
+//       Total_Paid_Amount_3: '',
+//       Company_Head_Amount_3: '', 
+//       Contractor_Head_Amount_3: '', 
+//       Remark_3: ''
 //     });
+//     setFormError('');
+//   };
+
+//   // Form Validation
+//   const validateForm = () => {
+//     if (!formData.Status_3) {
+//       setFormError('Please select Status');
+//       return false;
+//     }
+
+//     // Contractor Head Amount is required only when Approved Head is "Contractor Head"
+//     if (!isCompanyHead && (!formData.Contractor_Head_Amount_3 || formData.Contractor_Head_Amount_3.trim() === '')) {
+//       setFormError('Contractor Head Amount is required when Approved Head is "Contractor Head"');
+//       return false;
+//     }
+
+//     return true;
 //   };
 
 //   const handleSubmit = async () => {
 //     if (!selectedItem) return;
-//     if (!formData.Status_3) { alert('Please select Status'); return; }
+//     if (!validateForm()) return;
 
 //     try {
 //       const payload = {
@@ -270,12 +302,7 @@
 //     }
 //   };
 
-//   // ── Approved Head check ──
-//   // true  → "Company Head"   → Contractor Head Amount input DISABLED
-//   // false → "Contractor Head" → Contractor Head Amount input ENABLED
-//   const isCompanyHead = selectedItem?.Approved_Head_2 === 'Company Head';
-
-//   // ── Loading ──
+//   // Loading State
 //   if (isLoading) {
 //     return (
 //       <div className="flex items-center justify-center h-64">
@@ -287,7 +314,7 @@
 //     );
 //   }
 
-//   // ── Error ──
+//   // Error State
 //   if (isError) {
 //     return (
 //       <div className="flex items-center justify-center h-64 p-4">
@@ -306,7 +333,7 @@
 //   return (
 //     <div className="space-y-4 p-3 sm:p-4 lg:p-6">
 
-//       {/* ── Header ── */}
+//       {/* Header */}
 //       <div className="flex items-center justify-between gap-3">
 //         <div>
 //           <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Labour Management</h2>
@@ -322,7 +349,7 @@
 //         </button>
 //       </div>
 
-//       {/* ── Search & Count ── */}
+//       {/* Search & Count */}
 //       <div className="flex gap-2">
 //         <div className="relative flex-1">
 //           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -340,7 +367,7 @@
 //         </div>
 //       </div>
 
-//       {/* ── Empty State ── */}
+//       {/* Empty State */}
 //       {filteredData.length === 0 ? (
 //         <div className="bg-gray-50 rounded-xl p-10 text-center border-2 border-dashed border-gray-200">
 //           <FileText className="w-14 h-14 text-gray-300 mx-auto mb-3" />
@@ -349,7 +376,7 @@
 //         </div>
 //       ) : (
 //         <>
-//           {/* ── MOBILE: Card View (< md) ── */}
+//           {/* Mobile Card View */}
 //           <div className="block md:hidden">
 //             {filteredData.map((item, index) => (
 //               <MobileCard
@@ -363,7 +390,7 @@
 //             </p>
 //           </div>
 
-//           {/* ── DESKTOP: Table View (≥ md) ── */}
+//           {/* Desktop Table View */}
 //           <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200">
 //             <div className="overflow-x-auto">
 //               <table className="w-full min-w-[1600px]">
@@ -505,23 +532,14 @@
 //         </>
 //       )}
 
-//       {/* ══════════════════════════════════════════
-//           MODAL  – fully responsive (bottom-sheet on mobile)
-//       ══════════════════════════════════════════ */}
+//       {/* MODAL */}
 //       {showModal && selectedItem && (
 //         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
-//           {/* Backdrop tap to close */}
 //           <div className="absolute inset-0" onClick={() => setShowModal(false)} />
 
-//           <div className="relative bg-white w-full sm:w-[95%] sm:max-w-2xl
-//             rounded-t-3xl sm:rounded-2xl
-//             max-h-[92vh] sm:max-h-[95vh]
-//             flex flex-col
-//             shadow-2xl
-//             animate-slide-up sm:animate-none
-//           ">
+//           <div className="relative bg-white w-full sm:w-[95%] sm:max-w-2xl rounded-t-3xl sm:rounded-2xl max-h-[92vh] sm:max-h-[95vh] flex flex-col shadow-2xl animate-slide-up sm:animate-none">
 
-//             {/* Drag handle – mobile only */}
+//             {/* Drag handle for mobile */}
 //             <div className="flex-shrink-0 flex justify-center pt-3 pb-1 sm:hidden">
 //               <div className="w-10 h-1 bg-gray-300 rounded-full" />
 //             </div>
@@ -544,7 +562,10 @@
 //                     </span>
 //                   </div>
 //                 </div>
-//                 <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0 ml-2">
+//                 <button 
+//                   onClick={() => { setShowModal(false); resetForm(); }}
+//                   className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0 ml-2"
+//                 >
 //                   <X className="w-5 h-5 text-gray-500" />
 //                 </button>
 //               </div>
@@ -624,7 +645,6 @@
 //                     <label className="block text-xs text-gray-600 mb-1">Category</label>
 //                     <input disabled type="text" value={formData.Labour_Category_1_3}
 //                       onChange={(e) => handleFormChange('Labour_Category_1_3', e.target.value)}
-//                       placeholder="e.g. Mistri"
 //                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm bg-gray-50"
 //                     />
 //                   </div>
@@ -632,7 +652,6 @@
 //                     <label className="block text-xs text-gray-600 mb-1">No. of Labour</label>
 //                     <input type="number" value={formData.Number_Of_Labour_1_3}
 //                       onChange={(e) => handleFormChange('Number_Of_Labour_1_3', e.target.value)}
-//                       placeholder="0"
 //                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
 //                     />
 //                   </div>
@@ -640,7 +659,6 @@
 //                     <label className="block text-xs text-gray-600 mb-1">Rate (₹)</label>
 //                     <input type="number" value={formData.Labour_Rate_1_3}
 //                       onChange={(e) => handleFormChange('Labour_Rate_1_3', e.target.value)}
-//                       placeholder="0"
 //                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
 //                     />
 //                   </div>
@@ -657,7 +675,6 @@
 //                     <label className="block text-xs text-gray-600 mb-1">Category</label>
 //                     <input disabled type="text" value={formData.Labour_Category_2_3}
 //                       onChange={(e) => handleFormChange('Labour_Category_2_3', e.target.value)}
-//                       placeholder="e.g. Helper"
 //                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm bg-gray-50"
 //                     />
 //                   </div>
@@ -665,7 +682,6 @@
 //                     <label className="block text-xs text-gray-600 mb-1">No. of Labour</label>
 //                     <input type="number" value={formData.Number_Of_Labour_2_3}
 //                       onChange={(e) => handleFormChange('Number_Of_Labour_2_3', e.target.value)}
-//                       placeholder="0"
 //                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm"
 //                     />
 //                   </div>
@@ -673,7 +689,6 @@
 //                     <label className="block text-xs text-gray-600 mb-1">Rate (₹)</label>
 //                     <input type="number" value={formData.Labour_Rate_2_3}
 //                       onChange={(e) => handleFormChange('Labour_Rate_2_3', e.target.value)}
-//                       placeholder="0"
 //                       className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm"
 //                     />
 //                   </div>
@@ -698,7 +713,6 @@
 //                     </label>
 //                     <input type="number" value={formData.Conveyanance_3}
 //                       onChange={(e) => handleFormChange('Conveyanance_3', e.target.value)}
-//                       placeholder="0"
 //                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
 //                     />
 //                   </div>
@@ -717,11 +731,10 @@
 //                   <Building2 className="w-4 h-4" /> Amount Distribution
 //                 </h4>
 //                 <div className="grid grid-cols-2 gap-3">
-//                   {/* Company Head Amount – always auto/disabled */}
+//                   {/* Company Head Amount */}
 //                   <div>
 //                     <label className="block text-xs text-gray-600 mb-1">
-//                       🏢 Company Head Amount
-//                       <span className="text-purple-500 ml-1">(Auto)</span>
+//                       🏢 Company Head Amount <span className="text-purple-500">(Auto)</span>
 //                     </label>
 //                     <input
 //                       type="number"
@@ -732,10 +745,11 @@
 //                     <p className="text-xs text-purple-500 mt-1">= Total Paid Amount</p>
 //                   </div>
 
-//                   {/* Contractor Head Amount – disabled when Approved Head is "Company Head" */}
+//                   {/* Contractor Head Amount - REQUIRED when Contractor Head */}
 //                   <div>
 //                     <label className="block text-xs text-gray-600 mb-1">
 //                       👷 Contractor Head Amount (₹)
+//                       {!isCompanyHead && <span className="text-red-500 ml-1">*</span>}
 //                     </label>
 //                     <input
 //                       type="number"
@@ -749,15 +763,8 @@
 //                           : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-800'
 //                         }`}
 //                     />
-//                     {/* Hint text below the input */}
-//                     {isCompanyHead ? (
-//                       <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-//                         🔒 Disabled — Approved Head is <span className="font-medium text-purple-600">Company Head</span>
-//                       </p>
-//                     ) : (
-//                       <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
-//                         ✅ Enabled — Approved Head is <span className="font-medium text-blue-700">Contractor Head</span>
-//                       </p>
+//                     {!isCompanyHead && (
+//                       <p className="text-xs text-blue-600 mt-1">This field is required</p>
 //                     )}
 //                   </div>
 //                 </div>
@@ -777,14 +784,21 @@
 //                 />
 //               </div>
 
-//               {/* Bottom spacing for mobile safe area */}
+//               {/* Form Error Message */}
+//               {formError && (
+//                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-start gap-2">
+//                   <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+//                   <p className="text-sm">{formError}</p>
+//                 </div>
+//               )}
+
 //               <div className="h-2" />
 //             </div>
 
 //             {/* Modal Footer */}
 //             <div className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-t bg-gray-50 flex gap-3 justify-end sm:rounded-b-2xl">
 //               <button
-//                 onClick={() => setShowModal(false)}
+//                 onClick={() => { setShowModal(false); resetForm(); }}
 //                 className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors font-medium text-sm"
 //               >
 //                 Cancel
@@ -805,7 +819,7 @@
 //         </div>
 //       )}
 
-//       {/* slide-up animation for mobile modal */}
+//       {/* Slide-up animation for mobile modal */}
 //       <style>{`
 //         @keyframes slideUp {
 //           from { transform: translateY(100%); }
@@ -819,7 +833,7 @@
 //   );
 // };
 
-// // Helper for modal quick-info cells
+// // Helper Component
 // const InfoCell = ({ label, value, valueClass = 'text-gray-800 font-medium' }) => (
 //   <div>
 //     <span className="text-xs text-gray-400">{label}</span>
@@ -829,6 +843,8 @@
 
 // export default LabourManagement;
 
+
+//////////
 
 
 import React, { useState, useEffect } from 'react';
@@ -860,7 +876,8 @@ import {
   Building2,
   HardHat,
   ChevronRight,
-  ChevronUp
+  ChevronUp,
+  XCircle
 } from 'lucide-react';
 
 // ─── Mobile Card Component ───────────────────────────────────────────────────
@@ -1009,6 +1026,10 @@ const LabourManagement = () => {
     Remark_3: ''
   });
 
+  // ✅ Check if status is Reject
+  const isRejected = formData.Status_3 === 'Reject';
+  const isCompanyHead = selectedItem?.Approved_Head_2 === 'Company Head';
+
   const filteredData = labourData?.filter(item => 
     item.uid?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1018,8 +1039,10 @@ const LabourManagement = () => {
     item.workType?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  // Auto calculate Total Wages and Total Paid Amount
+  // Auto calculate Total Wages and Total Paid Amount - Only when NOT rejected
   useEffect(() => {
+    if (isRejected) return; // Skip calculation if rejected
+
     const num1 = parseFloat(formData.Number_Of_Labour_1_3) || 0;
     const rate1 = parseFloat(formData.Labour_Rate_1_3) || 0;
     const num2 = parseFloat(formData.Number_Of_Labour_2_3) || 0;
@@ -1040,10 +1063,9 @@ const LabourManagement = () => {
     formData.Labour_Rate_1_3, 
     formData.Number_Of_Labour_2_3, 
     formData.Labour_Rate_2_3,
-    formData.Conveyanance_3
+    formData.Conveyanance_3,
+    isRejected
   ]);
-
-  const isCompanyHead = selectedItem?.Approved_Head_2 === 'Company Head';
 
   const handleAction = (item) => {
     setSelectedItem(item);
@@ -1067,9 +1089,26 @@ const LabourManagement = () => {
     setShowModal(true);
   };
 
+  // ✅ Updated handleFormChange
   const handleFormChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (formError) setFormError(''); // Clear error when user types
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // If status is Reject, clear other fields (optional)
+      if (field === 'Status_3' && value === 'Reject') {
+        newData.Labouar_Contractor_Name_3 = '';
+        newData.Labour_Rate_1_3 = '';
+        newData.Labour_Rate_2_3 = '';
+        newData.Total_Wages_3 = '';
+        newData.Conveyanance_3 = '';
+        newData.Total_Paid_Amount_3 = '';
+        newData.Company_Head_Amount_3 = '';
+        newData.Contractor_Head_Amount_3 = '';
+      }
+      
+      return newData;
+    });
+    if (formError) setFormError('');
   };
 
   const resetForm = () => {
@@ -1092,14 +1131,19 @@ const LabourManagement = () => {
     setFormError('');
   };
 
-  // Form Validation
+  // ✅ Updated Form Validation
   const validateForm = () => {
     if (!formData.Status_3) {
       setFormError('Please select Status');
       return false;
     }
 
-    // Contractor Head Amount is required only when Approved Head is "Contractor Head"
+    // ✅ If status is Reject, no other validation needed
+    if (formData.Status_3 === 'Reject') {
+      return true;
+    }
+
+    // For Done status, validate other required fields
     if (!isCompanyHead && (!formData.Contractor_Head_Amount_3 || formData.Contractor_Head_Amount_3.trim() === '')) {
       setFormError('Contractor Head Amount is required when Approved Head is "Contractor Head"');
       return false;
@@ -1108,15 +1152,38 @@ const LabourManagement = () => {
     return true;
   };
 
+  // ✅ Updated handleSubmit
   const handleSubmit = async () => {
     if (!selectedItem) return;
     if (!validateForm()) return;
 
     try {
-      const payload = {
+      // ✅ Build payload based on status
+      let payload = {
         uid: selectedItem.uid,
-        ...formData
+        Status_3: formData.Status_3,
+        Remark_3: formData.Remark_3 || ''
       };
+
+      // ✅ Only add other fields if NOT rejected
+      if (formData.Status_3 !== 'Reject') {
+        payload = {
+          ...payload,
+          Labouar_Contractor_Name_3: formData.Labouar_Contractor_Name_3,
+          Labour_Category_1_3: formData.Labour_Category_1_3,
+          Number_Of_Labour_1_3: formData.Number_Of_Labour_1_3,
+          Labour_Rate_1_3: formData.Labour_Rate_1_3,
+          Labour_Category_2_3: formData.Labour_Category_2_3,
+          Number_Of_Labour_2_3: formData.Number_Of_Labour_2_3,
+          Labour_Rate_2_3: formData.Labour_Rate_2_3,
+          Total_Wages_3: formData.Total_Wages_3,
+          Conveyanance_3: formData.Conveyanance_3,
+          Total_Paid_Amount_3: formData.Total_Paid_Amount_3,
+          Company_Head_Amount_3: formData.Company_Head_Amount_3,
+          Contractor_Head_Amount_3: formData.Contractor_Head_Amount_3
+        };
+      }
+
       const result = await postLabourManagement(payload).unwrap();
       
       if (result.success) {
@@ -1442,167 +1509,185 @@ const LabourManagement = () => {
                   >
                     <option value="">-- Select Status --</option>
                     <option value="Done">✅ Done</option>
-                    <option value="Reject">Reject</option>
+                    <option value="Reject">❌ Reject</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                 </div>
               </div>
 
-              {/* Labour Contractor Name */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  <HardHat className="w-4 h-4 inline mr-1" />
-                  Labour Contractor Name
-                  <span className="text-gray-400 font-normal text-xs ml-1">(Enter manually)</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.Labouar_Contractor_Name_3}
-                  onChange={(e) => handleFormChange('Labouar_Contractor_Name_3', e.target.value)}
-                  placeholder="Enter labour contractor name..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  💡 Reference: {selectedItem.nameOfContractor || 'N/A'} ({selectedItem.contractorFirmName || 'No Firm'})
-                </p>
-              </div>
-
-              {/* Labour Category 1 */}
-              <div className="bg-blue-50 p-3 sm:p-4 rounded-xl space-y-3">
-                <h4 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
-                  <Users className="w-4 h-4" /> Labour Category 1
-                </h4>
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Category</label>
-                    <input disabled type="text" value={formData.Labour_Category_1_3}
-                      onChange={(e) => handleFormChange('Labour_Category_1_3', e.target.value)}
-                      className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm bg-gray-50"
-                    />
+              {/* ✅ Show Reject Info Message */}
+              {isRejected && (
+                <div className="p-4 bg-red-50 rounded-xl border border-red-200 animate-fadeIn">
+                  <div className="flex items-center gap-2 text-red-700">
+                    <XCircle className="w-5 h-5" />
+                    <span className="text-sm font-semibold">Rejection Mode</span>
                   </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">No. of Labour</label>
-                    <input type="number" value={formData.Number_Of_Labour_1_3}
-                      onChange={(e) => handleFormChange('Number_Of_Labour_1_3', e.target.value)}
-                      className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Rate (₹)</label>
-                    <input type="number" value={formData.Labour_Rate_1_3}
-                      onChange={(e) => handleFormChange('Labour_Rate_1_3', e.target.value)}
-                      className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
-                    />
-                  </div>
+                  <p className="text-xs text-red-600 mt-2">
+                    You can add an optional remark and submit. Other fields are not required for rejection.
+                  </p>
                 </div>
-              </div>
+              )}
 
-              {/* Labour Category 2 */}
-              <div className="bg-cyan-50 p-3 sm:p-4 rounded-xl space-y-3">
-                <h4 className="text-sm font-semibold text-cyan-800 flex items-center gap-2">
-                  <Users className="w-4 h-4" /> Labour Category 2
-                </h4>
-                <div className="grid grid-cols-3 gap-2">
+              {/* ✅ Only show these fields if NOT rejected */}
+              {!isRejected && (
+                <>
+                  {/* Labour Contractor Name */}
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1">Category</label>
-                    <input disabled type="text" value={formData.Labour_Category_2_3}
-                      onChange={(e) => handleFormChange('Labour_Category_2_3', e.target.value)}
-                      className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm bg-gray-50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">No. of Labour</label>
-                    <input type="number" value={formData.Number_Of_Labour_2_3}
-                      onChange={(e) => handleFormChange('Number_Of_Labour_2_3', e.target.value)}
-                      className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Rate (₹)</label>
-                    <input type="number" value={formData.Labour_Rate_2_3}
-                      onChange={(e) => handleFormChange('Labour_Rate_2_3', e.target.value)}
-                      className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Details */}
-              <div className="bg-green-50 p-3 sm:p-4 rounded-xl space-y-3">
-                <h4 className="text-sm font-semibold text-green-800 flex items-center gap-2">
-                  <IndianRupee className="w-4 h-4" /> Payment Details
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Total Wages (Auto)</label>
-                    <div className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-bold text-green-600">
-                      ₹ {formData.Total_Wages_3 || '0'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">
-                      <Truck className="w-3 h-3 inline mr-1" />Conveyance (₹)
-                    </label>
-                    <input type="number" value={formData.Conveyanance_3}
-                      onChange={(e) => handleFormChange('Conveyanance_3', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-xs text-gray-600 mb-1">Total Paid Amount (Auto)</label>
-                    <div className="px-3 py-3 bg-gradient-to-r from-green-100 to-emerald-100 border border-green-300 rounded-lg text-xl font-bold text-green-700 text-center">
-                      ₹ {formData.Total_Paid_Amount_3 || '0'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Amount Distribution */}
-              <div className="bg-purple-50 p-3 sm:p-4 rounded-xl space-y-3">
-                <h4 className="text-sm font-semibold text-purple-800 flex items-center gap-2">
-                  <Building2 className="w-4 h-4" /> Amount Distribution
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Company Head Amount */}
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">
-                      🏢 Company Head Amount <span className="text-purple-500">(Auto)</span>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <HardHat className="w-4 h-4 inline mr-1" />
+                      Labour Contractor Name
+                      <span className="text-gray-400 font-normal text-xs ml-1">(Enter manually)</span>
                     </label>
                     <input
-                      type="number"
-                      value={formData.Company_Head_Amount_3}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-purple-100 text-purple-700 font-bold cursor-not-allowed"
+                      type="text"
+                      value={formData.Labouar_Contractor_Name_3}
+                      onChange={(e) => handleFormChange('Labouar_Contractor_Name_3', e.target.value)}
+                      placeholder="Enter labour contractor name..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
                     />
-                    <p className="text-xs text-purple-500 mt-1">= Total Paid Amount</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      💡 Reference: {selectedItem.nameOfContractor || 'N/A'} ({selectedItem.contractorFirmName || 'No Firm'})
+                    </p>
                   </div>
 
-                  {/* Contractor Head Amount - REQUIRED when Contractor Head */}
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">
-                      👷 Contractor Head Amount (₹)
-                      {!isCompanyHead && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.Contractor_Head_Amount_3}
-                      onChange={(e) => handleFormChange('Contractor_Head_Amount_3', e.target.value)}
-                      placeholder={isCompanyHead ? 'N/A – Company Head' : '0'}
-                      disabled={isCompanyHead}
-                      className={`w-full px-3 py-2 border rounded-lg text-sm transition-colors
-                        ${isCompanyHead
-                          ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
-                          : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-800'
-                        }`}
-                    />
-                    {!isCompanyHead && (
-                      <p className="text-xs text-blue-600 mt-1">This field is required</p>
-                    )}
+                  {/* Labour Category 1 */}
+                  <div className="bg-blue-50 p-3 sm:p-4 rounded-xl space-y-3">
+                    <h4 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+                      <Users className="w-4 h-4" /> Labour Category 1
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Category</label>
+                        <input disabled type="text" value={formData.Labour_Category_1_3}
+                          onChange={(e) => handleFormChange('Labour_Category_1_3', e.target.value)}
+                          className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm bg-gray-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">No. of Labour</label>
+                        <input type="number" value={formData.Number_Of_Labour_1_3}
+                          onChange={(e) => handleFormChange('Number_Of_Labour_1_3', e.target.value)}
+                          className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Rate (₹)</label>
+                        <input type="number" value={formData.Labour_Rate_1_3}
+                          onChange={(e) => handleFormChange('Labour_Rate_1_3', e.target.value)}
+                          className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Remark */}
+                  {/* Labour Category 2 */}
+                  <div className="bg-cyan-50 p-3 sm:p-4 rounded-xl space-y-3">
+                    <h4 className="text-sm font-semibold text-cyan-800 flex items-center gap-2">
+                      <Users className="w-4 h-4" /> Labour Category 2
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Category</label>
+                        <input disabled type="text" value={formData.Labour_Category_2_3}
+                          onChange={(e) => handleFormChange('Labour_Category_2_3', e.target.value)}
+                          className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm bg-gray-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">No. of Labour</label>
+                        <input type="number" value={formData.Number_Of_Labour_2_3}
+                          onChange={(e) => handleFormChange('Number_Of_Labour_2_3', e.target.value)}
+                          className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Rate (₹)</label>
+                        <input type="number" value={formData.Labour_Rate_2_3}
+                          onChange={(e) => handleFormChange('Labour_Rate_2_3', e.target.value)}
+                          className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-xs sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Details */}
+                  <div className="bg-green-50 p-3 sm:p-4 rounded-xl space-y-3">
+                    <h4 className="text-sm font-semibold text-green-800 flex items-center gap-2">
+                      <IndianRupee className="w-4 h-4" /> Payment Details
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Total Wages (Auto)</label>
+                        <div className="px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-bold text-green-600">
+                          ₹ {formData.Total_Wages_3 || '0'}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          <Truck className="w-3 h-3 inline mr-1" />Conveyance (₹)
+                        </label>
+                        <input type="number" value={formData.Conveyanance_3}
+                          onChange={(e) => handleFormChange('Conveyanance_3', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs text-gray-600 mb-1">Total Paid Amount (Auto)</label>
+                        <div className="px-3 py-3 bg-gradient-to-r from-green-100 to-emerald-100 border border-green-300 rounded-lg text-xl font-bold text-green-700 text-center">
+                          ₹ {formData.Total_Paid_Amount_3 || '0'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Amount Distribution */}
+                  <div className="bg-purple-50 p-3 sm:p-4 rounded-xl space-y-3">
+                    <h4 className="text-sm font-semibold text-purple-800 flex items-center gap-2">
+                      <Building2 className="w-4 h-4" /> Amount Distribution
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Company Head Amount */}
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          🏢 Company Head Amount <span className="text-purple-500">(Auto)</span>
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.Company_Head_Amount_3}
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-purple-100 text-purple-700 font-bold cursor-not-allowed"
+                        />
+                        <p className="text-xs text-purple-500 mt-1">= Total Paid Amount</p>
+                      </div>
+
+                      {/* Contractor Head Amount - REQUIRED when Contractor Head */}
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          👷 Contractor Head Amount (₹)
+                          {!isCompanyHead && <span className="text-red-500 ml-1">*</span>}
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.Contractor_Head_Amount_3}
+                          onChange={(e) => handleFormChange('Contractor_Head_Amount_3', e.target.value)}
+                          placeholder={isCompanyHead ? 'N/A – Company Head' : '0'}
+                          disabled={isCompanyHead}
+                          className={`w-full px-3 py-2 border rounded-lg text-sm transition-colors
+                            ${isCompanyHead
+                              ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                              : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-gray-800'
+                            }`}
+                        />
+                        {!isCompanyHead && (
+                          <p className="text-xs text-blue-600 mt-1">This field is required</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Remark - Always visible */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Remark <span className="text-gray-400 font-normal">(Optional)</span>
@@ -1611,7 +1696,7 @@ const LabourManagement = () => {
                   value={formData.Remark_3}
                   onChange={(e) => handleFormChange('Remark_3', e.target.value)}
                   rows={3}
-                  placeholder="Enter any remarks..."
+                  placeholder={isRejected ? "Enter reason for rejection..." : "Enter any remarks..."}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none text-sm"
                 />
               </div>
@@ -1638,12 +1723,19 @@ const LabourManagement = () => {
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting || !formData.Status_3}
-                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-md hover:shadow-lg text-sm"
+                className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg text-sm ${
+                  isRejected 
+                    ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white hover:from-red-600 hover:to-rose-600'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600'
+                }`}
               >
                 {isSubmitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /><span>Submitting...</span></>
                 ) : (
-                  <><Send className="w-4 h-4" /><span>Submit</span></>
+                  <>
+                    {isRejected ? <XCircle className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+                    <span>{isRejected ? 'Reject' : 'Submit'}</span>
+                  </>
                 )}
               </button>
             </div>
@@ -1651,7 +1743,7 @@ const LabourManagement = () => {
         </div>
       )}
 
-      {/* Slide-up animation for mobile modal */}
+      {/* Slide-up animation for mobile modal + fadeIn */}
       <style>{`
         @keyframes slideUp {
           from { transform: translateY(100%); }
@@ -1659,6 +1751,19 @@ const LabourManagement = () => {
         }
         .animate-slide-up {
           animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
         }
       `}</style>
     </div>
