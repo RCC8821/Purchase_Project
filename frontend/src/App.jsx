@@ -14,6 +14,7 @@ import MRN from './components/purchase/MRN';
 import BillingFMS from './components/BillingFMS';
 import Payment from './components/purchase/Payment';
 
+import Advance_payment from './components/purchase/Advance_payment';
 
 /////// Billing components ///////////////////////
 
@@ -70,6 +71,7 @@ const App = () => {
           <Route path='Bill_Checked_18Step' element={Bill_Checked_18Step}/>
           <Route path='contractor-purchase-form' element={<ContractorPurchseForm/>}/>
           <Route path='outstanding' element={<OutStanding/>}/>
+          <Route path='advance_payment' element={<Advance_payment/>}/>
 
 
           ///// labour 

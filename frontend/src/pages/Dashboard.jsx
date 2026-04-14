@@ -25,6 +25,8 @@
 // import ContractorPurchseForm from '../components/ContractorPurchase/ContractorPurchseForm';
 // import OutStanding from '../components/purchase/OutStanding';
 
+// import Advance_payment from '../components/purchase/Advance_payment';
+
 // ///// labour 
 // import Approvel1 from '../components/Labour/Approvel1';
 // import LabourManagment from '../components/Labour/LabourManagment';
@@ -32,7 +34,6 @@
 // import PaidAmount from '../components/Labour/PaidAmount';
 
 // //// site Expenses 
-
 // import SiteApprovel from '../components/SiteExpenses/SiteApprovel';
 // import SitePaidAmount from '../components/SiteExpenses/SitePaidAmount';
 
@@ -41,6 +42,7 @@
 //   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 //   const [isPurchaseDropdownOpen, setIsPurchaseDropdownOpen] = useState(false);
 //   const [isLabourDropdownOpen, setIsLabourDropdownOpen] = useState(false);
+//   const [isSiteExpensesDropdownOpen, setIsSiteExpensesDropdownOpen] = useState(false);
 //   const [isTopDropdownOpen, setIsTopDropdownOpen] = useState(false);
 //   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 //   const [userType, setUserType] = useState(null);
@@ -67,7 +69,7 @@
 //     { id: 'Payment', name: 'Payment', icon: Truck, component: Payment, path: '/dashboard/Payment', allowedUserTypes: ['admin', 'Govind Ram Nagar'] },
 //     { id: 'Bill_Checked_18Step', name: 'Bill_Checked_18Step', icon: Truck, component: Bill_Checked_18Step, path: '/dashboard/Bill_Checked_18Step', allowedUserTypes: ['admin', 'Ravi Rajak'] },
 //     { id: 'contractor-purchase-form', name: 'Contractor Purchase Form', icon: FileText, component: ContractorPurchseForm, path: '/dashboard/contractor-purchase-form', allowedUserTypes: ['admin', 'Site Engineer', 'Material Received'] },
-//     { id: 'outstanding', name: 'Outstanding Form', icon: DollarSign, component: OutStanding, path: '/dashboard/outstanding', allowedUserTypes: ['admin', 'Govind Ram Nagar'] },
+//     { id: 'outstanding', name: 'Without System Bill Entry', icon: DollarSign, component: OutStanding, path: '/dashboard/outstanding', allowedUserTypes: ['admin', 'Govind Ram Nagar'] },
 //   ];
 
 //   // Labour Pages
@@ -76,6 +78,12 @@
 //     { id: 'Labourmanagement', name: 'Labour Management', icon: FileText, component: LabourManagment, path: '/dashboard/Labourmanagement', allowedUserTypes: ['admin', 'Labour Managment'] },
 //     { id: 'Deployed', name:  ' Labour Deployed', icon: FileText, component: Approvel2, path: '/dashboard/Approvel2', allowedUserTypes: ['admin', 'Ashok Pandey'] },
 //     { id: 'PaidAmount', name: 'Labour Payment', icon: FileText, component: PaidAmount, path: '/dashboard/PaidAmount', allowedUserTypes: ['admin', 'Govind Ram Nagar','Varsha Kahar'] },
+//   ];
+
+//   // Site Expenses Pages
+//   const allSiteExpensesPages = [
+//     { id: 'SiteApprovel', name: 'Site Approval', icon: FileText, component: SiteApprovel, path: '/dashboard/SiteApprovel', allowedUserTypes: ['admin', 'Ravindra Singh'] },
+//     { id: 'SitePaidAmount', name: 'Site Paid Amount', icon: DollarSign, component: SitePaidAmount, path: '/dashboard/SitePaidAmount', allowedUserTypes: ['admin', 'Govind Ram Nagar', 'Varsha Kahar','Final Material Received'] },
 //   ];
 
 //   const getPurchasePages = () => {
@@ -88,21 +96,28 @@
 //     return allLabourPages.filter(page => page.allowedUserTypes.includes(userType));
 //   };
 
+//   const getSiteExpensesPages = () => {
+//     if (!userType) return [];
+//     return allSiteExpensesPages.filter(page => page.allowedUserTypes.includes(userType));
+//   };
+
 //   const getAllowedPages = () => {
 //     const purchasePages = allPurchasePages.filter(page => page.allowedUserTypes.includes(userType));
 //     const labourPages = allLabourPages.filter(page => page.allowedUserTypes.includes(userType));
-//     return [...purchasePages, ...labourPages];
+//     const siteExpensesPages = allSiteExpensesPages.filter(page => page.allowedUserTypes.includes(userType));
+//     return [...purchasePages, ...labourPages, ...siteExpensesPages];
 //   };
 
 //   const menuItems = [
 //     { id: 'purchase-fms', name: 'Purchase FMS', icon: ShoppingCart, path: null, pages: getPurchasePages(), dropdownState: 'purchase' },
 //     { id: 'labour', name: 'Labour', icon: Users, path: null, pages: getLabourPages(), dropdownState: 'labour' },
+//     { id: 'site-expenses', name: 'Site Expenses', icon: DollarSign, path: null, pages: getSiteExpensesPages(), dropdownState: 'siteExpenses' },
 //     { id: 'Sheet-Link', name: 'Sheet Link', icon: FileText, url: 'https://docs.google.com/spreadsheets/d/18bmeQLqAOqleKS9628izEnirrRwOqkC0G_pEYGOsO-Y/edit?gid=0#gid=0', pages: [] },
 //   ];
 
 //   const pageContent = {
 //     'contractor-purchase-form': { title: 'Contractor Purchase Form', content: 'Create and manage contractor purchase requests and documentation.' },
-//     'outstanding': { title: 'Outstanding Form', content: 'View and manage outstanding payments, vendor dues, follow-ups and balances.' },
+//     'outstanding': { title: 'Without System Bill Entry', content: 'View and manage outstanding payments, vendor dues, follow-ups and balances.' },
 //     'requirement-received': { title: 'Requirement Form', content: 'View and manage received procurement requirements.' },
 //     'approve-required': { title: 'Approve Required', content: 'Review and approve required requests.' },
 //     'indent-to-get-quotation': { title: 'Indent (To Get Quotation)', content: 'Manage indents to request quotations.' },
@@ -123,6 +138,8 @@
 //     'Labourmanagement': { title: 'Labour Management ', content: 'Second level approval for labour management.' },
 //     'Deployed': { title: 'Labour Deployed', content: 'Third level approval for labour management.' },
 //     'PaidAmount': { title: 'PaidAmount', content: 'Fourth level approval for labour management.' },
+//     'SiteApprovel': { title: 'Site Approval', content: 'Site expense approval management.' },
+//     'SitePaidAmount': { title: 'Site Paid Amount', content: 'Site expense payment management.' },
 //     'no-access': { title: 'No Access', content: 'You do not have permission to access any pages.' },
 //   };
 
@@ -161,9 +178,15 @@
 //       if (menu.dropdownState === 'purchase') {
 //         setIsPurchaseDropdownOpen(!isPurchaseDropdownOpen);
 //         setIsLabourDropdownOpen(false);
+//         setIsSiteExpensesDropdownOpen(false);
 //       } else if (menu.dropdownState === 'labour') {
 //         setIsLabourDropdownOpen(!isLabourDropdownOpen);
 //         setIsPurchaseDropdownOpen(false);
+//         setIsSiteExpensesDropdownOpen(false);
+//       } else if (menu.dropdownState === 'siteExpenses') {
+//         setIsSiteExpensesDropdownOpen(!isSiteExpensesDropdownOpen);
+//         setIsPurchaseDropdownOpen(false);
+//         setIsLabourDropdownOpen(false);
 //       }
 //       setIsTopDropdownOpen(false);
 //     } else if (menu.id) {
@@ -174,6 +197,7 @@
 //   const isDropdownOpen = (menu) => {
 //     if (menu.dropdownState === 'purchase') return isPurchaseDropdownOpen;
 //     if (menu.dropdownState === 'labour') return isLabourDropdownOpen;
+//     if (menu.dropdownState === 'siteExpenses') return isSiteExpensesDropdownOpen;
 //     return false;
 //   };
 
@@ -181,6 +205,7 @@
 //     setSelectedPage(pageId);
 //     setIsPurchaseDropdownOpen(false);
 //     setIsLabourDropdownOpen(false);
+//     setIsSiteExpensesDropdownOpen(false);
 //     setIsTopDropdownOpen(false);
 //     setIsMobileMenuOpen(false);
 
@@ -355,6 +380,7 @@
 //                       setIsTopDropdownOpen(!isTopDropdownOpen);
 //                       setIsPurchaseDropdownOpen(false);
 //                       setIsLabourDropdownOpen(false);
+//                       setIsSiteExpensesDropdownOpen(false);
 //                     }}
 //                     className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all duration-200 shadow-md font-medium text-sm"
 //                   >
@@ -416,8 +442,6 @@
 
 
 
-
-
 import React, { useState, useEffect } from 'react';
 import { User, FileText, ShoppingCart, DollarSign, Package, Truck, ChevronDown, LogOut, Menu, X, Users } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -442,6 +466,8 @@ import Bill_Checked_18Step from '../components/purchase/Bill_Checked_18Step';
 
 import ContractorPurchseForm from '../components/ContractorPurchase/ContractorPurchseForm';
 import OutStanding from '../components/purchase/OutStanding';
+
+import Advance_payment from '../components/purchase/Advance_payment';
 
 ///// labour 
 import Approvel1 from '../components/Labour/Approvel1';
@@ -486,6 +512,8 @@ const Dashboard = () => {
     { id: 'Bill_Checked_18Step', name: 'Bill_Checked_18Step', icon: Truck, component: Bill_Checked_18Step, path: '/dashboard/Bill_Checked_18Step', allowedUserTypes: ['admin', 'Ravi Rajak'] },
     { id: 'contractor-purchase-form', name: 'Contractor Purchase Form', icon: FileText, component: ContractorPurchseForm, path: '/dashboard/contractor-purchase-form', allowedUserTypes: ['admin', 'Site Engineer', 'Material Received'] },
     { id: 'outstanding', name: 'Without System Bill Entry', icon: DollarSign, component: OutStanding, path: '/dashboard/outstanding', allowedUserTypes: ['admin', 'Govind Ram Nagar'] },
+    // ✅ NEW: Advance Payment Added Here
+    { id: 'Advance_payment', name: 'Advance Payment', icon: DollarSign, component: Advance_payment, path: '/dashboard/Advance_payment', allowedUserTypes: ['admin','Govind Ram Nagar'] }, // 👈 Add user names here
   ];
 
   // Labour Pages
@@ -550,6 +578,8 @@ const Dashboard = () => {
     'BillTallyData': { title: 'BillTallyData', content: 'Bill tally data management.' },
     'Payment': { title: 'Payment', content: 'Payment management.' },
     'Bill_Checked_18Step': { title: 'Bill_Checked_18Step', content: 'Bill checked 18 step management.' },
+  
+    'Advance_payment': { title: 'Advance Payment', content: 'Manage advance payments to vendors and contractors.' },
     'Approvel1': { title: 'Labour Approval 1', content: 'First level approval for labour management.' },
     'Labourmanagement': { title: 'Labour Management ', content: 'Second level approval for labour management.' },
     'Deployed': { title: 'Labour Deployed', content: 'Third level approval for labour management.' },

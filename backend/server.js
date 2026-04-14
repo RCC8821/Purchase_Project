@@ -39,7 +39,9 @@ const LabourApprovel = require("./SiteExpenses/Labour/LabourExpenses")
 
 const OutStanding= require('./All_Fms_Api/OutStanding')
 
+///////  Advance Payment 
 
+const Advancesection=require('./All_Fms_Api/Advance_payment')
 
 const app = express();
 
@@ -100,7 +102,9 @@ app.use('/api/SiteExpenses',SiteApprovels)
 
 app.use('/api/labour',LabourApprovel)
 
+//////// Advance 
 
+app.use('/api/advance',Advancesection)
 
 // Start the server
 const PORT = process.env.PORT || 5000;
