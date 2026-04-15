@@ -40,6 +40,7 @@ import Approvel1 from './components/Labour/Approvel1';
 import LabourManagment from './components/Labour/LabourManagment';
 import Approvel2 from './components/Labour/Approvel2';
 import PaidAmount from './components/Labour/PaidAmount';
+import LabourPDF from './components/Labour/LabourPDF';
 
 //////// Site Expenses /////
 
@@ -80,6 +81,7 @@ const App = () => {
           <Route path='Labourmanagement' element={<LabourManagment/>}/>
           <Route path='Approvel2' element={<Approvel2/>}/>
           <Route path='PaidAmount' element={<PaidAmount/>}/>
+          <Route path='LabourPDF' element={<LabourPDF/>}/>
 
           /////// site Expenses
 

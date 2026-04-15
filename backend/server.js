@@ -34,6 +34,7 @@ const SiteApprovels= require('./SiteExpenses/SiteExpenses/SiteApprovels')
 
 const LabourApprovel = require("./SiteExpenses/Labour/LabourExpenses")
 
+const LabourPDF = require('./SiteExpenses/Labour/PDFGenerate')
 
 /////// OutStanding Form 
 
@@ -101,6 +102,8 @@ app.use('/api/DebitExpenses',DebitApprovel1)
 app.use('/api/SiteExpenses',SiteApprovels)
 
 app.use('/api/labour',LabourApprovel)
+
+app.use('/api/labour/pdf',LabourPDF)
 
 //////// Advance 
 

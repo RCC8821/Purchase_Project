@@ -474,6 +474,7 @@ import Approvel1 from '../components/Labour/Approvel1';
 import LabourManagment from '../components/Labour/LabourManagment';
 import Approvel2 from '../components/Labour/Approvel2';
 import PaidAmount from '../components/Labour/PaidAmount';
+import LabourPDF from '../components/Labour/LabourPDF';
 
 //// site Expenses 
 import SiteApprovel from '../components/SiteExpenses/SiteApprovel';
@@ -522,6 +523,7 @@ const Dashboard = () => {
     { id: 'Labourmanagement', name: 'Labour Management', icon: FileText, component: LabourManagment, path: '/dashboard/Labourmanagement', allowedUserTypes: ['admin', 'Labour Managment'] },
     { id: 'Deployed', name:  ' Labour Deployed', icon: FileText, component: Approvel2, path: '/dashboard/Approvel2', allowedUserTypes: ['admin', 'Ashok Pandey'] },
     { id: 'PaidAmount', name: 'Labour Payment', icon: FileText, component: PaidAmount, path: '/dashboard/PaidAmount', allowedUserTypes: ['admin', 'Govind Ram Nagar','Varsha Kahar'] },
+    { id: 'LabourPDF', name: 'Labour PDF', icon: FileText, component: LabourPDF, path: '/dashboard/LabourPDF', allowedUserTypes: ['admin','Varsha Kahar'] },
   ];
 
   // Site Expenses Pages
@@ -584,6 +586,7 @@ const Dashboard = () => {
     'Labourmanagement': { title: 'Labour Management ', content: 'Second level approval for labour management.' },
     'Deployed': { title: 'Labour Deployed', content: 'Third level approval for labour management.' },
     'PaidAmount': { title: 'PaidAmount', content: 'Fourth level approval for labour management.' },
+    'LabourPDF': { title: 'LabourPDF', content: 'Fourth level approval for labour management.' },
     'SiteApprovel': { title: 'Site Approval', content: 'Site expense approval management.' },
     'SitePaidAmount': { title: 'Site Paid Amount', content: 'Site expense payment management.' },
     'no-access': { title: 'No Access', content: 'You do not have permission to access any pages.' },
