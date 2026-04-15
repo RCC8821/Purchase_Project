@@ -606,7 +606,8 @@ import {
 // ─── Redux imports — apne slice se replace karo ───────────────────────────────
 // import { useGetPDFDataQuery, useGeneratePDFMutation } from '../../redux/Labour/LabourSlice';
 
-const BASE_URL = 'https://purchase-project-3iia-jwvzmdp1g.vercel.app/api/labour/pdf'; // ← apna URL yahan daalo
+const BASE_URL = 'https://purchase-project-3iia.vercel.app/api/labour/pdf'; // ← apna URL yahan daalo
+// const BASE_URL = 'http://localhost:5000/api/labour/pdf'; // ← apna URL yahan daalo
 
 // ─── Temporary fetch hooks ─────────────────────────────────────────────────────
 const useGetPDFDataQuery = () => {
