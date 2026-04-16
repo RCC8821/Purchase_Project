@@ -843,6 +843,10 @@ router.get('/get-paid-step', async (req, res) => {
         Revised_Contractor_Head_Amount_4:  row[55] || '',
 
 
+        Paid_Name: row[59] || '',
+        Bill_No: row[60] || '',
+        Bill_Url: row[61] || '',
+
 
         remark4:                  row[56] || '',
         planned5:                row[62] || '',   // U
@@ -862,6 +866,129 @@ router.get('/get-paid-step', async (req, res) => {
     });
   }
 });
+
+
+
+
+
+// router.post('/Post-labour-Paid', async (req, res) => {
+//   const {
+//     uid,
+//     Status_5,
+//     PAYMENT_MODE_5,
+//     BANK_DETAILS_5,
+//     PAYMENT_DETAILS_5,
+//     Payment_Date_5,  
+//     Remark_5
+//   } = req.body;
+
+//   if (!uid) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'UID is required'
+//     });
+//   }
+
+//   try {
+//     const response = await sheets.spreadsheets.values.get({
+//       spreadsheetId: SiteExpeseSheetId,
+//       range: 'Labour_FMS!A7:BT',
+//     });
+
+//     const rows = response.data.values || [];
+//     if (rows.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'No data found in Labour_FMS sheet'
+//       });
+//     }
+
+//     const rowIndex = rows.findIndex(row =>
+//       row[1] && String(row[1]).trim() === String(uid).trim()
+//     );
+
+//     if (rowIndex === -1) {
+//       return res.status(404).json({
+//         success: false,
+//         message: `UID not found: ${uid}`
+//       });
+//     }
+
+//     const sheetRowNumber = 7 + rowIndex;
+
+//     console.log(`Found UID ${uid} at array index ${rowIndex} → sheet row ${sheetRowNumber}`);
+
+//     const batchData = [];
+
+//     // BM - Status_5
+//     if (Status_5 !== undefined && String(Status_5).trim() !== '') {
+//       batchData.push({ range: `Labour_FMS!BM${sheetRowNumber}`, values: [[Status_5]] });
+//     }
+
+//     // BP - PAYMENT_MODE_5
+//     if (PAYMENT_MODE_5 !== undefined && String(PAYMENT_MODE_5).trim() !== '') {
+//       batchData.push({ range: `Labour_FMS!BP${sheetRowNumber}`, values: [[PAYMENT_MODE_5]] });
+//     }
+
+//     // BQ - BANK_DETAILS_5
+//     if (BANK_DETAILS_5 !== undefined && String(BANK_DETAILS_5).trim() !== '') {
+//       batchData.push({ range: `Labour_FMS!BQ${sheetRowNumber}`, values: [[BANK_DETAILS_5]] });
+//     }
+
+//     // BR - PAYMENT_DETAILS_5
+//     if (PAYMENT_DETAILS_5 !== undefined && String(PAYMENT_DETAILS_5).trim() !== '') {
+//       batchData.push({ range: `Labour_FMS!BR${sheetRowNumber}`, values: [[PAYMENT_DETAILS_5]] });
+//     }
+
+//     // BS - Payment_Date_5
+//     if (Payment_Date_5 !== undefined && String(Payment_Date_5).trim() !== '') {
+//       batchData.push({ range: `Labour_FMS!BS${sheetRowNumber}`, values: [[Payment_Date_5]] });
+//     }
+
+//     // BT - Remark_5
+//     if (Remark_5 !== undefined && String(Remark_5).trim() !== '') {
+//       batchData.push({ range: `Labour_FMS!BT${sheetRowNumber}`, values: [[Remark_5]] });
+//     }
+
+//     if (batchData.length === 0) {
+//       return res.json({
+//         success: true,
+//         message: 'No valid / non-empty fields to update'
+//       });
+//     }
+
+//     await sheets.spreadsheets.values.batchUpdate({
+//       spreadsheetId: SiteExpeseSheetId,
+//       resource: {
+//         valueInputOption: 'USER_ENTERED',
+//         data: batchData,
+//       },
+//     });
+
+//     // ✅ FIXED: Safe column extraction with null check
+//     const updatedColumns = batchData.map(d => {
+//       const match = d.range.match(/!([A-Z]+)/);
+//       return match ? match[1] : 'Unknown';
+//     });
+
+//     return res.json({
+//       success: true,
+//       message: 'Labour payment fields updated successfully',
+//       rowNumber: sheetRowNumber,
+//       updatedColumns: updatedColumns,
+//       updatedCount: batchData.length
+//     });
+
+//   } catch (error) {
+//     console.error('Labour paid update error:', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Update failed',
+//       error: error.message
+//     });
+//   }
+// });
+
 
 
 
@@ -916,40 +1043,40 @@ router.post('/Post-labour-Paid', async (req, res) => {
 
     const batchData = [];
 
-    // BM - Status_5
-    if (Status_5 !== undefined && String(Status_5).trim() !== '') {
-      batchData.push({ range: `Labour_FMS!BM${sheetRowNumber}`, values: [[Status_5]] });
-    }
+    // ==================== STATUS SKIPPED ====================
+    // Status_5 ko completely skip kar diya hai jaise aapne kaha
+    // Koi value nahi jaayegi (na Done, na Reject)
+    // =======================================================
 
-    // BP - PAYMENT_MODE_5
-    if (PAYMENT_MODE_5 !== undefined && String(PAYMENT_MODE_5).trim() !== '') {
+    // Payment Mode
+    if (PAYMENT_MODE_5 !== undefined && PAYMENT_MODE_5 !== null && PAYMENT_MODE_5 !== '') {
       batchData.push({ range: `Labour_FMS!BP${sheetRowNumber}`, values: [[PAYMENT_MODE_5]] });
     }
 
-    // BQ - BANK_DETAILS_5
-    if (BANK_DETAILS_5 !== undefined && String(BANK_DETAILS_5).trim() !== '') {
+    // Bank Details
+    if (BANK_DETAILS_5 !== undefined && BANK_DETAILS_5 !== null && BANK_DETAILS_5 !== '') {
       batchData.push({ range: `Labour_FMS!BQ${sheetRowNumber}`, values: [[BANK_DETAILS_5]] });
     }
 
-    // BR - PAYMENT_DETAILS_5
-    if (PAYMENT_DETAILS_5 !== undefined && String(PAYMENT_DETAILS_5).trim() !== '') {
+    // Payment Details
+    if (PAYMENT_DETAILS_5 !== undefined && PAYMENT_DETAILS_5 !== null && PAYMENT_DETAILS_5 !== '') {
       batchData.push({ range: `Labour_FMS!BR${sheetRowNumber}`, values: [[PAYMENT_DETAILS_5]] });
     }
 
-    // BS - Payment_Date_5
-    if (Payment_Date_5 !== undefined && String(Payment_Date_5).trim() !== '') {
+    // Payment Date
+    if (Payment_Date_5 !== undefined && Payment_Date_5 !== null && Payment_Date_5 !== '') {
       batchData.push({ range: `Labour_FMS!BS${sheetRowNumber}`, values: [[Payment_Date_5]] });
     }
 
-    // BT - Remark_5
-    if (Remark_5 !== undefined && String(Remark_5).trim() !== '') {
+    // Remark (Reject ya Done dono case mein ja sakta hai)
+    if (Remark_5 !== undefined && Remark_5 !== null && Remark_5 !== '') {
       batchData.push({ range: `Labour_FMS!BT${sheetRowNumber}`, values: [[Remark_5]] });
     }
 
     if (batchData.length === 0) {
       return res.json({
         success: true,
-        message: 'No valid / non-empty fields to update'
+        message: 'No fields to update'
       });
     }
 
@@ -961,7 +1088,6 @@ router.post('/Post-labour-Paid', async (req, res) => {
       },
     });
 
-    // ✅ FIXED: Safe column extraction with null check
     const updatedColumns = batchData.map(d => {
       const match = d.range.match(/!([A-Z]+)/);
       return match ? match[1] : 'Unknown';
@@ -984,5 +1110,4 @@ router.post('/Post-labour-Paid', async (req, res) => {
     });
   }
 });
-
 module.exports = router;
