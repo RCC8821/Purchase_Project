@@ -6,8 +6,8 @@ export const advanceApi = createApi({
   reducerPath: 'advanceApi',
 
   baseQuery: fetchBaseQuery({
-    // baseUrl: 'https://purchase-project-3iia.vercel.app',
-    baseUrl: 'http://localhost:5000',
+    baseUrl: 'https://purchase-project-3iia.vercel.app',
+    // baseUrl: 'http://localhost:5000',
     prepareHeaders: (headers) => {
       return headers;
     },
