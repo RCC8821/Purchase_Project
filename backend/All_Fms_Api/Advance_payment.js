@@ -56,49 +56,7 @@ router.get('/dropdown-data', async (req, res) => {
   }
 });
 
-// ==========================================
-// Helper Function - Get Next Empty Row in Sheet
-// Yeh function sheet ki last filled row dhundh ke
-// uske neeche next empty row ka number return karta hai
-// ==========================================
 
-const getNextEmptyRow = async (sheetName) => {
-  try {
-    // Puri sheet ka column A fetch karo
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `${sheetName}!A:A`,
-    });
-
-    const rows = response.data.values;
-
-    if (!rows || rows.length === 0) {
-      // Agar sheet bilkul empty hai to row 2 se start karo (row 1 header hai)
-      return 2;
-    }
-
-    // Last filled row ke baad wali row return karo
-    return rows.length + 1;
-
-  } catch (error) {
-    console.error('Error finding next empty row:', error);
-    throw error;
-  }
-};
-
-// ==========================================
-// POST API - Submit Form Data to Advance_Payment_Sheet
-// Columns A to I:
-// A: Timestamp (Auto)
-// B: Site Name
-// C: VENDOR FIRM NAME 16
-// D: PAID_AMOUNT_17
-// E: BANK_DETAILS_17
-// F: PAYMENT_MODE_17
-// G: PAYMENT_DETAILS_17
-// H: PAYMENT DATE_18
-// I: Exp._Head
-// ==========================================
 
 router.post('/submit-payment', async (req, res) => {
   try {
