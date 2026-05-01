@@ -363,6 +363,194 @@ router.get('/get-Labour-management', async (req, res) => {
 
 
 
+// router.post('/Post-labour-management', async (req, res) => {
+//   try {
+//     const {
+//       uid,
+//       Status_3,
+//       Labouar_Contractor_Name_3,
+//       Labour_Category_1_3,
+//       Number_Of_Labour_1_3,
+//       Labour_Rate_1_3,
+//       Labour_Category_2_3,
+//       Number_Of_Labour_2_3,
+//       Labour_Rate_2_3,
+//       Total_Wages_3,
+//       Conveyanance_3,
+//       Total_Paid_Amount_3,
+//       Company_Head_Amount_3,
+//       Contractor_Head_Amount_3,
+//       Remark_3    } = req.body;
+
+//     // Validate required UID
+//     if (!uid) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'UID is required'
+//       });
+//     }
+
+//     // Get data from spreadsheet
+//     const response = await sheets.spreadsheets.values.get({
+//       spreadsheetId: SiteExpeseSheetId,
+//       range: 'Labour_FMS!A7:AS',
+//     });
+
+//     const rows = response.data.values || [];
+//     if (rows.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'No data found in Labour_FMS sheet'
+//       });
+//     }
+
+//     // Find matching UID row (column B = index 1)
+//     const rowIndex = rows.findIndex(row => 
+//       row[1] && String(row[1]).trim() === String(uid).trim()
+//     );
+
+//     if (rowIndex === -1) {
+//       return res.status(404).json({
+//         success: false,
+//         message: `UID not found: ${uid}`
+//       });
+//     }
+
+//     const sheetRowNumber = 7 + rowIndex; // Convert to 1-based sheet row    // Prepare batch update data (columns AE to AS)
+//     const batchData = [];
+
+//     // Helper to safely add non-empty values
+//     const addIfValid = (colLetter, value) => {
+//       if (value !== undefined && value !== null && String(value).trim() !== '') {
+//         batchData.push({ 
+//           range: `Labour_FMS!${colLetter}${sheetRowNumber}`, 
+//           values: [[value]] 
+//         });
+//       }
+//     };
+
+//     // Add fields with proper validation
+//     if (Status_3 !== undefined && String(Status_3).trim() !== '') {
+//       addIfValid('AE', Status_3);
+//     }
+    
+//     if (Labouar_Contractor_Name_3 !== undefined && String(Labouar_Contractor_Name_3).trim() !== '') {
+//       addIfValid('AG', Labouar_Contractor_Name_3);
+//     }
+    
+//     if (Labour_Category_1_3 !== undefined && String(Labour_Category_1_3).trim() !== '') {
+//       addIfValid('AH', Labour_Category_1_3);
+//     }
+//         if (Number_Of_Labour_1_3 !== undefined && !isNaN(Number_Of_Labour_1_3)) {
+//       addIfValid('AI', Number_Of_Labour_1_3);
+//     }
+    
+//     if (Labour_Rate_1_3 !== undefined && !isNaN(Labour_Rate_1_3)) {
+//       addIfValid('AJ', Labour_Rate_1_3);
+//     }
+    
+//     if (Labour_Category_2_3 !== undefined && String(Labour_Category_2_3).trim() !== '') {
+//       addIfValid('AK', Labour_Category_2_3);
+//     }
+    
+//     if (Number_Of_Labour_2_3 !== undefined && !isNaN(Number_Of_Labour_2_3)) {
+//       addIfValid('AL', Number_Of_Labour_2_3);
+//     }
+    
+//     if (Labour_Rate_2_3 !== undefined && !isNaN(Labour_Rate_2_3)) {
+//       addIfValid('AM', Labour_Rate_2_3);
+//     }
+    
+//     if (Total_Wages_3 !== undefined && !isNaN(Total_Wages_3)) {
+//       addIfValid('AN', Total_Wages_3);
+//     }
+    
+//     if (Conveyanance_3 !== undefined && !isNaN(Conveyanance_3)) {
+//       addIfValid('AO', Conveyanance_3);
+//     }
+    
+//     if (Total_Paid_Amount_3 !== undefined && !isNaN(Total_Paid_Amount_3)) {
+//       addIfValid('AP', Total_Paid_Amount_3);
+//     }
+    
+//     if (Company_Head_Amount_3 !== undefined && !isNaN(Company_Head_Amount_3)) {
+//       addIfValid('AQ', Company_Head_Amount_3);
+//     }
+    
+//     if (Contractor_Head_Amount_3 !== undefined && !isNaN(Contractor_Head_Amount_3)) {
+//       addIfValid('AR', Contractor_Head_Amount_3);
+//     }
+    
+//     if (Remark_3 !== undefined && String(Remark_3).trim() !== '') {
+//       addIfValid('AS', Remark_3);
+//     }
+
+//     // Handle case with no valid updates
+//     if (batchData.length === 0) {
+//       return res.json({
+//         success: true,
+//         message: 'No valid/non-empty fields to update',
+//         rowNumber: sheetRowNumber,
+//         updatedColumns: [],
+//         updatedCount: 0
+//       });
+//     }
+
+//     // Execute batch update
+//     await sheets.spreadsheets.values.batchUpdate({
+//       spreadsheetId: SiteExpeseSheetId,
+//       resource: {
+//         valueInputOption: 'USER_ENTERED',
+//         data: batchData,
+//       },
+//     });
+
+//     // SAFE column extraction (no regex risks)
+//     const updatedColumns = batchData.map(update => {
+//       try {
+//         // Extract column letters from range like "Labour_FMS!AE5" → "AE"
+//         const rangeParts = update.range.split('!');
+//         if (rangeParts.length < 2) return 'unknown';
+        
+//         const colRowPart = rangeParts[1]; // e.g., "AE5"
+//         // Get leading alphabetic characters only
+//         const colMatch = colRowPart.match(/^[A-Z]+/);
+//         return colMatch ? colMatch[0] : 'unknown';
+//       } catch (e) {
+//         console.error('Column extraction error:', e, update.range);
+//         return 'error';
+//       }
+//     });
+
+//     // Return successful response
+//     return res.json({
+//       success: true,
+//       message: 'Labour_FMS payment/management fields updated successfully',
+//       rowNumber: sheetRowNumber,
+//       updatedColumns: updatedColumns,
+//       updatedCount: batchData.length
+//     });
+
+//   } catch (error) {
+//     console.error('=== BACKEND ERROR ===');
+//     console.error('Error details:', error);
+//     console.error('Stack trace:', error.stack);
+    
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Update failed - see server logs for details',
+//       error: error.message || 'Unknown error'
+//     });
+//   }
+// });
+
+
+
+
+///////   Approvel labour ashok pandey sir 
+
+
+
 router.post('/Post-labour-management', async (req, res) => {
   try {
     const {
@@ -377,12 +565,19 @@ router.post('/Post-labour-management', async (req, res) => {
       Labour_Rate_2_3,
       Total_Wages_3,
       Conveyanance_3,
+      Contractor_Commission,
       Total_Paid_Amount_3,
       Company_Head_Amount_3,
       Contractor_Head_Amount_3,
-      Remark_3    } = req.body;
+      Remark_3
+    } = req.body;
 
-    // Validate required UID
+    // ✅ DEBUG LOG - Check what values are coming
+    console.log('=== INCOMING PAYLOAD ===');
+    console.log('Contractor_Commission:', Contractor_Commission);
+    console.log('Total_Paid_Amount_3:', Total_Paid_Amount_3);
+    console.log('========================');
+
     if (!uid) {
       return res.status(400).json({
         success: false,
@@ -390,10 +585,9 @@ router.post('/Post-labour-management', async (req, res) => {
       });
     }
 
-    // Get data from spreadsheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SiteExpeseSheetId,
-      range: 'Labour_FMS!A7:AS',
+      range: 'Labour_FMS!A7:AT',
     });
 
     const rows = response.data.values || [];
@@ -404,8 +598,7 @@ router.post('/Post-labour-management', async (req, res) => {
       });
     }
 
-    // Find matching UID row (column B = index 1)
-    const rowIndex = rows.findIndex(row => 
+    const rowIndex = rows.findIndex(row =>
       row[1] && String(row[1]).trim() === String(uid).trim()
     );
 
@@ -416,76 +609,113 @@ router.post('/Post-labour-management', async (req, res) => {
       });
     }
 
-    const sheetRowNumber = 7 + rowIndex; // Convert to 1-based sheet row    // Prepare batch update data (columns AE to AS)
+    const sheetRowNumber = 7 + rowIndex;
     const batchData = [];
 
-    // Helper to safely add non-empty values
     const addIfValid = (colLetter, value) => {
       if (value !== undefined && value !== null && String(value).trim() !== '') {
-        batchData.push({ 
-          range: `Labour_FMS!${colLetter}${sheetRowNumber}`, 
-          values: [[value]] 
+        batchData.push({
+          range: `Labour_FMS!${colLetter}${sheetRowNumber}`,
+          values: [[value]]
         });
       }
     };
 
-    // Add fields with proper validation
+    // AE - Status_3
     if (Status_3 !== undefined && String(Status_3).trim() !== '') {
       addIfValid('AE', Status_3);
     }
-    
+
+    // AG - Labouar_Contractor_Name_3
     if (Labouar_Contractor_Name_3 !== undefined && String(Labouar_Contractor_Name_3).trim() !== '') {
       addIfValid('AG', Labouar_Contractor_Name_3);
     }
-    
+
+    // AH - Labour_Category_1_3
     if (Labour_Category_1_3 !== undefined && String(Labour_Category_1_3).trim() !== '') {
       addIfValid('AH', Labour_Category_1_3);
     }
-        if (Number_Of_Labour_1_3 !== undefined && !isNaN(Number_Of_Labour_1_3)) {
+
+    // AI - Number_Of_Labour_1_3
+    if (Number_Of_Labour_1_3 !== undefined && String(Number_Of_Labour_1_3).trim() !== '') {
       addIfValid('AI', Number_Of_Labour_1_3);
     }
-    
-    if (Labour_Rate_1_3 !== undefined && !isNaN(Labour_Rate_1_3)) {
+
+    // AJ - Labour_Rate_1_3
+    if (Labour_Rate_1_3 !== undefined && String(Labour_Rate_1_3).trim() !== '') {
       addIfValid('AJ', Labour_Rate_1_3);
     }
-    
+
+    // AK - Labour_Category_2_3
     if (Labour_Category_2_3 !== undefined && String(Labour_Category_2_3).trim() !== '') {
       addIfValid('AK', Labour_Category_2_3);
     }
-    
-    if (Number_Of_Labour_2_3 !== undefined && !isNaN(Number_Of_Labour_2_3)) {
+
+    // AL - Number_Of_Labour_2_3
+    if (Number_Of_Labour_2_3 !== undefined && String(Number_Of_Labour_2_3).trim() !== '') {
       addIfValid('AL', Number_Of_Labour_2_3);
     }
-    
-    if (Labour_Rate_2_3 !== undefined && !isNaN(Labour_Rate_2_3)) {
+
+    // AM - Labour_Rate_2_3
+    if (Labour_Rate_2_3 !== undefined && String(Labour_Rate_2_3).trim() !== '') {
       addIfValid('AM', Labour_Rate_2_3);
     }
-    
-    if (Total_Wages_3 !== undefined && !isNaN(Total_Wages_3)) {
+
+    // AN - Total_Wages_3
+    if (Total_Wages_3 !== undefined && String(Total_Wages_3).trim() !== '') {
       addIfValid('AN', Total_Wages_3);
     }
-    
-    if (Conveyanance_3 !== undefined && !isNaN(Conveyanance_3)) {
+
+    // AO - Conveyanance_3
+    if (Conveyanance_3 !== undefined && String(Conveyanance_3).trim() !== '') {
       addIfValid('AO', Conveyanance_3);
     }
-    
-    if (Total_Paid_Amount_3 !== undefined && !isNaN(Total_Paid_Amount_3)) {
-      addIfValid('AP', Total_Paid_Amount_3);
-    }
-    
-    if (Company_Head_Amount_3 !== undefined && !isNaN(Company_Head_Amount_3)) {
-      addIfValid('AQ', Company_Head_Amount_3);
-    }
-    
-    if (Contractor_Head_Amount_3 !== undefined && !isNaN(Contractor_Head_Amount_3)) {
-      addIfValid('AR', Contractor_Head_Amount_3);
-    }
-    
-    if (Remark_3 !== undefined && String(Remark_3).trim() !== '') {
-      addIfValid('AS', Remark_3);
+
+    // ✅ AP - Contractor_Commission (SIRF Commission ki value - DIRECT PUSH)
+    if (Contractor_Commission !== undefined && Contractor_Commission !== null && String(Contractor_Commission).trim() !== '') {
+      console.log('✅ Writing to AP (Commission):', Contractor_Commission);
+      batchData.push({
+        range: `Labour_FMS!AP${sheetRowNumber}`,
+        values: [[String(Contractor_Commission).trim()]]
+      });
     }
 
-    // Handle case with no valid updates
+    // ✅ AQ - Total_Paid_Amount_3 (DIRECT PUSH)
+    if (Total_Paid_Amount_3 !== undefined && Total_Paid_Amount_3 !== null && String(Total_Paid_Amount_3).trim() !== '') {
+      console.log('✅ Writing to AQ (Total Paid):', Total_Paid_Amount_3);
+      batchData.push({
+        range: `Labour_FMS!AQ${sheetRowNumber}`,
+        values: [[String(Total_Paid_Amount_3).trim()]]
+      });
+    }
+
+    // ✅ AR - Company_Head_Amount_3 (DIRECT PUSH)
+    if (Company_Head_Amount_3 !== undefined && Company_Head_Amount_3 !== null && String(Company_Head_Amount_3).trim() !== '') {
+      console.log('✅ Writing to AR (Company Head):', Company_Head_Amount_3);
+      batchData.push({
+        range: `Labour_FMS!AR${sheetRowNumber}`,
+        values: [[String(Company_Head_Amount_3).trim()]]
+      });
+    }
+
+    // ✅ AS - Contractor_Head_Amount_3 (DIRECT PUSH)
+    if (Contractor_Head_Amount_3 !== undefined && Contractor_Head_Amount_3 !== null && String(Contractor_Head_Amount_3).trim() !== '') {
+      console.log('✅ Writing to AS (Contractor Head):', Contractor_Head_Amount_3);
+      batchData.push({
+        range: `Labour_FMS!AS${sheetRowNumber}`,
+        values: [[String(Contractor_Head_Amount_3).trim()]]
+      });
+    }
+
+    // ✅ AT - Remark_3 (DIRECT PUSH)
+    if (Remark_3 !== undefined && Remark_3 !== null && String(Remark_3).trim() !== '') {
+      console.log('✅ Writing to AT (Remark):', Remark_3);
+      batchData.push({
+        range: `Labour_FMS!AT${sheetRowNumber}`,
+        values: [[String(Remark_3).trim()]]
+      });
+    }
+
     if (batchData.length === 0) {
       return res.json({
         success: true,
@@ -496,7 +726,13 @@ router.post('/Post-labour-management', async (req, res) => {
       });
     }
 
-    // Execute batch update
+    // ✅ LOG all batch data before writing
+    console.log('=== BATCH DATA TO WRITE ===');
+    batchData.forEach(item => {
+      console.log(`${item.range} → ${item.values[0][0]}`);
+    });
+    console.log('===========================');
+
     await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: SiteExpeseSheetId,
       resource: {
@@ -505,15 +741,11 @@ router.post('/Post-labour-management', async (req, res) => {
       },
     });
 
-    // SAFE column extraction (no regex risks)
     const updatedColumns = batchData.map(update => {
       try {
-        // Extract column letters from range like "Labour_FMS!AE5" → "AE"
         const rangeParts = update.range.split('!');
         if (rangeParts.length < 2) return 'unknown';
-        
-        const colRowPart = rangeParts[1]; // e.g., "AE5"
-        // Get leading alphabetic characters only
+        const colRowPart = rangeParts[1];
         const colMatch = colRowPart.match(/^[A-Z]+/);
         return colMatch ? colMatch[0] : 'unknown';
       } catch (e) {
@@ -522,7 +754,6 @@ router.post('/Post-labour-management', async (req, res) => {
       }
     });
 
-    // Return successful response
     return res.json({
       success: true,
       message: 'Labour_FMS payment/management fields updated successfully',
@@ -535,7 +766,7 @@ router.post('/Post-labour-management', async (req, res) => {
     console.error('=== BACKEND ERROR ===');
     console.error('Error details:', error);
     console.error('Stack trace:', error.stack);
-    
+
     return res.status(500).json({
       success: false,
       message: 'Update failed - see server logs for details',
@@ -543,12 +774,6 @@ router.post('/Post-labour-management', async (req, res) => {
     });
   }
 });
-
-
-
-
-///////   Approvel labour ashok pandey sir 
-
 
 
 router.get('/get-Approvel-ashokSir', async (req, res) => {

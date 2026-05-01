@@ -1,27 +1,26 @@
 
-
-
 // import React, { useState, useEffect, useRef, useMemo } from 'react';
 // import {
 //   Loader2, RefreshCw, Search, Filter, X, FileText,
 //   Building, HardHat, Hash, ChevronDown, ChevronUp,
 //   Users, Wrench, User, Clock, Check, CheckSquare,
 //   Square, ListChecks, CircleDollarSign, Receipt,
-//   AlertCircle
+//   AlertCircle, BadgeCheck
 // } from 'lucide-react';
 
 // // ─── Redux imports — apne slice se replace karo ───────────────────────────────
 // // import { useGetPDFDataQuery, useGeneratePDFMutation } from '../../redux/Labour/LabourSlice';
 
-// // ─── Temporary fetch hooks (Redux wale hote to inhe hata do) ─────────────────
+// // const BASE_URL = 'https://purchase-project-3iia.vercel.app/api/labour/pdf'; // ← apna URL yahan daalo
 // const BASE_URL = 'http://localhost:5000/api/labour/pdf'; // ← apna URL yahan daalo
 
+// // ─── Temporary fetch hooks ─────────────────────────────────────────────────────
 // const useGetPDFDataQuery = () => {
 //   const [state, setState] = useState({ data: null, isLoading: true, isError: false, isFetching: false });
 //   const refetch = async () => {
 //     setState(s => ({ ...s, isFetching: true }));
 //     try {
-//       const res = await fetch(`${BASE_URL}/Get-PDF-Data`);
+//       const res  = await fetch(`${BASE_URL}/Get-PDF-Data`);
 //       const json = await res.json();
 //       setState({ data: json.success ? json.data : null, isLoading: false, isError: !json.success, isFetching: false });
 //     } catch {
@@ -37,7 +36,7 @@
 //   const mutate = async (payload) => {
 //     setIsLoading(true);
 //     try {
-//       const res = await fetch(`${BASE_URL}/Generate-PDF`, {
+//       const res  = await fetch(`${BASE_URL}/Generate-PDF`, {
 //         method: 'POST',
 //         headers: { 'Content-Type': 'application/json' },
 //         body: JSON.stringify(payload),
@@ -61,8 +60,8 @@
 
 // // ─── Searchable Dropdown ───────────────────────────────────────────────────────
 // const SearchableDropdown = ({ label, icon: Icon, options = [], value, onChange, placeholder, color = 'amber' }) => {
-//   const [isOpen, setIsOpen] = useState(false);
-//   const [searchTerm, setSearchTerm] = useState('');
+//   const [isOpen, setIsOpen]     = useState(false);
+//   const [searchTerm, setSearch] = useState('');
 //   const ref = useRef(null);
 
 //   const palette = {
@@ -77,7 +76,7 @@
 //   );
 
 //   useEffect(() => {
-//     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) { setIsOpen(false); setSearchTerm(''); } };
+//     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) { setIsOpen(false); setSearch(''); } };
 //     document.addEventListener('mousedown', h);
 //     return () => document.removeEventListener('mousedown', h);
 //   }, []);
@@ -96,14 +95,14 @@
 //         {value ? (
 //           <span className={`text-sm font-medium truncate flex-1 ${palette.text}`}>{value}</span>
 //         ) : (
-//           <input value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setIsOpen(true); }}
+//           <input value={searchTerm} onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
 //             onClick={e => { e.stopPropagation(); setIsOpen(true); }}
 //             placeholder={placeholder}
 //             className="w-full bg-transparent outline-none text-sm text-gray-600 placeholder-gray-400" />
 //         )}
 //         <div className="flex items-center gap-1 flex-shrink-0">
 //           {value && (
-//             <button onClick={e => { e.stopPropagation(); onChange(''); setSearchTerm(''); }}
+//             <button onClick={e => { e.stopPropagation(); onChange(''); setSearch(''); }}
 //               className="p-0.5 hover:bg-white/60 rounded-full">
 //               <X className="w-3.5 h-3.5 text-gray-500" />
 //             </button>
@@ -118,18 +117,18 @@
 //             <div className="p-2 border-b border-gray-100">
 //               <div className="relative">
 //                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-//                 <input autoFocus value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+//                 <input autoFocus value={searchTerm} onChange={e => setSearch(e.target.value)}
 //                   placeholder="Search..." className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
 //               </div>
 //             </div>
 //           )}
 //           <div className="max-h-48 overflow-y-auto">
-//             <button onClick={() => { onChange(''); setIsOpen(false); setSearchTerm(''); }}
+//             <button onClick={() => { onChange(''); setIsOpen(false); setSearch(''); }}
 //               className={`w-full px-4 py-2.5 text-left text-sm ${!value ? palette.selected : 'hover:bg-gray-50 text-gray-400'}`}>
 //               -- Select --
 //             </button>
 //             {filtered.length > 0 ? filtered.map((opt, i) => (
-//               <button key={`${opt}-${i}`} onClick={() => { onChange(opt); setIsOpen(false); setSearchTerm(''); }}
+//               <button key={`${opt}-${i}`} onClick={() => { onChange(opt); setIsOpen(false); setSearch(''); }}
 //                 className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between transition-colors
 //                   ${value === opt ? palette.selected : `${palette.hover} text-gray-700`}`}>
 //                 <span className="truncate">{opt}</span>
@@ -145,19 +144,47 @@
 //   );
 // };
 
-// // ─── PDF Modal ──────────────────────────────────────────────────────────────────
+// // ─── PDF Modal ─────────────────────────────────────────────────────────────────
 // const PDFModal = ({ open, onClose, onConfirm, isLoading, selectedItems }) => {
-//   const [billNo, setBillNo]     = useState('');
-//   const [paidName, setPaidName] = useState('');
+//   const [paidName, setPaidName]   = useState('');
+//   const [billNo, setBillNo]       = useState('');
+//   const [billLoading, setBillLoad]= useState(false);
+//   const [billError, setBillError] = useState('');
+
+//   // Modal khulne par Bill No auto-fetch karo
+//   useEffect(() => {
+//     if (!open) return;
+//     setPaidName('');
+//     setBillNo('');
+//     setBillError('');
+
+//     const fetchBillNo = async () => {
+//       setBillLoad(true);
+//       try {
+//         const res  = await fetch(`${BASE_URL}/Get-Next-BillNo`);
+//         const json = await res.json();
+//         if (json.success) setBillNo(json.billNo);
+//         else setBillError('Bill No. generate nahi hua');
+//       } catch {
+//         setBillError('Server se Bill No. nahi mila');
+//       } finally {
+//         setBillLoad(false);
+//       }
+//     };
+//     fetchBillNo();
+//   }, [open]);
 
 //   if (!open) return null;
 
 //   const totalCompany    = selectedItems.reduce((s, r) => s + (parseFloat(String(r.Revised_Company_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 //   const totalContractor = selectedItems.reduce((s, r) => s + (parseFloat(String(r.Revised_Contractor_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
+//   const canSubmit = !isLoading && !billLoading && !!billNo && !!paidName && !billError;
+
 //   return (
 //     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
 //       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col">
+
 //         {/* Header */}
 //         <div className="p-5 border-b bg-gradient-to-r from-indigo-50 to-blue-50 rounded-t-2xl flex items-center justify-between">
 //           <div>
@@ -174,7 +201,8 @@
 //         </div>
 
 //         <div className="p-5 space-y-4">
-//           {/* UID Chips */}
+
+//           {/* UID chips + Totals */}
 //           <div className="bg-indigo-50 rounded-xl p-3 border border-indigo-100">
 //             <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2 flex items-center gap-1">
 //               <ListChecks className="w-3.5 h-3.5" /> Selected UIDs
@@ -198,13 +226,34 @@
 //             </div>
 //           </div>
 
-//           {/* Bill No */}
+//           {/* ✅ Bill No — auto generated, read only */}
 //           <div>
 //             <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
-//               <Hash className="w-4 h-4" /> Bill No. <span className="text-red-500">*</span>
+//               <Hash className="w-4 h-4" /> Bill No.
+//               <span className="ml-auto text-xs font-normal text-indigo-500 flex items-center gap-1">
+//                 <BadgeCheck className="w-3.5 h-3.5" /> Auto Generated
+//               </span>
 //             </label>
-//             <input value={billNo} onChange={e => setBillNo(e.target.value)} placeholder="Enter bill number"
-//               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm" />
+//             <div className={`w-full px-4 py-2.5 rounded-xl text-sm font-bold border-2 flex items-center justify-between
+//               ${billError ? 'border-red-300 bg-red-50 text-red-600' : 'border-indigo-200 bg-indigo-50 text-indigo-700'}`}>
+//               {billLoading ? (
+//                 <span className="flex items-center gap-2 text-gray-400 font-normal">
+//                   <Loader2 className="w-4 h-4 animate-spin" /> Generating...
+//                 </span>
+//               ) : billError ? (
+//                 <span className="text-red-500 font-normal text-xs">{billError}</span>
+//               ) : (
+//                 <>
+//                   <span className="tracking-wide">{billNo}</span>
+//                   <span className="text-xs font-normal text-indigo-400 flex items-center gap-1">
+//                     <BadgeCheck className="w-3.5 h-3.5 text-indigo-400" /> Unique
+//                   </span>
+//                 </>
+//               )}
+//             </div>
+//             <p className="text-xs text-gray-400 mt-1 ml-1">
+//               Bill number backend se auto-generate hota hai — duplicate nahi banega
+//             </p>
 //           </div>
 
 //           {/* Paid By */}
@@ -212,25 +261,76 @@
 //             <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
 //               <Receipt className="w-4 h-4" /> Paid By <span className="text-red-500">*</span>
 //             </label>
-//             <input value={paidName} onChange={e => setPaidName(e.target.value)} placeholder="Enter payer name"
+//             <input value={paidName} onChange={e => setPaidName(e.target.value)}
+//               placeholder="Enter payer name"
 //               className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm" />
 //           </div>
 
 //           <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
 //             <p className="text-xs text-blue-600">
-//               ℹ️ <strong>Note:</strong> PDF Google Drive pe upload hogi aur sheet mein status update ho jaayega.
+//               ℹ️ <strong>Note:</strong> PDF Google Drive pe upload hogi aur sheet mein{' '}
+//               <span className="font-semibold">{billNo || '...'}</span> ke saath status update ho jaayega.
 //             </p>
 //           </div>
 //         </div>
 
+//         {/* Footer */}
 //         <div className="p-4 border-t bg-gray-50 rounded-b-2xl flex gap-3 justify-end">
 //           <button onClick={onClose} className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 text-sm font-medium">
 //             Cancel
 //           </button>
-//           <button onClick={() => onConfirm(paidName, billNo)} disabled={isLoading || !paidName || !billNo}
+//           <button onClick={() => onConfirm(paidName, billNo)} disabled={!canSubmit}
 //             className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow">
-//             {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" />Generating...</> : <><FileText className="w-4 h-4" />Generate PDF</>}
+//             {isLoading
+//               ? <><Loader2 className="w-4 h-4 animate-spin" />Generating...</>
+//               : <><FileText className="w-4 h-4" />Generate PDF</>
+//             }
 //           </button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// // ─── PDF Success Modal ─────────────────────────────────────────────────────────
+// const PDFSuccessModal = ({ open, billNo, pdfUrl, onClose }) => {
+//   if (!open) return null;
+//   return (
+//     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+//       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center p-8 text-center">
+//         {/* Success Icon */}
+//         <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-5">
+//           <svg className="w-10 h-10 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+//             <polyline points="20 6 9 17 4 12"/>
+//           </svg>
+//         </div>
+
+//         <h3 className="text-xl font-bold text-gray-800 mb-1">PDF Ready!</h3>
+//         <p className="text-sm text-gray-500 mb-2">Labour PDF successfully generate ho gayi</p>
+
+//         {/* Bill No Badge */}
+//         <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-xl mb-6">
+//           <BadgeCheck className="w-4 h-4 text-indigo-500" />
+//           <span className="text-sm font-bold text-indigo-700">{billNo}</span>
+//         </div>
+
+//         {/* Buttons */}
+//         <div className="flex gap-3 w-full">
+//           <button
+//             onClick={onClose}
+//             className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-medium text-sm transition-colors"
+//           >
+//             Cancel
+//           </button>
+//           <a
+//             href={pdfUrl}
+//             target="_blank"
+//             rel="noreferrer"
+//             onClick={onClose}
+//             className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow transition-all"
+//           >
+//             <FileText className="w-4 h-4" /> View PDF
+//           </a>
 //         </div>
 //       </div>
 //     </div>
@@ -248,11 +348,12 @@
 //   const [selectedItems,      setSelectedItems]      = useState([]);
 //   const [showModal,          setShowModal]          = useState(false);
 //   const [toast,              setToast]              = useState(null);
+//   const [pdfSuccess,         setPdfSuccess]         = useState(null);
 
-//   const data             = useMemo(() => (Array.isArray(apiData) ? apiData : []), [apiData]);
-//   const uniqueProjects   = useMemo(() => [...new Set(data.map(d => d.projectName).filter(Boolean))].sort(), [data]);
-//   const uniqueContractors= useMemo(() => [...new Set(data.map(d => d.Labouar_Contractor_Name_3).filter(Boolean))].sort(), [data]);
-//   const hasActiveFilters = searchTerm || selectedProject || selectedContractor;
+//   const data              = useMemo(() => (Array.isArray(apiData) ? apiData : []), [apiData]);
+//   const uniqueProjects    = useMemo(() => [...new Set(data.map(d => d.projectName).filter(Boolean))].sort(), [data]);
+//   const uniqueContractors = useMemo(() => [...new Set(data.map(d => d.Labouar_Contractor_Name_3).filter(Boolean))].sort(), [data]);
+//   const hasActiveFilters  = searchTerm || selectedProject || selectedContractor;
 
 //   const filteredData = useMemo(() => data.filter(item => {
 //     const s = searchTerm.toLowerCase();
@@ -262,47 +363,48 @@
 //   }), [data, searchTerm, selectedProject, selectedContractor]);
 
 //   const clearFilters = () => { setSearchTerm(''); setSelectedProject(''); setSelectedContractor(''); };
-//   const toggleItem = (item) => setSelectedItems(prev => prev.some(s => s.uid === item.uid) ? prev.filter(s => s.uid !== item.uid) : [...prev, item]);
-//   const toggleAll  = () => setSelectedItems(selectedItems.length === filteredData.length ? [] : [...filteredData]);
-//   const allSelected= filteredData.length > 0 && selectedItems.length === filteredData.length;
+//   const toggleItem   = (item) => setSelectedItems(prev => prev.some(s => s.uid === item.uid) ? prev.filter(s => s.uid !== item.uid) : [...prev, item]);
+//   const toggleAll    = () => setSelectedItems(selectedItems.length === filteredData.length ? [] : [...filteredData]);
+//   const allSelected  = filteredData.length > 0 && selectedItems.length === filteredData.length;
 
-//   const totalSelectedCompany    = selectedItems.reduce((s, r) => s + (parseFloat(String(r.Revised_Company_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
-//   const totalSelectedContractor = selectedItems.reduce((s, r) => s + (parseFloat(String(r.Revised_Contractor_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+//   const totalSelCompany    = selectedItems.reduce((s, r) => s + (parseFloat(String(r.Revised_Company_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
+//   const totalSelContractor = selectedItems.reduce((s, r) => s + (parseFloat(String(r.Revised_Contractor_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
+//   // ✅ Frontend se billNo nahi bhejte — backend generate karta hai
 //   const handleGenerate = async (paidName, billNo) => {
 //     try {
-//       const result = await generatePDF({ uids: selectedItems.map(i => i.uid), paidName, billNo });
-//       setToast({ type: 'success', msg: `✅ PDF ban gayi! ${result.updatedUids?.length || 0} records update ho gaye.`, url: result.pdfUrl });
+//       const result = await generatePDF({ uids: selectedItems.map(i => i.uid), paidName });
 //       setSelectedItems([]);
 //       setShowModal(false);
 //       refetch();
+//       // ✅ Success modal open karo
+//       setPdfSuccess({ billNo: result.billNo, pdfUrl: result.pdfUrl });
 //     } catch (e) {
 //       setToast({ type: 'error', msg: `❌ ${e.message || 'PDF generate nahi hui'}` });
 //     }
 //   };
 
 //   useEffect(() => {
-//     if (toast) { const t = setTimeout(() => setToast(null), 6000); return () => clearTimeout(t); }
+//     if (toast) { const t = setTimeout(() => setToast(null), 7000); return () => clearTimeout(t); }
 //   }, [toast]);
 
-//   // Table columns — same fields as PaidAmount
 //   const columns = [
-//       { key: 'planned5',                         label: 'Planned Date',      icon: Clock                           },
-//     { key: 'uid',                              label: 'UID No.',           icon: Hash,              isUid: true   },
-//     { key: 'projectName',                      label: 'Project Name',      icon: Building                        },
-//     { key: 'projectEngineer',                  label: 'Engineer',          icon: User                            },
-//     { key: 'workType',                         label: 'Work Type',         icon: Wrench                          },
-//     { key: 'workDescription',                  label: 'Work Description',  icon: FileText                        },
-//     { key: 'Labouar_Contractor_Name_3',        label: 'Contractor',        icon: HardHat                         },
-//     { key: 'Labour_Category_1_3',              label: 'Cat 1',             icon: Users                           },
-//     { key: 'Number_Of_Labour_1_3',             label: 'Labour No.1',       icon: Users,             isNum: true   },
-//     { key: 'Labour_Category_2_3',              label: 'Cat 2',             icon: Users                           },
-//     { key: 'Number_Of_Labour_2_3',             label: 'Labour No.2',       icon: Users,             isNum: true   },
-//     { key: 'totalLabour',                      label: 'Total Labour',      icon: Users,             isNum: true   },
-//     { key: 'Deployed_Category_1_Labour_No_4',  label: 'Deployed Cat1',     icon: Users,             isNum: true   },
-//     { key: 'Deployed_Category_2_Labour_No_4',  label: 'Deployed Cat2',     icon: Users,             isNum: true   },
-//     { key: 'Revised_Company_Head_Amount_4',    label: 'Company Head Amt',  icon: CircleDollarSign,  isAmt: true, amtColor: 'text-purple-700'  },
-//     { key: 'Revised_Contractor_Head_Amount_4', label: 'Contractor Amt',    icon: CircleDollarSign,  isAmt: true, amtColor: 'text-green-700'   },
+//       { key: 'planned5',                         label: 'Planned Date',     icon: Clock                          },
+//     { key: 'uid',                              label: 'UID No.',          icon: Hash,              isUid: true  },
+//     { key: 'projectName',                      label: 'Project Name',     icon: Building                       },
+//     { key: 'projectEngineer',                  label: 'Engineer',         icon: User                           },
+//     { key: 'workType',                         label: 'Work Type',        icon: Wrench                         },
+//     { key: 'workDescription',                  label: 'Work Description', icon: FileText                       },
+//     { key: 'Labouar_Contractor_Name_3',        label: 'Contractor',       icon: HardHat                        },
+//     { key: 'Labour_Category_1_3',              label: 'Cat 1',            icon: Users                          },
+//     { key: 'Number_Of_Labour_1_3',             label: 'Labour No.1',      icon: Users,             isNum: true  },
+//     { key: 'Labour_Category_2_3',              label: 'Cat 2',            icon: Users                          },
+//     { key: 'Number_Of_Labour_2_3',             label: 'Labour No.2',      icon: Users,             isNum: true  },
+//     { key: 'totalLabour',                      label: 'Total Labour',     icon: Users,             isNum: true  },
+//     { key: 'Deployed_Category_1_Labour_No_4',  label: 'Deployed Cat1',    icon: Users,             isNum: true  },
+//     { key: 'Deployed_Category_2_Labour_No_4',  label: 'Deployed Cat2',    icon: Users,             isNum: true  },
+//     { key: 'Revised_Company_Head_Amount_4',    label: 'Company Head Amt', icon: CircleDollarSign,  isAmt: true, amtColor: 'text-purple-700' },
+//     { key: 'Revised_Contractor_Head_Amount_4', label: 'Contractor Amt',   icon: CircleDollarSign,  isAmt: true, amtColor: 'text-green-700'  },
 //   ];
 
 //   if (isLoading) return (
@@ -338,7 +440,7 @@
 //         </div>
 //       )}
 
-//       {/* Page Header */}
+//       {/* Header */}
 //       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 //         <div>
 //           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -352,7 +454,7 @@
 //         </button>
 //       </div>
 
-//       {/* Sticky Selected Banner */}
+//       {/* Sticky Selection Banner */}
 //       {selectedItems.length > 0 && (
 //         <div className="sticky top-0 z-20 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-xl p-4 text-white shadow-lg">
 //           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -362,10 +464,10 @@
 //               </div>
 //               <div className="flex gap-2 flex-wrap">
 //                 <span className="bg-white/20 px-3 py-1 rounded-lg text-xs font-medium">
-//                   🏢 Company: ₹{formatAmount(totalSelectedCompany)}
+//                   🏢 Company: ₹{formatAmount(totalSelCompany)}
 //                 </span>
 //                 <span className="bg-white/20 px-3 py-1 rounded-lg text-xs font-medium">
-//                   👷 Contractor: ₹{formatAmount(totalSelectedContractor)}
+//                   👷 Contractor: ₹{formatAmount(totalSelContractor)}
 //                 </span>
 //               </div>
 //             </div>
@@ -390,14 +492,12 @@
 //             <Filter className="w-4 h-4 text-amber-500" /> Filters
 //           </h3>
 //           {hasActiveFilters && (
-//             <button onClick={clearFilters} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+//             <button onClick={clearFilters} className="text-sm text-indigo-600 font-medium flex items-center gap-1">
 //               <X className="w-4 h-4" /> Clear All
 //             </button>
 //           )}
 //         </div>
-
 //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//           {/* Search */}
 //           <div>
 //             <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
 //               <Search className="w-4 h-4" /> Search
@@ -414,17 +514,14 @@
 //               )}
 //             </div>
 //           </div>
-
 //           <SearchableDropdown label="Project Name" icon={Building} options={uniqueProjects}
 //             value={selectedProject} onChange={setSelectedProject}
 //             placeholder="Search & select project..." color="purple" />
-
 //           <SearchableDropdown label="Labour Contractor" icon={HardHat} options={uniqueContractors}
 //             value={selectedContractor} onChange={setSelectedContractor}
 //             placeholder="Search & select contractor..." color="green" />
 //         </div>
 
-//         {/* Active pills */}
 //         {hasActiveFilters && (
 //           <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 items-center">
 //             <span className="text-xs text-gray-400">Active:</span>
@@ -447,7 +544,7 @@
 //         )}
 //       </div>
 
-//       {/* Count + Select All row */}
+//       {/* Count + Select All */}
 //       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 //         <div className="flex items-center gap-3">
 //           <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-gray-200 text-sm">
@@ -467,7 +564,7 @@
 //         </button>
 //       </div>
 
-//       {/* ─── Table ─────────────────────────────────────────────────────────────── */}
+//       {/* Table */}
 //       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
 //         {filteredData.length === 0 ? (
 //           <div className="py-16 text-center">
@@ -485,7 +582,6 @@
 //             <table className="w-full text-sm border-collapse">
 //               <thead>
 //                 <tr className="bg-[#1a3c6e]">
-//                   {/* Checkbox TH */}
 //                   <th className="px-4 py-3.5 w-12 sticky left-0 z-10 bg-[#1a3c6e]">
 //                     <div onClick={toggleAll}
 //                       className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer mx-auto transition-all
@@ -504,7 +600,6 @@
 //                   ))}
 //                 </tr>
 //               </thead>
-
 //               <tbody>
 //                 {filteredData.map((row, i) => {
 //                   const isSel = selectedItems.some(s => s.uid === row.uid);
@@ -512,16 +607,13 @@
 //                     <tr key={row.uid || i} onClick={() => toggleItem(row)}
 //                       className={`border-b border-gray-100 cursor-pointer transition-colors
 //                         ${isSel ? 'bg-indigo-50' : i % 2 === 0 ? 'bg-white hover:bg-indigo-50/40' : 'bg-gray-50/60 hover:bg-indigo-50/40'}`}>
-//                       {/* Checkbox TD */}
 //                       <td className="px-4 py-3 sticky left-0 z-10" style={{ background: 'inherit' }}>
 //                         <div className={`w-5 h-5 rounded border-2 flex items-center justify-center mx-auto transition-all
 //                           ${isSel ? 'bg-indigo-500 border-indigo-500' : 'border-gray-300 hover:border-indigo-400'}`}>
 //                           {isSel && <Check className="w-3 h-3 text-white" />}
 //                         </div>
 //                       </td>
-//                       {/* Sr No */}
 //                       <td className="px-3 py-3 text-center text-gray-400 text-xs font-medium">{i + 1}</td>
-//                       {/* Data cells */}
 //                       {columns.map(col => (
 //                         <td key={col.key} className="px-3 py-3 whitespace-nowrap">
 //                           {col.isUid ? (
@@ -549,19 +641,15 @@
 //                 })}
 //               </tbody>
 
-//               {/* Totals footer */}
+//               {/* Totals Footer */}
 //               {selectedItems.length > 0 && (
 //                 <tfoot>
 //                   <tr className="bg-indigo-600 text-white text-xs font-bold">
 //                     <td colSpan={2 + columns.length - 2} className="px-4 py-3 text-right tracking-wide">
 //                       {selectedItems.length} records selected — Total:
 //                     </td>
-//                     <td className="px-3 py-3 text-purple-200 whitespace-nowrap">
-//                       ₹{formatAmount(totalSelectedCompany)}
-//                     </td>
-//                     <td className="px-3 py-3 text-green-200 whitespace-nowrap">
-//                       ₹{formatAmount(totalSelectedContractor)}
-//                     </td>
+//                     <td className="px-3 py-3 text-purple-200 whitespace-nowrap">₹{formatAmount(totalSelCompany)}</td>
+//                     <td className="px-3 py-3 text-green-200 whitespace-nowrap">₹{formatAmount(totalSelContractor)}</td>
 //                   </tr>
 //                 </tfoot>
 //               )}
@@ -580,8 +668,21 @@
 //       </div>
 
 //       {/* Modal */}
-//       <PDFModal open={showModal} onClose={() => setShowModal(false)}
-//         onConfirm={handleGenerate} isLoading={isPDFLoading} selectedItems={selectedItems} />
+//       <PDFModal
+//         open={showModal}
+//         onClose={() => setShowModal(false)}
+//         onConfirm={handleGenerate}
+//         isLoading={isPDFLoading}
+//         selectedItems={selectedItems}
+//       />
+
+//       {/* ✅ PDF Success Modal */}
+//       <PDFSuccessModal
+//         open={!!pdfSuccess}
+//         billNo={pdfSuccess?.billNo}
+//         pdfUrl={pdfSuccess?.pdfUrl}
+//         onClose={() => setPdfSuccess(null)}
+//       />
 //     </div>
 //   );
 // };
@@ -591,7 +692,6 @@
 
 
 
-/////// 
 
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -603,13 +703,10 @@ import {
   AlertCircle, BadgeCheck
 } from 'lucide-react';
 
-// ─── Redux imports — apne slice se replace karo ───────────────────────────────
-// import { useGetPDFDataQuery, useGeneratePDFMutation } from '../../redux/Labour/LabourSlice';
-
 const BASE_URL = 'https://purchase-project-3iia.vercel.app/api/labour/pdf'; // ← apna URL yahan daalo
-// const BASE_URL = 'http://localhost:5000/api/labour/pdf'; // ← apna URL yahan daalo
 
-// ─── Temporary fetch hooks ─────────────────────────────────────────────────────
+// const BASE_URL = 'http://localhost:5000/api/labour/pdf';
+
 const useGetPDFDataQuery = () => {
   const [state, setState] = useState({ data: null, isLoading: true, isError: false, isFetching: false });
   const refetch = async () => {
@@ -645,7 +742,6 @@ const useGeneratePDFMutation = () => {
   return [mutate, { isLoading }];
 };
 
-// ─── Format Amount ─────────────────────────────────────────────────────────────
 const formatAmount = (value) => {
   if (value == null || value === '') return '0';
   const num = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
@@ -653,7 +749,6 @@ const formatAmount = (value) => {
   return num.toLocaleString('en-IN', { maximumFractionDigits: 0 });
 };
 
-// ─── Searchable Dropdown ───────────────────────────────────────────────────────
 const SearchableDropdown = ({ label, icon: Icon, options = [], value, onChange, placeholder, color = 'amber' }) => {
   const [isOpen, setIsOpen]     = useState(false);
   const [searchTerm, setSearch] = useState('');
@@ -739,14 +834,12 @@ const SearchableDropdown = ({ label, icon: Icon, options = [], value, onChange, 
   );
 };
 
-// ─── PDF Modal ─────────────────────────────────────────────────────────────────
 const PDFModal = ({ open, onClose, onConfirm, isLoading, selectedItems }) => {
   const [paidName, setPaidName]   = useState('');
   const [billNo, setBillNo]       = useState('');
   const [billLoading, setBillLoad]= useState(false);
   const [billError, setBillError] = useState('');
 
-  // Modal khulne par Bill No auto-fetch karo
   useEffect(() => {
     if (!open) return;
     setPaidName('');
@@ -779,8 +872,6 @@ const PDFModal = ({ open, onClose, onConfirm, isLoading, selectedItems }) => {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col">
-
-        {/* Header */}
         <div className="p-5 border-b bg-gradient-to-r from-indigo-50 to-blue-50 rounded-t-2xl flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -796,8 +887,6 @@ const PDFModal = ({ open, onClose, onConfirm, isLoading, selectedItems }) => {
         </div>
 
         <div className="p-5 space-y-4">
-
-          {/* UID chips + Totals */}
           <div className="bg-indigo-50 rounded-xl p-3 border border-indigo-100">
             <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2 flex items-center gap-1">
               <ListChecks className="w-3.5 h-3.5" /> Selected UIDs
@@ -821,7 +910,6 @@ const PDFModal = ({ open, onClose, onConfirm, isLoading, selectedItems }) => {
             </div>
           </div>
 
-          {/* ✅ Bill No — auto generated, read only */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
               <Hash className="w-4 h-4" /> Bill No.
@@ -851,7 +939,6 @@ const PDFModal = ({ open, onClose, onConfirm, isLoading, selectedItems }) => {
             </p>
           </div>
 
-          {/* Paid By */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
               <Receipt className="w-4 h-4" /> Paid By <span className="text-red-500">*</span>
@@ -869,7 +956,6 @@ const PDFModal = ({ open, onClose, onConfirm, isLoading, selectedItems }) => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="p-4 border-t bg-gray-50 rounded-b-2xl flex gap-3 justify-end">
           <button onClick={onClose} className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 text-sm font-medium">
             Cancel
@@ -887,43 +973,29 @@ const PDFModal = ({ open, onClose, onConfirm, isLoading, selectedItems }) => {
   );
 };
 
-// ─── PDF Success Modal ─────────────────────────────────────────────────────────
 const PDFSuccessModal = ({ open, billNo, pdfUrl, onClose }) => {
   if (!open) return null;
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center p-8 text-center">
-        {/* Success Icon */}
         <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-5">
           <svg className="w-10 h-10 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
         </div>
-
         <h3 className="text-xl font-bold text-gray-800 mb-1">PDF Ready!</h3>
         <p className="text-sm text-gray-500 mb-2">Labour PDF successfully generate ho gayi</p>
-
-        {/* Bill No Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-xl mb-6">
           <BadgeCheck className="w-4 h-4 text-indigo-500" />
           <span className="text-sm font-bold text-indigo-700">{billNo}</span>
         </div>
-
-        {/* Buttons */}
         <div className="flex gap-3 w-full">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-medium text-sm transition-colors"
-          >
+          <button onClick={onClose}
+            className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-medium text-sm transition-colors">
             Cancel
           </button>
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noreferrer"
-            onClick={onClose}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow transition-all"
-          >
+          <a href={pdfUrl} target="_blank" rel="noreferrer" onClick={onClose}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow transition-all">
             <FileText className="w-4 h-4" /> View PDF
           </a>
         </div>
@@ -937,27 +1009,35 @@ const LabourPDF = () => {
   const { data: apiData, isLoading, isError, isFetching, refetch } = useGetPDFDataQuery();
   const [generatePDF, { isLoading: isPDFLoading }] = useGeneratePDFMutation();
 
-  const [searchTerm,         setSearchTerm]         = useState('');
-  const [selectedProject,    setSelectedProject]    = useState('');
-  const [selectedContractor, setSelectedContractor] = useState('');
-  const [selectedItems,      setSelectedItems]      = useState([]);
-  const [showModal,          setShowModal]          = useState(false);
-  const [toast,              setToast]              = useState(null);
-  const [pdfSuccess,         setPdfSuccess]         = useState(null);
+  const [searchTerm,      setSearchTerm]      = useState('');
+  const [selectedProject, setSelectedProject] = useState('');  // ✅ contractor state hata diya
+  const [selectedItems,   setSelectedItems]   = useState([]);
+  const [showModal,       setShowModal]       = useState(false);
+  const [toast,           setToast]           = useState(null);
+  const [pdfSuccess,      setPdfSuccess]      = useState(null);
 
-  const data              = useMemo(() => (Array.isArray(apiData) ? apiData : []), [apiData]);
-  const uniqueProjects    = useMemo(() => [...new Set(data.map(d => d.projectName).filter(Boolean))].sort(), [data]);
-  const uniqueContractors = useMemo(() => [...new Set(data.map(d => d.Labouar_Contractor_Name_3).filter(Boolean))].sort(), [data]);
-  const hasActiveFilters  = searchTerm || selectedProject || selectedContractor;
+  const data           = useMemo(() => (Array.isArray(apiData) ? apiData : []), [apiData]);
+  const uniqueProjects = useMemo(() => [...new Set(data.map(d => d.projectName).filter(Boolean))].sort(), [data]);
+
+  // ✅ contractor filter hata diya — sirf search + project
+  const hasActiveFilters = searchTerm || selectedProject;
 
   const filteredData = useMemo(() => data.filter(item => {
     const s = searchTerm.toLowerCase();
-    const matchSearch = !s || [item.uid, item.projectName, item.Labouar_Contractor_Name_3, item.projectEngineer, item.workDescription, item.workType]
-      .some(v => (v || '').toLowerCase().includes(s));
-    return matchSearch && (!selectedProject || item.projectName === selectedProject) && (!selectedContractor || item.Labouar_Contractor_Name_3 === selectedContractor);
-  }), [data, searchTerm, selectedProject, selectedContractor]);
+    const matchSearch = !s || [
+      item.uid,
+      item.projectName,
+      item.Labouar_Contractor_Name_3,
+      item.projectEngineer,
+      item.workDescription,
+      item.workType
+    ].some(v => (v || '').toLowerCase().includes(s));
 
-  const clearFilters = () => { setSearchTerm(''); setSelectedProject(''); setSelectedContractor(''); };
+    // ✅ sirf search + project filter — contractor filter nahi
+    return matchSearch && (!selectedProject || item.projectName === selectedProject);
+  }), [data, searchTerm, selectedProject]);
+
+  const clearFilters = () => { setSearchTerm(''); setSelectedProject(''); };
   const toggleItem   = (item) => setSelectedItems(prev => prev.some(s => s.uid === item.uid) ? prev.filter(s => s.uid !== item.uid) : [...prev, item]);
   const toggleAll    = () => setSelectedItems(selectedItems.length === filteredData.length ? [] : [...filteredData]);
   const allSelected  = filteredData.length > 0 && selectedItems.length === filteredData.length;
@@ -965,14 +1045,12 @@ const LabourPDF = () => {
   const totalSelCompany    = selectedItems.reduce((s, r) => s + (parseFloat(String(r.Revised_Company_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
   const totalSelContractor = selectedItems.reduce((s, r) => s + (parseFloat(String(r.Revised_Contractor_Head_Amount_4 || '0').replace(/[^0-9.-]/g, '')) || 0), 0);
 
-  // ✅ Frontend se billNo nahi bhejte — backend generate karta hai
   const handleGenerate = async (paidName, billNo) => {
     try {
       const result = await generatePDF({ uids: selectedItems.map(i => i.uid), paidName });
       setSelectedItems([]);
       setShowModal(false);
       refetch();
-      // ✅ Success modal open karo
       setPdfSuccess({ billNo: result.billNo, pdfUrl: result.pdfUrl });
     } catch (e) {
       setToast({ type: 'error', msg: `❌ ${e.message || 'PDF generate nahi hui'}` });
@@ -984,7 +1062,7 @@ const LabourPDF = () => {
   }, [toast]);
 
   const columns = [
-      { key: 'planned5',                         label: 'Planned Date',     icon: Clock                          },
+    { key: 'planned5',                         label: 'Planned Date',     icon: Clock                          },
     { key: 'uid',                              label: 'UID No.',          icon: Hash,              isUid: true  },
     { key: 'projectName',                      label: 'Project Name',     icon: Building                       },
     { key: 'projectEngineer',                  label: 'Engineer',         icon: User                           },
@@ -1080,7 +1158,7 @@ const LabourPDF = () => {
         </div>
       )}
 
-      {/* Filters */}
+      {/* ✅ Filters — sirf Search + Project (Contractor hata diya) */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-gray-700 flex items-center gap-2">
@@ -1092,7 +1170,9 @@ const LabourPDF = () => {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        {/* ✅ grid-cols-2 — sirf 2 filters ab */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <Search className="w-4 h-4" /> Search
@@ -1109,14 +1189,20 @@ const LabourPDF = () => {
               )}
             </div>
           </div>
-          <SearchableDropdown label="Project Name" icon={Building} options={uniqueProjects}
-            value={selectedProject} onChange={setSelectedProject}
-            placeholder="Search & select project..." color="purple" />
-          <SearchableDropdown label="Labour Contractor" icon={HardHat} options={uniqueContractors}
-            value={selectedContractor} onChange={setSelectedContractor}
-            placeholder="Search & select contractor..." color="green" />
+
+          {/* ✅ Sirf Project filter raha */}
+          <SearchableDropdown
+            label="Project Name"
+            icon={Building}
+            options={uniqueProjects}
+            value={selectedProject}
+            onChange={setSelectedProject}
+            placeholder="Search & select project..."
+            color="purple"
+          />
         </div>
 
+        {/* Active filter chips */}
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100 items-center">
             <span className="text-xs text-gray-400">Active:</span>
@@ -1127,12 +1213,8 @@ const LabourPDF = () => {
             )}
             {selectedProject && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                <Building className="w-3 h-3" />{selectedProject} <button onClick={() => setSelectedProject('')}><X className="w-3 h-3" /></button>
-              </span>
-            )}
-            {selectedContractor && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                <HardHat className="w-3 h-3" />{selectedContractor} <button onClick={() => setSelectedContractor('')}><X className="w-3 h-3" /></button>
+                <Building className="w-3 h-3" />{selectedProject}
+                <button onClick={() => setSelectedProject('')}><X className="w-3 h-3" /></button>
               </span>
             )}
           </div>
@@ -1236,7 +1318,6 @@ const LabourPDF = () => {
                 })}
               </tbody>
 
-              {/* Totals Footer */}
               {selectedItems.length > 0 && (
                 <tfoot>
                   <tr className="bg-indigo-600 text-white text-xs font-bold">
@@ -1262,7 +1343,6 @@ const LabourPDF = () => {
         <p className="text-xs text-gray-400">Row click karke select karein · Filters se narrow down karein</p>
       </div>
 
-      {/* Modal */}
       <PDFModal
         open={showModal}
         onClose={() => setShowModal(false)}
@@ -1271,7 +1351,6 @@ const LabourPDF = () => {
         selectedItems={selectedItems}
       />
 
-      {/* ✅ PDF Success Modal */}
       <PDFSuccessModal
         open={!!pdfSuccess}
         billNo={pdfSuccess?.billNo}
