@@ -363,193 +363,6 @@ router.get('/get-Labour-management', async (req, res) => {
 
 
 
-// router.post('/Post-labour-management', async (req, res) => {
-//   try {
-//     const {
-//       uid,
-//       Status_3,
-//       Labouar_Contractor_Name_3,
-//       Labour_Category_1_3,
-//       Number_Of_Labour_1_3,
-//       Labour_Rate_1_3,
-//       Labour_Category_2_3,
-//       Number_Of_Labour_2_3,
-//       Labour_Rate_2_3,
-//       Total_Wages_3,
-//       Conveyanance_3,
-//       Total_Paid_Amount_3,
-//       Company_Head_Amount_3,
-//       Contractor_Head_Amount_3,
-//       Remark_3    } = req.body;
-
-//     // Validate required UID
-//     if (!uid) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'UID is required'
-//       });
-//     }
-
-//     // Get data from spreadsheet
-//     const response = await sheets.spreadsheets.values.get({
-//       spreadsheetId: SiteExpeseSheetId,
-//       range: 'Labour_FMS!A7:AS',
-//     });
-
-//     const rows = response.data.values || [];
-//     if (rows.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'No data found in Labour_FMS sheet'
-//       });
-//     }
-
-//     // Find matching UID row (column B = index 1)
-//     const rowIndex = rows.findIndex(row => 
-//       row[1] && String(row[1]).trim() === String(uid).trim()
-//     );
-
-//     if (rowIndex === -1) {
-//       return res.status(404).json({
-//         success: false,
-//         message: `UID not found: ${uid}`
-//       });
-//     }
-
-//     const sheetRowNumber = 7 + rowIndex; // Convert to 1-based sheet row    // Prepare batch update data (columns AE to AS)
-//     const batchData = [];
-
-//     // Helper to safely add non-empty values
-//     const addIfValid = (colLetter, value) => {
-//       if (value !== undefined && value !== null && String(value).trim() !== '') {
-//         batchData.push({ 
-//           range: `Labour_FMS!${colLetter}${sheetRowNumber}`, 
-//           values: [[value]] 
-//         });
-//       }
-//     };
-
-//     // Add fields with proper validation
-//     if (Status_3 !== undefined && String(Status_3).trim() !== '') {
-//       addIfValid('AE', Status_3);
-//     }
-    
-//     if (Labouar_Contractor_Name_3 !== undefined && String(Labouar_Contractor_Name_3).trim() !== '') {
-//       addIfValid('AG', Labouar_Contractor_Name_3);
-//     }
-    
-//     if (Labour_Category_1_3 !== undefined && String(Labour_Category_1_3).trim() !== '') {
-//       addIfValid('AH', Labour_Category_1_3);
-//     }
-//         if (Number_Of_Labour_1_3 !== undefined && !isNaN(Number_Of_Labour_1_3)) {
-//       addIfValid('AI', Number_Of_Labour_1_3);
-//     }
-    
-//     if (Labour_Rate_1_3 !== undefined && !isNaN(Labour_Rate_1_3)) {
-//       addIfValid('AJ', Labour_Rate_1_3);
-//     }
-    
-//     if (Labour_Category_2_3 !== undefined && String(Labour_Category_2_3).trim() !== '') {
-//       addIfValid('AK', Labour_Category_2_3);
-//     }
-    
-//     if (Number_Of_Labour_2_3 !== undefined && !isNaN(Number_Of_Labour_2_3)) {
-//       addIfValid('AL', Number_Of_Labour_2_3);
-//     }
-    
-//     if (Labour_Rate_2_3 !== undefined && !isNaN(Labour_Rate_2_3)) {
-//       addIfValid('AM', Labour_Rate_2_3);
-//     }
-    
-//     if (Total_Wages_3 !== undefined && !isNaN(Total_Wages_3)) {
-//       addIfValid('AN', Total_Wages_3);
-//     }
-    
-//     if (Conveyanance_3 !== undefined && !isNaN(Conveyanance_3)) {
-//       addIfValid('AO', Conveyanance_3);
-//     }
-    
-//     if (Total_Paid_Amount_3 !== undefined && !isNaN(Total_Paid_Amount_3)) {
-//       addIfValid('AP', Total_Paid_Amount_3);
-//     }
-    
-//     if (Company_Head_Amount_3 !== undefined && !isNaN(Company_Head_Amount_3)) {
-//       addIfValid('AQ', Company_Head_Amount_3);
-//     }
-    
-//     if (Contractor_Head_Amount_3 !== undefined && !isNaN(Contractor_Head_Amount_3)) {
-//       addIfValid('AR', Contractor_Head_Amount_3);
-//     }
-    
-//     if (Remark_3 !== undefined && String(Remark_3).trim() !== '') {
-//       addIfValid('AS', Remark_3);
-//     }
-
-//     // Handle case with no valid updates
-//     if (batchData.length === 0) {
-//       return res.json({
-//         success: true,
-//         message: 'No valid/non-empty fields to update',
-//         rowNumber: sheetRowNumber,
-//         updatedColumns: [],
-//         updatedCount: 0
-//       });
-//     }
-
-//     // Execute batch update
-//     await sheets.spreadsheets.values.batchUpdate({
-//       spreadsheetId: SiteExpeseSheetId,
-//       resource: {
-//         valueInputOption: 'USER_ENTERED',
-//         data: batchData,
-//       },
-//     });
-
-//     // SAFE column extraction (no regex risks)
-//     const updatedColumns = batchData.map(update => {
-//       try {
-//         // Extract column letters from range like "Labour_FMS!AE5" → "AE"
-//         const rangeParts = update.range.split('!');
-//         if (rangeParts.length < 2) return 'unknown';
-        
-//         const colRowPart = rangeParts[1]; // e.g., "AE5"
-//         // Get leading alphabetic characters only
-//         const colMatch = colRowPart.match(/^[A-Z]+/);
-//         return colMatch ? colMatch[0] : 'unknown';
-//       } catch (e) {
-//         console.error('Column extraction error:', e, update.range);
-//         return 'error';
-//       }
-//     });
-
-//     // Return successful response
-//     return res.json({
-//       success: true,
-//       message: 'Labour_FMS payment/management fields updated successfully',
-//       rowNumber: sheetRowNumber,
-//       updatedColumns: updatedColumns,
-//       updatedCount: batchData.length
-//     });
-
-//   } catch (error) {
-//     console.error('=== BACKEND ERROR ===');
-//     console.error('Error details:', error);
-//     console.error('Stack trace:', error.stack);
-    
-//     return res.status(500).json({
-//       success: false,
-//       message: 'Update failed - see server logs for details',
-//       error: error.message || 'Unknown error'
-//     });
-//   }
-// });
-
-
-
-
-///////   Approvel labour ashok pandey sir 
-
-
 
 router.post('/Post-labour-management', async (req, res) => {
   try {
@@ -791,8 +604,8 @@ router.get('/get-Approvel-ashokSir', async (req, res) => {
       .filter(row => {
         if (row.length < 18) return false; // need up to R (index 17)
 
-        const planned4 = (row[48] || '').toString().trim(); // Planned_2 → Q
-        const actual4  = (row[49] || '').toString().trim(); // Actual_2  → R
+        const planned4 = (row[49] || '').toString().trim(); // Planned_2 → Q
+        const actual4  = (row[50] || '').toString().trim(); // Actual_2  → R
 
         return planned4 !== '' && actual4 === '';
       })
@@ -831,8 +644,8 @@ router.get('/get-Approvel-ashokSir', async (req, res) => {
         
         // blanks at 16–19 (P–S) are skipped in object
 
-        planned4:                row[48] || '',   // U
-        actual4:                 row[49] || '',  
+        planned4:                row[49] || '',   // U
+        actual4:                 row[50] || '',  
       }));
 
     res.json({
@@ -1026,8 +839,8 @@ router.get('/get-paid-step', async (req, res) => {
       .filter(row => {
         if (row.length < 18) return false; // need up to R (index 17)
 
-        const planned3 = (row[62] || '').toString().trim(); // Planned_2 → Q
-        const actual3  = (row[63] || '').toString().trim(); // Actual_2  → R
+        const planned3 = (row[57] || '').toString().trim(); // Planned_2 → Q
+        const actual3  = (row[58] || '').toString().trim(); // Actual_2  → R
 
         return planned3 !== '' && actual3 === '';
       })
