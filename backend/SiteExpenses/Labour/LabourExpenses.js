@@ -828,7 +828,7 @@ router.get('/get-paid-step', async (req, res) => {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SiteExpeseSheetId,
-      range: 'Labour_FMS!A7:BL',   // starts from row 7 (data)
+      range: 'Labour_FMS!A7:BM',   // starts from row 7 (data)
     });
 
     const rows = response.data.values || [];
@@ -839,8 +839,8 @@ router.get('/get-paid-step', async (req, res) => {
       .filter(row => {
         if (row.length < 18) return false; // need up to R (index 17)
 
-        const planned3 = (row[57] || '').toString().trim(); // Planned_2 → Q
-        const actual3  = (row[58] || '').toString().trim(); // Actual_2  → R
+        const planned3 = (row[63] || '').toString().trim(); // Planned_2 → Q
+        const actual3  = (row[64] || '').toString().trim(); // Actual_2  → R
 
         return planned3 !== '' && actual3 === '';
       })
@@ -872,23 +872,23 @@ router.get('/get-paid-step', async (req, res) => {
         Labour_Rate_2_3:         row[38] || '',
         Total_Wages_3:         row[39] || '',
         Conveyanance_3:         row[40] || '',
-        Total_Paid_Amount_3:         row[41] || '',
+        Total_Paid_Amount_3:         row[42] || '',
         
   
-        Deployed_Category_1_Labour_No_4:	row[52] || '',
-        Deployed_Category_2_Labour_No_4:	row[53] || '',
-        Revised_Company_Head_Amount_4:   row[54] || '',
-        Revised_Contractor_Head_Amount_4:  row[55] || '',
+        Deployed_Category_1_Labour_No_4:	row[51] || '',
+        Deployed_Category_2_Labour_No_4:	row[52] || '',
+        Revised_Company_Head_Amount_4:   row[55] || '',
+        Revised_Contractor_Head_Amount_4:  row[56] || '',
 
 
-        Paid_Name: row[59] || '',
-        Bill_No: row[60] || '',
-        Bill_Url: row[61] || '',
+        Paid_Name: row[60] || '',
+        Bill_No: row[61] || '',
+        Bill_Url: row[62] || '',
 
 
         remark4:                  row[56] || '',
-        planned5:                row[62] || '',   // U
-        actua5:                 row[63] || '',  
+        planned5:                row[63] || '',   // U
+        actua5:                 row[64] || '',  
       }));
 
     res.json({
