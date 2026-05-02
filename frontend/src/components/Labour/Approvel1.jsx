@@ -1114,10 +1114,10 @@ const Approvel1 = () => {
                     Name of Contractor
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
-                    Contractor Firm
+                    Contractor Firm 
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">
-                    Remark
+                    Remark #
                   </th>
                   <th className="px-4 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap sticky right-0 bg-indigo-500">
                     Action
