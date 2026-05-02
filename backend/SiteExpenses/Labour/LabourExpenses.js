@@ -662,6 +662,161 @@ router.get('/get-Approvel-ashokSir', async (req, res) => {
   }
 });
 
+// router.post('/Post-labour-Approvel-AshokSir', async (req, res) => {
+//   const { 
+//     uid, 
+//     status, 
+//     Deployed_Category_1_Labour_No_4,
+//     Deployed_Category_2_Labour_No_4,
+//     Revised_Company_Head_Amount_4,
+//     Revised_Contractor_Head_Amount_4, 
+//     remark4 
+//   } = req.body;
+
+//   if (!uid) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'UID is required'
+//     });
+//   }
+
+//   // Require at least one field to update
+//   if (
+//     status === undefined && 
+//     Time_Delay_4 === undefined &&
+//     Deployed_Category_1_Labour_No_4 === undefined &&
+//     Deployed_Category_2_Labour_No_4 === undefined &&
+//     Revised_Company_Head_Amount_4 === undefined && 
+//     Revised_Contractor_Head_Amount_4 === undefined &&
+//     remark4 === undefined
+//   ) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'Provide at least one field to update'
+//     });
+//   }
+
+//   try {
+//     const response = await sheets.spreadsheets.values.get({
+//       spreadsheetId: SiteExpeseSheetId,
+//       range: 'Labour_FMS!A7:BE',
+//     });
+
+//     const rows = response.data.values || [];
+//     if (rows.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'No data found in sheet'
+//       });
+//     }
+
+//     const rowIndex = rows.findIndex(row =>
+//       row[1] && String(row[1]).trim() === String(uid).trim()
+//     );
+
+//     if (rowIndex === -1) {
+//       return res.status(404).json({
+//         success: false,
+//         message: `UID not found: ${uid}`
+//       });
+//     }
+
+//     const sheetRowNumber = 7 + rowIndex;
+
+//     console.log(`Found UID ${uid} at array index ${rowIndex} → sheet row ${sheetRowNumber}`);
+
+//     const batchData = [];
+
+//     // AY - Status_4
+//     if (status !== undefined && String(status).trim() !== '') {
+//       batchData.push({
+//         range: `Labour_FMS!AZ${sheetRowNumber}`,
+//         values: [[status]],
+//       });
+//     }
+
+
+
+//     // BA - Deployed_Category_1_Labour_No._4
+//     if (Deployed_Category_1_Labour_No_4 !== undefined && String(Deployed_Category_1_Labour_No_4).trim() !== '') {
+//       batchData.push({
+//         range: `Labour_FMS!BB${sheetRowNumber}`,
+//         values: [[Deployed_Category_1_Labour_No_4]],
+//       });
+//     }
+
+//     // BB - Deployed_Category_2_Labour_No._4
+//     if (Deployed_Category_2_Labour_No_4 !== undefined && String(Deployed_Category_2_Labour_No_4).trim() !== '') {
+//       batchData.push({
+//         range: `Labour_FMS!BC${sheetRowNumber}`,
+//         values: [[Deployed_Category_2_Labour_No_4]],
+//       });
+//     }
+
+//     // BC - Revised_Company_Head_Amount_4
+//     if (Revised_Company_Head_Amount_4 !== undefined && String(Revised_Company_Head_Amount_4).trim() !== '') {
+//       batchData.push({
+//         range: `Labour_FMS!BD${sheetRowNumber}`,
+//         values: [[Revised_Company_Head_Amount_4]],
+//       });
+//     }
+
+//     // BD - Revised_Contractor_Head_Amount_4
+//     if (Revised_Contractor_Head_Amount_4 !== undefined && String(Revised_Contractor_Head_Amount_4).trim() !== '') {
+//       batchData.push({
+//         range: `Labour_FMS!BE${sheetRowNumber}`,
+//         values: [[Revised_Contractor_Head_Amount_4]],
+//       });
+//     }
+
+//     // BE - Remark_4
+//     if (remark4 !== undefined && String(remark4).trim() !== '') {
+//       batchData.push({
+//         range: `Labour_FMS!BE${sheetRowNumber}`,
+//         values: [[remark4]],
+//       });
+//     }
+
+//     if (batchData.length === 0) {
+//       return res.json({
+//         success: true,
+//         message: 'No non-empty values to update'
+//       });
+//     }
+
+//     await sheets.spreadsheets.values.batchUpdate({
+//       spreadsheetId: SiteExpeseSheetId,
+//       resource: {
+//         valueInputOption: 'USER_ENTERED',
+//         data: batchData,
+//       },
+//     });
+
+//     return res.json({
+//       success: true,
+//       message: 'Row updated successfully',
+//       rowNumber: sheetRowNumber,
+//       updatedColumns: batchData.map(d => d.range.match(/!([A-Z]+)/)?.[1]),
+//     });
+
+//   } catch (error) {
+//     console.error('Update error:', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Update failed',
+//       error: error.message
+//     });
+//   }
+// });
+
+
+
+
+
+
+///////// Paid Amount step 6
+
+
 router.post('/Post-labour-Approvel-AshokSir', async (req, res) => {
   const { 
     uid, 
@@ -670,9 +825,10 @@ router.post('/Post-labour-Approvel-AshokSir', async (req, res) => {
     Deployed_Category_2_Labour_No_4,
     Revised_Company_Head_Amount_4,
     Revised_Contractor_Head_Amount_4, 
-    remark4 
+    // remark4 
   } = req.body;
 
+  // ✅ UID Check
   if (!uid) {
     return res.status(400).json({
       success: false,
@@ -680,15 +836,14 @@ router.post('/Post-labour-Approvel-AshokSir', async (req, res) => {
     });
   }
 
-  // Require at least one field to update
+  // ✅ At least one field required (removed undefined Time_Delay_4)
   if (
     status === undefined && 
-    Time_Delay_4 === undefined &&
     Deployed_Category_1_Labour_No_4 === undefined &&
     Deployed_Category_2_Labour_No_4 === undefined &&
     Revised_Company_Head_Amount_4 === undefined && 
-    Revised_Contractor_Head_Amount_4 === undefined &&
-    remark4 === undefined
+    Revised_Contractor_Head_Amount_4 === undefined
+    // remark4 === undefined
   ) {
     return res.status(400).json({
       success: false,
@@ -697,12 +852,14 @@ router.post('/Post-labour-Approvel-AshokSir', async (req, res) => {
   }
 
   try {
+    // ✅ Fetch Sheet Data
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SiteExpeseSheetId,
-      range: 'Labour_FMS!A7:BE',
+      range: 'Labour_FMS!A7:BF',  // Extended range to cover all columns
     });
 
     const rows = response.data.values || [];
+
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
@@ -710,6 +867,7 @@ router.post('/Post-labour-Approvel-AshokSir', async (req, res) => {
       });
     }
 
+    // ✅ Find Row by UID
     const rowIndex = rows.findIndex(row =>
       row[1] && String(row[1]).trim() === String(uid).trim()
     );
@@ -727,62 +885,55 @@ router.post('/Post-labour-Approvel-AshokSir', async (req, res) => {
 
     const batchData = [];
 
-    // AY - Status_4
+    // ✅ AZ Column → Status_4
     if (status !== undefined && String(status).trim() !== '') {
       batchData.push({
-        range: `Labour_FMS!AY${sheetRowNumber}`,
+        range: `Labour_FMS!AZ${sheetRowNumber}`,
         values: [[status]],
       });
     }
 
-    // AZ - Time Delay 4
-    // if (Time_Delay_4 !== undefined && String(Time_Delay_4).trim() !== '') {
-    //   batchData.push({
-    //     range: `Labour_FMS!AZ${sheetRowNumber}`,
-    //     values: [[Time_Delay_4]],
-    //   });
-    // }
-
-    // BA - Deployed_Category_1_Labour_No._4
+    // ✅ BB Column → Deployed_Category_1_Labour_No_4
     if (Deployed_Category_1_Labour_No_4 !== undefined && String(Deployed_Category_1_Labour_No_4).trim() !== '') {
       batchData.push({
-        range: `Labour_FMS!BA${sheetRowNumber}`,
+        range: `Labour_FMS!BB${sheetRowNumber}`,
         values: [[Deployed_Category_1_Labour_No_4]],
       });
     }
 
-    // BB - Deployed_Category_2_Labour_No._4
+    // ✅ BC Column → Deployed_Category_2_Labour_No_4
     if (Deployed_Category_2_Labour_No_4 !== undefined && String(Deployed_Category_2_Labour_No_4).trim() !== '') {
       batchData.push({
-        range: `Labour_FMS!BB${sheetRowNumber}`,
+        range: `Labour_FMS!BC${sheetRowNumber}`,
         values: [[Deployed_Category_2_Labour_No_4]],
       });
     }
 
-    // BC - Revised_Company_Head_Amount_4
+    // ✅ BD Column → Revised_Company_Head_Amount_4
     if (Revised_Company_Head_Amount_4 !== undefined && String(Revised_Company_Head_Amount_4).trim() !== '') {
       batchData.push({
-        range: `Labour_FMS!BC${sheetRowNumber}`,
+        range: `Labour_FMS!BD${sheetRowNumber}`,
         values: [[Revised_Company_Head_Amount_4]],
       });
     }
 
-    // BD - Revised_Contractor_Head_Amount_4
+    // ✅ BE Column → Revised_Contractor_Head_Amount_4
     if (Revised_Contractor_Head_Amount_4 !== undefined && String(Revised_Contractor_Head_Amount_4).trim() !== '') {
       batchData.push({
-        range: `Labour_FMS!BD${sheetRowNumber}`,
+        range: `Labour_FMS!BE${sheetRowNumber}`,
         values: [[Revised_Contractor_Head_Amount_4]],
       });
     }
 
-    // BE - Remark_4
-    if (remark4 !== undefined && String(remark4).trim() !== '') {
-      batchData.push({
-        range: `Labour_FMS!BE${sheetRowNumber}`,
-        values: [[remark4]],
-      });
-    }
+    // ✅ BF Column → Remark_4  (Fixed: was conflicting with BE before)
+    // if (remark4 !== undefined && String(remark4).trim() !== '') {
+    //   batchData.push({
+    //     range: `Labour_FMS!BF${sheetRowNumber}`,
+    //     values: [[remark4]],
+    //   });
+    // }
 
+    // ✅ Nothing to update
     if (batchData.length === 0) {
       return res.json({
         success: true,
@@ -790,6 +941,7 @@ router.post('/Post-labour-Approvel-AshokSir', async (req, res) => {
       });
     }
 
+    // ✅ Batch Update
     await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: SiteExpeseSheetId,
       resource: {
@@ -814,14 +966,6 @@ router.post('/Post-labour-Approvel-AshokSir', async (req, res) => {
     });
   }
 });
-
-
-
-
-
-
-///////// Paid Amount step 6
-
 
 
 router.get('/get-paid-step', async (req, res) => {
@@ -1088,27 +1232,27 @@ router.post('/Post-labour-Paid', async (req, res) => {
 
     // Payment Mode
     if (PAYMENT_MODE_5 !== undefined && PAYMENT_MODE_5 !== null && PAYMENT_MODE_5 !== '') {
-      batchData.push({ range: `Labour_FMS!BP${sheetRowNumber}`, values: [[PAYMENT_MODE_5]] });
+      batchData.push({ range: `Labour_FMS!BQ${sheetRowNumber}`, values: [[PAYMENT_MODE_5]] });
     }
 
     // Bank Details
     if (BANK_DETAILS_5 !== undefined && BANK_DETAILS_5 !== null && BANK_DETAILS_5 !== '') {
-      batchData.push({ range: `Labour_FMS!BQ${sheetRowNumber}`, values: [[BANK_DETAILS_5]] });
+      batchData.push({ range: `Labour_FMS!BR${sheetRowNumber}`, values: [[BANK_DETAILS_5]] });
     }
 
     // Payment Details
     if (PAYMENT_DETAILS_5 !== undefined && PAYMENT_DETAILS_5 !== null && PAYMENT_DETAILS_5 !== '') {
-      batchData.push({ range: `Labour_FMS!BR${sheetRowNumber}`, values: [[PAYMENT_DETAILS_5]] });
+      batchData.push({ range: `Labour_FMS!BS${sheetRowNumber}`, values: [[PAYMENT_DETAILS_5]] });
     }
 
     // Payment Date
     if (Payment_Date_5 !== undefined && Payment_Date_5 !== null && Payment_Date_5 !== '') {
-      batchData.push({ range: `Labour_FMS!BS${sheetRowNumber}`, values: [[Payment_Date_5]] });
+      batchData.push({ range: `Labour_FMS!BT${sheetRowNumber}`, values: [[Payment_Date_5]] });
     }
 
     // Remark (Reject ya Done dono case mein ja sakta hai)
     if (Remark_5 !== undefined && Remark_5 !== null && Remark_5 !== '') {
-      batchData.push({ range: `Labour_FMS!BT${sheetRowNumber}`, values: [[Remark_5]] });
+      batchData.push({ range: `Labour_FMS!BU${sheetRowNumber}`, values: [[Remark_5]] });
     }
 
     if (batchData.length === 0) {

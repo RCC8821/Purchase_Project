@@ -18,7 +18,7 @@ const router = express.Router();
 async function generateUniqueBillNo() {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SiteExpeseSheetId,
-    range: 'Labour_FMS!BI7:BI',   // BG=Bill Status, BH=PaidName, BI=BillNo, BJ=URL
+    range: 'Labour_FMS!BJ7:BJ',   // BG=Bill Status, BH=PaidName, BI=BillNo, BJ=URL
   });
 
   const rows = response.data.values || [];
@@ -288,8 +288,8 @@ router.get('/Get-PDF-Data', async (req, res) => {
     const pendingLabour = rows
       .filter(row => {
         if (row.length < 18) return false;
-        const planned3 = (row[56] || '').toString().trim();
-        const actual3  = (row[57] || '').toString().trim();
+        const planned3 = (row[57] || '').toString().trim();
+        const actual3  = (row[58] || '').toString().trim();
         return planned3 !== '' && actual3 === '';
       })
       .map(row => ({
@@ -324,8 +324,8 @@ router.get('/Get-PDF-Data', async (req, res) => {
         Revised_Company_Head_Amount_4:    row[54] || '',
         Revised_Contractor_Head_Amount_4: row[55] || '',
         remark4:                          row[56] || '',
-        planned5:                         row[56] || '',
-        actua5:                           row[57] || '',
+        planned5:                         row[57] || '',
+        actua5:                           row[58] || '',
       }));
 
     res.json({ success: true, count: pendingLabour.length, data: pendingLabour });
@@ -405,7 +405,7 @@ router.post('/Generate-PDF', async (req, res) => {
 
     // ✅ Sheet update: BG=Done, BH=paidName, BI=billNo, BJ=fileUrl
     const updateRequests = matchedSheetRows.map(sheetRow => ({
-      range: `Labour_FMS!BG${sheetRow}:BJ${sheetRow}`,
+      range: `Labour_FMS!BH${sheetRow}:BK${sheetRow}`,
       values: [['Done', paidName, billNo, fileUrl]],
     }));
 
