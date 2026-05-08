@@ -637,10 +637,10 @@ router.get('/get-Approvel-ashokSir', async (req, res) => {
         Labour_Rate_2_3:         row[38] || '',
         Total_Wages_3:         row[39] || '',
         Conveyanance_3:         row[40] || '',
-        Total_Paid_Amount_3:         row[41] || '',
-        Company_Head_Amount_3:         row[42] || '',
-        Contractor_Head_Amount_3:         row[43] || '',
-        remark3:                  row[44] || '',
+        Total_Paid_Amount_3:         row[42] || '',
+        Company_Head_Amount_3:         row[43] || '',
+        Contractor_Head_Amount_3:         row[44] || '',
+        remark3:                  row[45] || '',
         
         // blanks at 16–19 (P–S) are skipped in object
 
