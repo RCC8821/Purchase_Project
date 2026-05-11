@@ -8,7 +8,7 @@ import {
   AlertCircle, BadgeCheck
 } from 'lucide-react';
 
-const BASE_URL = 'https://purchase-project-3iia.vercel.app/api/labour/pdf'; // ← apna URL yahan daalo
+const BASE_URL = 'https://purchase-project-3iia.vercel.app/api/labour/pdf'; 
 
 // const BASE_URL = 'http://localhost:5000/api/labour/pdf';
 
@@ -367,7 +367,7 @@ const LabourPDF = () => {
   }, [toast]);
 
   const columns = [
-    { key: 'planned5',                         label: 'Planned Date',     icon: Clock                          },
+    { key: 'dateRequired',                         label: 'Labour Deployed Date',     icon: Clock                          },
     { key: 'uid',                              label: 'UID No.',          icon: Hash,              isUid: true  },
     { key: 'projectName',                      label: 'Project Name',     icon: Building                       },
     { key: 'projectEngineer',                  label: 'Engineer',         icon: User                           },
@@ -571,7 +571,7 @@ const LabourPDF = () => {
                       {allSelected && <Check className="w-3 h-3 text-indigo-600" />}
                     </div>
                   </th>
-                  <th className="px-3 py-3.5 text-center text-white text-xs font-bold w-10">Sr.</th>
+                  <th className="px-3 py-3.5 text-center text-white text-xs font-bold w-10"></th>
                   {columns.map(col => (
                     <th key={col.key} className="px-3 py-3.5 text-left text-white text-xs font-bold whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
@@ -595,7 +595,7 @@ const LabourPDF = () => {
                           {isSel && <Check className="w-3 h-3 text-white" />}
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-center text-gray-400 text-xs font-medium">{i + 1}</td>
+                      <td className="px-3 py-3 text-center text-gray-400 text-xs font-medium"></td>
                       {columns.map(col => (
                         <td key={col.key} className="px-3 py-3 whitespace-nowrap">
                           {col.isUid ? (
