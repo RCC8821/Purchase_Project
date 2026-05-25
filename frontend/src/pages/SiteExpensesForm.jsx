@@ -1,5 +1,4 @@
 
-
 // import React, { useState, useEffect, useMemo } from 'react';
 // import {
 //   useGetProjectDropdownQuery,
@@ -211,7 +210,7 @@
 //     if (file) {
 //       setBillPhotoName(file.name);
 //       const reader = new FileReader();
-//       reader.readAsDataURL(file); // data:image/jpeg;base64,.... format
+//       reader.readAsDataURL(file);
 //       reader.onload = () => {
 //         handleSiteExpenseChange('Bill_Photo_1', reader.result);
 //       };
@@ -242,13 +241,49 @@
 //   };
 
 //   // ─── Submit Handlers ──────────────────────────────────────────────────────
+
+//   // ✅ UPDATED: Site Expenses — required fields validation (Bill No. & Remark optional)
 //   const handleSubmitSiteExpenses = async (e) => {
 //     e.preventDefault();
-//     if (!siteExpensesData.Project_Name_1) { showAlert('error', 'Project Name required hai'); return; }
 
-//     const validItems = siteExpenseItems.filter(item => item.Exp_Head_1 && item.Amount_1);
+//     // Required field checks
+//     if (!siteExpensesData.Vendor_Payee_Name_1.trim()) {
+//       showAlert('error', 'Vendor/Payee Name required hai');
+//       return;
+//     }
+//     if (!siteExpensesData.Project_Name_1) {
+//       showAlert('error', 'Project Name required hai');
+//       return;
+//     }
+//     if (!siteExpensesData.Head_Type_1) {
+//       showAlert('error', 'Head Type required hai');
+//       return;
+//     }
+//     if (!siteExpensesData.Bill_Date_1) {
+//       showAlert('error', 'Bill Date required hai');
+//       return;
+//     }
+//     if (!siteExpensesData.Bill_Photo_1) {
+//       showAlert('error', 'Bill Photo required hai');
+//       return;
+//     }
+//     // Contractor fields required when Contractor Head selected
+//     if (isSiteContractorHead && !siteExpensesData.Contractor_Name_1) {
+//       showAlert('error', 'Contractor Name required hai');
+//       return;
+//     }
+
+//     const validItems = siteExpenseItems.filter(item => item.Exp_Head_1 && item.Amount_1 && item.Details_of_Work_1.trim());
 //     if (validItems.length === 0) {
-//       showAlert('error', 'Kam se kam ek item mein Expense Head aur Amount fill karo');
+//       showAlert('error', 'Kam se kam ek item mein Expense Head, Amount aur Details of Work fill karo');
+//       return;
+//     }
+//     const incompleteItem = siteExpenseItems.find(item =>
+//       (item.Exp_Head_1 || item.Amount_1 || item.Details_of_Work_1.trim()) &&
+//       (!item.Exp_Head_1 || !item.Amount_1 || !item.Details_of_Work_1.trim())
+//     );
+//     if (incompleteItem) {
+//       showAlert('error', 'Har item mein Expense Head, Amount aur Details of Work teeno required hain');
 //       return;
 //     }
 
@@ -259,7 +294,7 @@
 //       Head_Type_1:              siteExpensesData.Head_Type_1,
 //       Bill_No_1:                siteExpensesData.Bill_No_1,
 //       Bill_Date_1:              siteExpensesData.Bill_Date_1,
-//       Bill_Photo_1:             siteExpensesData.Bill_Photo_1, // ✅ base64 data URI
+//       Bill_Photo_1:             siteExpensesData.Bill_Photo_1,
 //       Contractor_Name_1:        siteExpensesData.Contractor_Name_1,
 //       Contractor_Firm_Name_1:   siteExpensesData.Contractor_Firm_Name_1,
 //       Remark_1:                 siteExpensesData.Remark_1,
@@ -275,12 +310,45 @@
 //     }
 //   };
 
+//   // ✅ UPDATED: Labour — required fields validation
+//   // Optional: Labour Category 2, Number of Labour Cat 2, Remark
 //   const handleSubmitLabour = async (e) => {
 //     e.preventDefault();
-//     if (!labourData.Project_Name_1 || !labourData.Work_Type_1) {
-//       showAlert('error', 'Project Name aur Work Type required hain');
+
+//     if (!labourData.Project_Name_1) {
+//       showAlert('error', 'Project Name required hai');
 //       return;
 //     }
+//     if (!labourData.Work_Type_1) {
+//       showAlert('error', 'Work Type required hai');
+//       return;
+//     }
+//     if (!labourData.Work_Description_1.trim()) {
+//       showAlert('error', 'Work Description required hai');
+//       return;
+//     }
+//     if (!labourData.Labour_Category_1) {
+//       showAlert('error', 'Labour Category 1 required hai');
+//       return;
+//     }
+//     if (!labourData.Number_Of_Labour_1 || parseInt(labourData.Number_Of_Labour_1) <= 0) {
+//       showAlert('error', 'Number of Labour (Cat 1) required hai aur 0 se zyada hona chahiye');
+//       return;
+//     }
+//     if (!labourData.Date_Of_Required_1) {
+//       showAlert('error', 'Date of Required required hai');
+//       return;
+//     }
+//     if (!labourData.Head_Of_Contractor_Company_1) {
+//       showAlert('error', 'Head Of Contractor/Company required hai');
+//       return;
+//     }
+//     // Contractor fields required when Contractor Head selected
+//     if (isLabourContractorHead && !labourData.Name_Of_Contractor_1) {
+//       showAlert('error', 'Name of Contractor required hai');
+//       return;
+//     }
+
 //     const payload = { ...labourData };
 //     try {
 //       const result = await postLabourRequest(payload).unwrap();
@@ -315,7 +383,7 @@
 //       Contractor_Name_1: '', Contractor_Firm_Name_1: '', Remark_1: '',
 //     });
 //     setSiteExpenseItems([{ Exp_Head_1: '', Details_of_Work_1: '', Amount_1: '' }]);
-//     setBillPhotoName(''); // ✅ Photo name bhi reset
+//     setBillPhotoName('');
 //   };
 
 //   const resetLabourForm = () => setLabourData({
@@ -430,8 +498,9 @@
 //               {/* Vendor & Project */}
 //               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //                 <div>
+//                   {/* ✅ Required */}
 //                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                     <User className="w-4 h-4 inline mr-1" />Vendor/Payee Name
+//                     <User className="w-4 h-4 inline mr-1" />Vendor/Payee Name <span className="text-red-500">*</span>
 //                   </label>
 //                   <input
 //                     type="text"
@@ -463,6 +532,7 @@
 //                   />
 //                 </div>
 //                 <div>
+//                   {/* Bill No — optional (no * star) */}
 //                   <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                     <Hash className="w-4 h-4 inline mr-1" />Bill No.
 //                   </label>
@@ -475,8 +545,9 @@
 //                   />
 //                 </div>
 //                 <div>
+//                   {/* ✅ Required */}
 //                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                     <Calendar className="w-4 h-4 inline mr-1" />Bill Date
+//                     <Calendar className="w-4 h-4 inline mr-1" />Bill Date <span className="text-red-500">*</span>
 //                   </label>
 //                   <input
 //                     type="date"
@@ -487,10 +558,10 @@
 //                 </div>
 //               </div>
 
-//               {/* Head Type */}
+//               {/* Head Type — ✅ Required */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                   <Briefcase className="w-4 h-4 inline mr-1" />Head Type
+//                   <Briefcase className="w-4 h-4 inline mr-1" />Head Type <span className="text-red-500">*</span>
 //                 </label>
 //                 <div className="relative">
 //                   <select
@@ -514,10 +585,10 @@
 //                 </div>
 //               </div>
 
-//               {/* ✅ Bill Photo — FileReader se base64 */}
+//               {/* ✅ Bill Photo — Required */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                   <Camera className="w-4 h-4 inline mr-1" />Bill Photo
+//                   <Camera className="w-4 h-4 inline mr-1" />Bill Photo <span className="text-red-500">*</span>
 //                 </label>
 //                 <input
 //                   type="file"
@@ -534,8 +605,9 @@
 //               {isSiteContractorHead && (
 //                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 //                   <div>
+//                     {/* ✅ Required when Contractor Head */}
 //                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                       <HardHat className="w-4 h-4 inline mr-1" />Contractor Name
+//                       <HardHat className="w-4 h-4 inline mr-1" />Contractor Name <span className="text-red-500">*</span>
 //                     </label>
 //                     <div className="relative">
 //                       <select
@@ -569,7 +641,7 @@
 //               <div className="border border-blue-200 rounded-xl overflow-hidden">
 //                 <div className="bg-blue-50 px-4 py-3 flex items-center justify-between border-b border-blue-200">
 //                   <h3 className="font-semibold text-blue-800 flex items-center gap-2">
-//                     <FileText className="w-5 h-5" />Expense Items
+//                     <FileText className="w-5 h-5" />Expense Items <span className="text-red-500">*</span>
 //                     <span className="text-xs text-blue-600 font-normal">(har item alag row banega sheet mein)</span>
 //                   </h3>
 //                   <button
@@ -628,7 +700,7 @@
 //                         </div>
 
 //                         <div className="md:col-span-2">
-//                           <label className="block text-xs font-medium text-gray-600 mb-1">Details of Work</label>
+//                           <label className="block text-xs font-medium text-gray-600 mb-1">Details of Work <span className="text-red-500">*</span></label>
 //                           <input
 //                             type="text"
 //                             value={item.Details_of_Work_1}
@@ -644,7 +716,7 @@
 
 //                 <div className="bg-blue-50 px-4 py-3 border-t border-blue-200 flex items-center justify-between">
 //                   <span className="text-sm font-semibold text-blue-800">
-//                     Total Items: {siteExpenseItems.filter(i => i.Exp_Head_1 && i.Amount_1).length} valid
+//                     Total Items: {siteExpenseItems.filter(i => i.Exp_Head_1 && i.Amount_1 && i.Details_of_Work_1.trim()).length} valid
 //                   </span>
 //                   <span className="text-lg font-bold text-blue-700">
 //                     ₹{siteExpenseItems.reduce((sum, i) => sum + (parseFloat(i.Amount_1) || 0), 0).toFixed(2)}
@@ -652,7 +724,7 @@
 //                 </div>
 //               </div>
 
-//               {/* Remark */}
+//               {/* Remark — optional (no * star) */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <MessageSquare className="w-4 h-4 inline mr-1" />Remark
@@ -706,6 +778,7 @@
 //                 </div>
 //               </div>
 
+//               {/* ✅ Required */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <Wrench className="w-4 h-4 inline mr-1" />Work Type <span className="text-red-500">*</span>
@@ -724,9 +797,10 @@
 //                 </div>
 //               </div>
 
+//               {/* ✅ Required */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                   <FileText className="w-4 h-4 inline mr-1" />Work Description
+//                   <FileText className="w-4 h-4 inline mr-1" />Work Description <span className="text-red-500">*</span>
 //                 </label>
 //                 <textarea value={labourData.Work_Description_1} rows={3}
 //                   onChange={(e) => handleLabourChange('Work_Description_1', e.target.value)}
@@ -740,8 +814,11 @@
 //                   <Users className="w-5 h-5" />Labour Details
 //                 </h3>
 //                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                   {/* ✅ Required */}
 //                   <div>
-//                     <label className="block text-sm font-medium text-gray-700 mb-2">Labour Category 1</label>
+//                     <label className="block text-sm font-medium text-gray-700 mb-2">
+//                       Labour Category 1 <span className="text-red-500">*</span>
+//                     </label>
 //                     <div className="relative">
 //                       <select value={labourData.Labour_Category_1}
 //                         onChange={(e) => handleLabourChange('Labour_Category_1', e.target.value)}
@@ -755,14 +832,18 @@
 //                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
 //                     </div>
 //                   </div>
+//                   {/* ✅ Required */}
 //                   <div>
-//                     <label className="block text-sm font-medium text-gray-700 mb-2">Number of Labour (Cat 1)</label>
+//                     <label className="block text-sm font-medium text-gray-700 mb-2">
+//                       Number of Labour (Cat 1) <span className="text-red-500">*</span>
+//                     </label>
 //                     <input type="number" min="0" placeholder="0"
 //                       value={labourData.Number_Of_Labour_1}
 //                       onChange={(e) => handleLabourChange('Number_Of_Labour_1', e.target.value)}
 //                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
 //                     />
 //                   </div>
+//                   {/* Optional — no * */}
 //                   <div>
 //                     <label className="block text-sm font-medium text-gray-700 mb-2">Labour Category 2</label>
 //                     <div className="relative">
@@ -778,6 +859,7 @@
 //                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
 //                     </div>
 //                   </div>
+//                   {/* Optional — no * */}
 //                   <div>
 //                     <label className="block text-sm font-medium text-gray-700 mb-2">Number of Labour (Cat 2)</label>
 //                     <input type="number" min="0" placeholder="0"
@@ -798,9 +880,10 @@
 //                 </div>
 //               </div>
 
+//               {/* ✅ Required */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                   <Calendar className="w-4 h-4 inline mr-1" />Date of Required
+//                   <Calendar className="w-4 h-4 inline mr-1" />Date of Required <span className="text-red-500">*</span>
 //                 </label>
 //                 <input type="date" value={labourData.Date_Of_Required_1}
 //                   onChange={(e) => handleLabourChange('Date_Of_Required_1', e.target.value)}
@@ -808,10 +891,11 @@
 //                 />
 //               </div>
 
+//               {/* ✅ Required */}
 //               <div className={`grid grid-cols-1 gap-4 ${isLabourContractorHead ? 'md:grid-cols-3' : ''}`}>
 //                 <div>
 //                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                     <Briefcase className="w-4 h-4 inline mr-1" />Head Of Contractor/Company
+//                     <Briefcase className="w-4 h-4 inline mr-1" />Head Of Contractor/Company <span className="text-red-500">*</span>
 //                   </label>
 //                   <div className="relative">
 //                     <select value={labourData.Head_Of_Contractor_Company_1}
@@ -836,9 +920,10 @@
 
 //                 {isLabourContractorHead && (
 //                   <>
+//                     {/* ✅ Required when Contractor Head */}
 //                     <div>
 //                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                         <HardHat className="w-4 h-4 inline mr-1" />Name of Contractor
+//                         <HardHat className="w-4 h-4 inline mr-1" />Name of Contractor <span className="text-red-500">*</span>
 //                       </label>
 //                       <div className="relative">
 //                         <select value={labourData.Name_Of_Contractor_1}
@@ -866,6 +951,7 @@
 //                 )}
 //               </div>
 
+//               {/* Remark — optional (no * star) */}
 //               <div>
 //                 <label className="block text-sm font-semibold text-gray-700 mb-2">
 //                   <MessageSquare className="w-4 h-4 inline mr-1" />Remark
@@ -1070,100 +1156,162 @@
 
 
 
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  useGetProjectDropdownQuery,
-} from '../redux/Labour/LabourSlice';
 
+
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useGetProjectDropdownQuery } from '../redux/Labour/LabourSlice';
 import {
   usePostSiteExpenseMutation,
   usePostLabourRequestMutation,
   usePostContractorDebitMutation,
 } from '../redux/formSlice';
-
 import {
   Loader2, Receipt, Users, CreditCard, Building, User, Hash, FileText,
   IndianRupee, Calendar, Camera, Briefcase, HardHat, MessageSquare,
-  Send, RefreshCw, X, ChevronDown, Wrench, Calculator, Package
+  Send, RefreshCw, X, ChevronDown, Wrench, Calculator, Package, CheckCircle,
 } from 'lucide-react';
 
+// ============================================================
+// HELPER: Browser-side image compress (Canvas)
+// Fast + no library needed
+// ============================================================
+const compressImageFrontend = (file) => {
+  return new Promise((resolve, reject) => {
+    // PDF / non-image - as-is base64 return karo
+    if (!file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload  = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('File read failed'));
+      return;
+    }
+
+    const MAX_PX   = 1200;        // max width/height
+    const QUALITY  = 0.72;        // jpeg quality
+    const url      = URL.createObjectURL(file);
+    const img      = new Image();
+
+    img.onload = () => {
+      let { width, height } = img;
+
+      // Resize if needed
+      if (width > MAX_PX || height > MAX_PX) {
+        if (width >= height) {
+          height = Math.round((height / width) * MAX_PX);
+          width  = MAX_PX;
+        } else {
+          width  = Math.round((width / height) * MAX_PX);
+          height = MAX_PX;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width  = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+      const base64 = canvas.toDataURL('image/jpeg', QUALITY);
+
+      URL.revokeObjectURL(url);
+
+      const origKB  = (file.size / 1024).toFixed(0);
+      const finalKB = ((base64.length * 0.75) / 1024).toFixed(0);
+      console.log(`[COMPRESS] ${origKB}KB → ${finalKB}KB`);
+
+      resolve(base64);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Image load failed'));
+    };
+
+    img.src = url;
+  });
+};
+
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 const SiteExpensesForm = () => {
   const [activeTab, setActiveTab] = useState('siteExpenses');
 
-  // ─── API Hooks ────────────────────────────────────────────────────────────
+  // API hooks
   const {
-    data: dropdownData,
-    isLoading: isDropdownLoading,
-    isError: isDropdownError,
+    data        : dropdownData,
+    isLoading   : isDropdownLoading,
+    isError     : isDropdownError,
   } = useGetProjectDropdownQuery();
 
   const safeDropdown = Array.isArray(dropdownData) ? dropdownData : [];
 
-  const [postSiteExpense,    { isLoading: isSiteLoading  }] = usePostSiteExpenseMutation();
-  const [postLabourRequest,  { isLoading: isLabourLoading }] = usePostLabourRequestMutation();
-  const [postContractorDebit,{ isLoading: isDebitLoading  }] = usePostContractorDebitMutation();
+  const [postSiteExpense,     { isLoading: isSiteLoading   }] = usePostSiteExpenseMutation();
+  const [postLabourRequest,   { isLoading: isLabourLoading }] = usePostLabourRequestMutation();
+  const [postContractorDebit, { isLoading: isDebitLoading  }] = usePostContractorDebitMutation();
 
-  const isSubmitting = isSiteLoading || isLabourLoading || isDebitLoading;
+  // ── Photo States ──────────────────────────────────────────
+  const [billPhotoName,    setBillPhotoName]    = useState('');
+  const [isPhotoLoading,   setIsPhotoLoading]   = useState(false);
+  const [photoError,       setPhotoError]       = useState('');
+  const [photoPreviewUrl,  setPhotoPreviewUrl]  = useState('');
+  const fileInputRef = useRef(null);
 
-  // ─── Form States ──────────────────────────────────────────────────────────
+  // ── Form States ───────────────────────────────────────────
   const [siteExpensesData, setSiteExpensesData] = useState({
-    Vendor_Payee_Name_1: '',
-    Project_Name_1: '',
-    Project_Engineer_Name_1: '',
-    Head_Type_1: '',
-    Bill_No_1: '',
-    Bill_Date_1: '',
-    Bill_Photo_1: '',
-    Contractor_Name_1: '',
-    Contractor_Firm_Name_1: '',
-    Remark_1: '',
+    Vendor_Payee_Name_1     : '',
+    Project_Name_1          : '',
+    Project_Engineer_Name_1 : '',
+    Head_Type_1             : '',
+    Bill_No_1               : '',
+    Bill_Date_1             : '',
+    Bill_Photo_1            : '',
+    Contractor_Name_1       : '',
+    Contractor_Firm_Name_1  : '',
+    Remark_1                : '',
   });
-
-  // ✅ Photo preview ke liye alag state
-  const [billPhotoName, setBillPhotoName] = useState('');
 
   const [siteExpenseItems, setSiteExpenseItems] = useState([
     { Exp_Head_1: '', Details_of_Work_1: '', Amount_1: '' }
   ]);
 
   const [labourData, setLabourData] = useState({
-    Project_Name_1: '',
-    Project_Engineer_1: '',
-    Work_Type_1: '',
-    Work_Description_1: '',
-    Labour_Category_1: '',
-    Number_Of_Labour_1: '',
-    Labour_Category_2: '',
-    Number_Of_Labour_2: '',
-    Total_Labour_1: '',
-    Date_Of_Required_1: '',
-    Head_Of_Contractor_Company_1: '',
-    Name_Of_Contractor_1: '',
-    Contractor_Firm_Name_1: '',
-    Remark_1: '',
+    Project_Name_1               : '',
+    Project_Engineer_1           : '',
+    Work_Type_1                  : '',
+    Work_Description_1           : '',
+    Labour_Category_1            : '',
+    Number_Of_Labour_1           : '',
+    Labour_Category_2            : '',
+    Number_Of_Labour_2           : '',
+    Total_Labour_1               : '',
+    Date_Of_Required_1           : '',
+    Head_Of_Contractor_Company_1 : '',
+    Name_Of_Contractor_1         : '',
+    Contractor_Firm_Name_1       : '',
+    Remark_1                     : '',
   });
 
   const [debitData, setDebitData] = useState({
-    Project_Name_1: '',
-    Project_Engineer_1: '',
-    Contractor_Name_1: '',
+    Project_Name_1      : '',
+    Project_Engineer_1  : '',
+    Contractor_Name_1   : '',
     Contractor_Firm_Name_1: '',
-    Work_Type_1: '',
-    Work_Date_1: '',
-    Work_Description_1: '',
-    Particular_1: '',
-    Qty_1: '',
-    Rate_Wages_1: '',
-    Amount_1: '',
+    Work_Type_1         : '',
+    Work_Date_1         : '',
+    Work_Description_1  : '',
+    Particular_1        : '',
+    Qty_1               : '',
+    Rate_Wages_1        : '',
+    Amount_1            : '',
   });
 
   const isLabourContractorHead = labourData.Head_Of_Contractor_Company_1 === 'Contractor Head';
   const isSiteContractorHead   = siteExpensesData.Head_Type_1 === 'Contractor Head';
 
-  // ─── Auto Calculations ────────────────────────────────────────────────────
+  // ── Auto Calculations ─────────────────────────────────────
   useEffect(() => {
-    const l1 = parseInt(labourData.Number_Of_Labour_1) || 0;
-    const l2 = parseInt(labourData.Number_Of_Labour_2) || 0;
+    const l1 = parseInt(labourData.Number_Of_Labour_1)  || 0;
+    const l2 = parseInt(labourData.Number_Of_Labour_2)  || 0;
     setLabourData(prev => ({ ...prev, Total_Labour_1: (l1 + l2).toString() }));
   }, [labourData.Number_Of_Labour_1, labourData.Number_Of_Labour_2]);
 
@@ -1173,7 +1321,7 @@ const SiteExpensesForm = () => {
     setDebitData(prev => ({ ...prev, Amount_1: (qty * rate).toFixed(2) }));
   }, [debitData.Qty_1, debitData.Rate_Wages_1]);
 
-  // ─── Dropdown Options ─────────────────────────────────────────────────────
+  // ── Dropdown Options ──────────────────────────────────────
   const projectOptions = useMemo(() => {
     const seen = new Set();
     return safeDropdown
@@ -1186,11 +1334,7 @@ const SiteExpensesForm = () => {
         const lower = name.toLowerCase();
         if (!seen.has(lower)) {
           seen.add(lower);
-          acc.push({
-            value:    name,
-            label:    item.label || name,
-            engineer: item.engineer || '',
-          });
+          acc.push({ value: name, label: item.label || name, engineer: item.engineer || '' });
         }
         return acc;
       }, [])
@@ -1200,62 +1344,41 @@ const SiteExpensesForm = () => {
   const contractorOptions = useMemo(() => {
     const seen = new Map();
     safeDropdown.forEach(item => {
-      const cName = (item.contractorName || '').trim();
+      const cName  = (item.contractorName     || '').trim();
       if (!cName) return;
-      const lowerC = cName.toLowerCase();
       const fName  = (item.contractorFirmName || '').trim();
-      if (!seen.has(lowerC)) {
-        seen.set(lowerC, {
-          value:    cName,
+      const lower  = cName.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.set(lower, {
+          value   : cName,
           firmName: fName,
-          label:    fName ? `${cName} (${fName})` : cName,
+          label   : fName ? `${cName} (${fName})` : cName,
         });
-      } else {
-        const existing = seen.get(lowerC);
-        if (fName && !existing.firmName) {
-          existing.firmName = fName;
-          existing.label    = `${cName} (${fName})`;
-        }
       }
     });
     return Array.from(seen.values()).sort((a, b) => a.label.localeCompare(b.label));
   }, [safeDropdown]);
 
-  const expenseWorkTypeOptions = useMemo(() => {
-    return [...new Set(
-      safeDropdown.map(i => (i.expenseWorkType || '').trim()).filter(Boolean)
-    )].sort();
-  }, [safeDropdown]);
+  const expenseWorkTypeOptions = useMemo(() =>
+    [...new Set(safeDropdown.map(i => (i.expenseWorkType || '').trim()).filter(Boolean))].sort()
+  , [safeDropdown]);
 
-  const labourWorkTypeOptions = useMemo(() => {
-    return [...new Set(
-      safeDropdown.map(i => (i.labourWorkType || '').trim()).filter(Boolean)
-    )].sort();
-  }, [safeDropdown]);
+  const labourWorkTypeOptions = useMemo(() =>
+    [...new Set(safeDropdown.map(i => (i.labourWorkType || '').trim()).filter(Boolean))].sort()
+  , [safeDropdown]);
 
-  const labourCategoryOptions = useMemo(() => {
-    return [...new Set(
-      safeDropdown.map(i => (i.labourCategory || '').trim()).filter(Boolean)
-    )].sort();
-  }, [safeDropdown]);
+  const labourCategoryOptions = useMemo(() =>
+    [...new Set(safeDropdown.map(i => (i.labourCategory || '').trim()).filter(Boolean))].sort()
+  , [safeDropdown]);
 
-  // ─── Debug Logs ───────────────────────────────────────────────────────────
-  useEffect(() => {
-    console.log('── Dropdown Debug ──────────────────────');
-    console.log('Raw rows from API   :', safeDropdown.length);
-    console.log('Unique Projects     :', projectOptions.length);
-    console.log('Unique Contractors  :', contractorOptions.length);
-    console.log('Contractors list    :', contractorOptions.map(c => c.value));
-  }, [safeDropdown, projectOptions, contractorOptions]);
-
-  // ─── Handlers ─────────────────────────────────────────────────────────────
+  // ── Handlers ──────────────────────────────────────────────
   const handleProjectChange = (tab, value) => {
     const engineer = projectOptions.find(o => o.value === value)?.engineer || '';
     if (tab === 'siteExpenses') {
       setSiteExpensesData(prev => ({ ...prev, Project_Name_1: value, Project_Engineer_Name_1: engineer }));
     } else if (tab === 'labour') {
       setLabourData(prev => ({ ...prev, Project_Name_1: value, Project_Engineer_1: engineer }));
-    } else if (tab === 'debit') {
+    } else {
       setDebitData(prev => ({ ...prev, Project_Name_1: value, Project_Engineer_1: engineer }));
     }
   };
@@ -1266,163 +1389,149 @@ const SiteExpensesForm = () => {
       setSiteExpensesData(prev => ({ ...prev, Contractor_Name_1: value, Contractor_Firm_Name_1: firmName }));
     } else if (tab === 'labour') {
       setLabourData(prev => ({ ...prev, Name_Of_Contractor_1: value, Contractor_Firm_Name_1: firmName }));
-    } else if (tab === 'debit') {
+    } else {
       setDebitData(prev => ({ ...prev, Contractor_Name_1: value, Contractor_Firm_Name_1: firmName }));
     }
   };
 
-  const handleSiteExpenseChange = (field, value) => setSiteExpensesData(prev => ({ ...prev, [field]: value }));
-  const handleLabourChange      = (field, value) => setLabourData(prev => ({ ...prev, [field]: value }));
-  const handleDebitChange       = (field, value) => setDebitData(prev => ({ ...prev, [field]: value }));
+  const handleSiteExpenseChange = (field, value) =>
+    setSiteExpensesData(prev => ({ ...prev, [field]: value }));
+  const handleLabourChange = (field, value) =>
+    setLabourData(prev => ({ ...prev, [field]: value }));
+  const handleDebitChange = (field, value) =>
+    setDebitData(prev => ({ ...prev, [field]: value }));
 
-  // ✅ Photo handler — FileReader se base64 with data URI
-  const handlePhotoChange = (e) => {
+  // ── Photo Handler ─────────────────────────────────────────
+  const handlePhotoChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setBillPhotoName(file.name);
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        handleSiteExpenseChange('Bill_Photo_1', reader.result);
-      };
-      reader.onerror = () => {
-        console.error('File read karne mein error');
-        setBillPhotoName('');
-        handleSiteExpenseChange('Bill_Photo_1', '');
-      };
+    if (!file) return;
+
+    // Size limit 20MB
+    if (file.size > 20 * 1024 * 1024) {
+      setPhotoError('File 20MB se bada hai. Chota file choose karo.');
+      e.target.value = '';
+      return;
+    }
+
+    setPhotoError('');
+    setIsPhotoLoading(true);
+    setBillPhotoName(file.name);
+
+    // Preview URL (instant)
+    const preview = URL.createObjectURL(file);
+    setPhotoPreviewUrl(preview);
+
+    try {
+      const compressed = await compressImageFrontend(file);
+      handleSiteExpenseChange('Bill_Photo_1', compressed);
+    } catch (err) {
+      console.error('[PHOTO ERROR]', err);
+      setPhotoError('Photo process karne mein error aaya. Dobara try karo.');
+      setBillPhotoName('');
+      setPhotoPreviewUrl('');
+      handleSiteExpenseChange('Bill_Photo_1', '');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } finally {
+      setIsPhotoLoading(false);
     }
   };
 
   const handleItemChange = (index, field, value) => {
     setSiteExpenseItems(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      const updated    = [...prev];
+      updated[index]   = { ...updated[index], [field]: value };
       return updated;
     });
   };
 
   const addItem    = () => setSiteExpenseItems(prev => [
-    ...prev,
-    { Exp_Head_1: '', Details_of_Work_1: '', Amount_1: '' }
+    ...prev, { Exp_Head_1: '', Details_of_Work_1: '', Amount_1: '' }
   ]);
-  const removeItem = (index) => setSiteExpenseItems(prev => prev.filter((_, i) => i !== index));
+  const removeItem = (index) =>
+    setSiteExpenseItems(prev => prev.filter((_, i) => i !== index));
 
-  const showAlert = (type, message) => {
+  const showAlert = (type, message) =>
     alert(`${type === 'success' ? '✅' : '❌'} ${message}`);
-  };
 
-  // ─── Submit Handlers ──────────────────────────────────────────────────────
-
-  // ✅ UPDATED: Site Expenses — required fields validation (Bill No. & Remark optional)
+  // ── Submit: Site Expenses ─────────────────────────────────
   const handleSubmitSiteExpenses = async (e) => {
     e.preventDefault();
 
-    // Required field checks
     if (!siteExpensesData.Vendor_Payee_Name_1.trim()) {
-      showAlert('error', 'Vendor/Payee Name required hai');
-      return;
+      return showAlert('error', 'Vendor/Payee Name required hai');
     }
     if (!siteExpensesData.Project_Name_1) {
-      showAlert('error', 'Project Name required hai');
-      return;
+      return showAlert('error', 'Project Name required hai');
     }
     if (!siteExpensesData.Head_Type_1) {
-      showAlert('error', 'Head Type required hai');
-      return;
+      return showAlert('error', 'Head Type required hai');
     }
     if (!siteExpensesData.Bill_Date_1) {
-      showAlert('error', 'Bill Date required hai');
-      return;
+      return showAlert('error', 'Bill Date required hai');
     }
     if (!siteExpensesData.Bill_Photo_1) {
-      showAlert('error', 'Bill Photo required hai');
-      return;
+      return showAlert('error', 'Bill Photo required hai');
     }
-    // Contractor fields required when Contractor Head selected
+    if (isPhotoLoading) {
+      return showAlert('error', 'Photo abhi process ho rahi hai. Thoda wait karo.');
+    }
     if (isSiteContractorHead && !siteExpensesData.Contractor_Name_1) {
-      showAlert('error', 'Contractor Name required hai');
-      return;
+      return showAlert('error', 'Contractor Name required hai');
     }
 
-    const validItems = siteExpenseItems.filter(item => item.Exp_Head_1 && item.Amount_1 && item.Details_of_Work_1.trim());
+    const validItems = siteExpenseItems.filter(
+      item => item.Exp_Head_1 && item.Amount_1 && item.Details_of_Work_1.trim()
+    );
     if (validItems.length === 0) {
-      showAlert('error', 'Kam se kam ek item mein Expense Head, Amount aur Details of Work fill karo');
-      return;
+      return showAlert('error', 'Kam se kam ek item mein Expense Head, Amount aur Details fill karo');
     }
-    const incompleteItem = siteExpenseItems.find(item =>
+    const incomplete = siteExpenseItems.find(item =>
       (item.Exp_Head_1 || item.Amount_1 || item.Details_of_Work_1.trim()) &&
       (!item.Exp_Head_1 || !item.Amount_1 || !item.Details_of_Work_1.trim())
     );
-    if (incompleteItem) {
-      showAlert('error', 'Har item mein Expense Head, Amount aur Details of Work teeno required hain');
-      return;
+    if (incomplete) {
+      return showAlert('error', 'Har item mein Expense Head, Amount aur Details teeno required hain');
     }
 
-    const payload = {
-      Vendor_Payee_Name_1:      siteExpensesData.Vendor_Payee_Name_1,
-      Project_Name_1:           siteExpensesData.Project_Name_1,
-      Project_Engineer_Name_1:  siteExpensesData.Project_Engineer_Name_1,
-      Head_Type_1:              siteExpensesData.Head_Type_1,
-      Bill_No_1:                siteExpensesData.Bill_No_1,
-      Bill_Date_1:              siteExpensesData.Bill_Date_1,
-      Bill_Photo_1:             siteExpensesData.Bill_Photo_1,
-      Contractor_Name_1:        siteExpensesData.Contractor_Name_1,
-      Contractor_Firm_Name_1:   siteExpensesData.Contractor_Firm_Name_1,
-      Remark_1:                 siteExpensesData.Remark_1,
-      items:                    validItems,
-    };
-
     try {
-      const result = await postSiteExpense(payload).unwrap();
+      const result = await postSiteExpense({
+        Vendor_Payee_Name_1    : siteExpensesData.Vendor_Payee_Name_1,
+        Project_Name_1         : siteExpensesData.Project_Name_1,
+        Project_Engineer_Name_1: siteExpensesData.Project_Engineer_Name_1,
+        Head_Type_1            : siteExpensesData.Head_Type_1,
+        Bill_No_1              : siteExpensesData.Bill_No_1,
+        Bill_Date_1            : siteExpensesData.Bill_Date_1,
+        Bill_Photo_1           : siteExpensesData.Bill_Photo_1,
+        Contractor_Name_1      : siteExpensesData.Contractor_Name_1,
+        Contractor_Firm_Name_1 : siteExpensesData.Contractor_Firm_Name_1,
+        Remark_1               : siteExpensesData.Remark_1,
+        items                  : validItems,
+      }).unwrap();
+
       showAlert('success', `${result.message} | Bill: ${result.billNo}`);
       resetSiteExpensesForm();
     } catch (err) {
-      showAlert('error', err?.data?.message || 'Site Expense submit karne mein error aaya');
+      showAlert('error', err?.data?.message || 'Submit karne mein error aaya');
     }
   };
 
-  // ✅ UPDATED: Labour — required fields validation
-  // Optional: Labour Category 2, Number of Labour Cat 2, Remark
+  // ── Submit: Labour ────────────────────────────────────────
   const handleSubmitLabour = async (e) => {
     e.preventDefault();
+    if (!labourData.Project_Name_1)          return showAlert('error', 'Project Name required hai');
+    if (!labourData.Work_Type_1)             return showAlert('error', 'Work Type required hai');
+    if (!labourData.Work_Description_1.trim()) return showAlert('error', 'Work Description required hai');
+    if (!labourData.Labour_Category_1)       return showAlert('error', 'Labour Category 1 required hai');
+    if (!labourData.Number_Of_Labour_1 || parseInt(labourData.Number_Of_Labour_1) <= 0)
+      return showAlert('error', 'Number of Labour (Cat 1) 0 se zyada hona chahiye');
+    if (!labourData.Date_Of_Required_1)      return showAlert('error', 'Date of Required required hai');
+    if (!labourData.Head_Of_Contractor_Company_1)
+      return showAlert('error', 'Head Of Contractor/Company required hai');
+    if (isLabourContractorHead && !labourData.Name_Of_Contractor_1)
+      return showAlert('error', 'Name of Contractor required hai');
 
-    if (!labourData.Project_Name_1) {
-      showAlert('error', 'Project Name required hai');
-      return;
-    }
-    if (!labourData.Work_Type_1) {
-      showAlert('error', 'Work Type required hai');
-      return;
-    }
-    if (!labourData.Work_Description_1.trim()) {
-      showAlert('error', 'Work Description required hai');
-      return;
-    }
-    if (!labourData.Labour_Category_1) {
-      showAlert('error', 'Labour Category 1 required hai');
-      return;
-    }
-    if (!labourData.Number_Of_Labour_1 || parseInt(labourData.Number_Of_Labour_1) <= 0) {
-      showAlert('error', 'Number of Labour (Cat 1) required hai aur 0 se zyada hona chahiye');
-      return;
-    }
-    if (!labourData.Date_Of_Required_1) {
-      showAlert('error', 'Date of Required required hai');
-      return;
-    }
-    if (!labourData.Head_Of_Contractor_Company_1) {
-      showAlert('error', 'Head Of Contractor/Company required hai');
-      return;
-    }
-    // Contractor fields required when Contractor Head selected
-    if (isLabourContractorHead && !labourData.Name_Of_Contractor_1) {
-      showAlert('error', 'Name of Contractor required hai');
-      return;
-    }
-
-    const payload = { ...labourData };
     try {
-      const result = await postLabourRequest(payload).unwrap();
+      const result = await postLabourRequest({ ...labourData }).unwrap();
       showAlert('success', `${result.message} | UID: ${result.uid}`);
       resetLabourForm();
     } catch (err) {
@@ -1430,15 +1539,14 @@ const SiteExpensesForm = () => {
     }
   };
 
+  // ── Submit: Debit ─────────────────────────────────────────
   const handleSubmitDebit = async (e) => {
     e.preventDefault();
-    if (!debitData.Project_Name_1 || !debitData.Contractor_Name_1) {
-      showAlert('error', 'Project Name aur Contractor Name required hain');
-      return;
-    }
-    const payload = { ...debitData };
+    if (!debitData.Project_Name_1 || !debitData.Contractor_Name_1)
+      return showAlert('error', 'Project Name aur Contractor Name required hain');
+
     try {
-      const result = await postContractorDebit(payload).unwrap();
+      const result = await postContractorDebit({ ...debitData }).unwrap();
       showAlert('success', `${result.message} | UID: ${result.uid}`);
       resetDebitForm();
     } catch (err) {
@@ -1446,7 +1554,7 @@ const SiteExpensesForm = () => {
     }
   };
 
-  // ─── Reset Handlers ───────────────────────────────────────────────────────
+  // ── Reset Handlers ────────────────────────────────────────
   const resetSiteExpensesForm = () => {
     setSiteExpensesData({
       Vendor_Payee_Name_1: '', Project_Name_1: '', Project_Engineer_Name_1: '',
@@ -1455,26 +1563,28 @@ const SiteExpensesForm = () => {
     });
     setSiteExpenseItems([{ Exp_Head_1: '', Details_of_Work_1: '', Amount_1: '' }]);
     setBillPhotoName('');
+    setPhotoError('');
+    setIsPhotoLoading(false);
+    setPhotoPreviewUrl('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const resetLabourForm = () => setLabourData({
     Project_Name_1: '', Project_Engineer_1: '', Work_Type_1: '', Work_Description_1: '',
-    Labour_Category_1: '', Number_Of_Labour_1: '', Labour_Category_2: '', Number_Of_Labour_2: '',
-    Total_Labour_1: '', Date_Of_Required_1: '', Head_Of_Contractor_Company_1: '',
-    Name_Of_Contractor_1: '', Contractor_Firm_Name_1: '', Remark_1: '',
+    Labour_Category_1: '', Number_Of_Labour_1: '', Labour_Category_2: '',
+    Number_Of_Labour_2: '', Total_Labour_1: '', Date_Of_Required_1: '',
+    Head_Of_Contractor_Company_1: '', Name_Of_Contractor_1: '',
+    Contractor_Firm_Name_1: '', Remark_1: '',
   });
 
   const resetDebitForm = () => setDebitData({
-    Project_Name_1: '', Project_Engineer_1: '', Contractor_Name_1: '', Contractor_Firm_Name_1: '',
-    Work_Type_1: '', Work_Date_1: '', Work_Description_1: '', Particular_1: '',
-    Qty_1: '', Rate_Wages_1: '', Amount_1: '',
+    Project_Name_1: '', Project_Engineer_1: '', Contractor_Name_1: '',
+    Contractor_Firm_Name_1: '', Work_Type_1: '', Work_Date_1: '',
+    Work_Description_1: '', Particular_1: '', Qty_1: '', Rate_Wages_1: '', Amount_1: '',
   });
 
-  // ─── Reusable SelectField Component ──────────────────────────────────────
-  const SelectField = ({
-    label, icon: Icon, value, onChange, options,
-    required, colorClass = 'blue', disabled = false
-  }) => (
+  // ── Reusable Components ───────────────────────────────────
+  const SelectField = ({ label, icon: Icon, value, onChange, options, required, colorClass = 'blue', disabled = false }) => (
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-2">
         {Icon && <Icon className="w-4 h-4 inline mr-1" />}
@@ -1485,9 +1595,7 @@ const SiteExpensesForm = () => {
       </label>
       <div className="relative">
         <select
-          value={value}
-          onChange={onChange}
-          disabled={disabled}
+          value={value} onChange={onChange} disabled={disabled}
           className={`w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none
             focus:ring-2 focus:ring-${colorClass}-500 appearance-none bg-white
             ${disabled ? 'bg-gray-50 cursor-not-allowed' : ''}`}
@@ -1502,7 +1610,7 @@ const SiteExpensesForm = () => {
     </div>
   );
 
-  // ─── Tab Config ───────────────────────────────────────────────────────────
+  // Tab config
   const tabs = [
     { id: 'siteExpenses', label: 'Site Expenses', icon: Receipt,    gradient: 'from-blue-600 to-indigo-600'   },
     { id: 'labour',       label: 'Labour',        icon: Users,      gradient: 'from-emerald-600 to-teal-600'  },
@@ -1510,20 +1618,18 @@ const SiteExpensesForm = () => {
   ];
   const activeTabConfig = tabs.find(t => t.id === activeTab);
 
-  // ─── JSX ──────────────────────────────────────────────────────────────────
+  // ── JSX ───────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
 
-        {/* ── Tabs ── */}
+        {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-6">
           {tabs.map((tab) => {
             const Icon     = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all ${
                   isActive
                     ? `bg-gradient-to-r ${tab.gradient} text-white shadow-lg scale-105`
@@ -1536,7 +1642,6 @@ const SiteExpensesForm = () => {
           })}
         </div>
 
-        {/* Dropdown error banner */}
         {isDropdownError && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
             ⚠️ Dropdown data load nahi ho paya. Page refresh karo.
@@ -1545,7 +1650,7 @@ const SiteExpensesForm = () => {
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
 
-          {/* ── Header ── */}
+          {/* Header */}
           <div className={`bg-gradient-to-r ${activeTabConfig?.gradient} p-6 text-white`}>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -1562,23 +1667,24 @@ const SiteExpensesForm = () => {
             </div>
           </div>
 
-          {/* ════════════════════ SITE EXPENSES FORM ════════════════════ */}
+          {/* ════ SITE EXPENSES FORM ════ */}
           {activeTab === 'siteExpenses' && (
             <form onSubmit={handleSubmitSiteExpenses} className="p-6 space-y-6">
 
               {/* Vendor & Project */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  {/* ✅ Required */}
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <User className="w-4 h-4 inline mr-1" />Vendor/Payee Name <span className="text-red-500">*</span>
+                    <User className="w-4 h-4 inline mr-1" />
+                    Vendor/Payee Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={siteExpensesData.Vendor_Payee_Name_1}
                     onChange={(e) => handleSiteExpenseChange('Vendor_Payee_Name_1', e.target.value)}
                     placeholder="Enter Vendor/Payee Name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <SelectField
@@ -1596,40 +1702,38 @@ const SiteExpensesForm = () => {
                     <User className="w-4 h-4 inline mr-1" />Project Engineer
                     <span className="text-xs text-gray-400 ml-1">(auto)</span>
                   </label>
-                  <input
-                    type="text" readOnly
+                  <input type="text" readOnly
                     value={siteExpensesData.Project_Engineer_Name_1}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 cursor-not-allowed text-gray-600"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                      bg-gray-50 cursor-not-allowed text-gray-600"
                   />
                 </div>
                 <div>
-                  {/* Bill No — optional (no * star) */}
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     <Hash className="w-4 h-4 inline mr-1" />Bill No.
                   </label>
-                  <input
-                    type="text"
+                  <input type="text"
                     value={siteExpensesData.Bill_No_1}
                     onChange={(e) => handleSiteExpenseChange('Bill_No_1', e.target.value)}
                     placeholder="Enter Bill Number"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  {/* ✅ Required */}
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     <Calendar className="w-4 h-4 inline mr-1" />Bill Date <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="date"
+                  <input type="date"
                     value={siteExpensesData.Bill_Date_1}
                     onChange={(e) => handleSiteExpenseChange('Bill_Date_1', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Head Type — ✅ Required */}
+              {/* Head Type */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <Briefcase className="w-4 h-4 inline mr-1" />Head Type <span className="text-red-500">*</span>
@@ -1645,7 +1749,8 @@ const SiteExpensesForm = () => {
                         ...(val !== 'Contractor Head' && { Contractor_Name_1: '', Contractor_Firm_Name_1: '' })
                       }));
                     }}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
                   >
                     <option value="">-- Select Head Type --</option>
                     {['Company Head', 'Contractor Head'].map((opt, i) => (
@@ -1656,27 +1761,73 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
-              {/* ✅ Bill Photo — Required */}
+              {/* Bill Photo */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <Camera className="w-4 h-4 inline mr-1" />Bill Photo <span className="text-red-500">*</span>
+                  <span className="text-xs text-gray-400 ml-2 font-normal">
+                    (max 20MB — auto compressed)
+                  </span>
                 </label>
+
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept="image/*,application/pdf"
                   onChange={handlePhotoChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  disabled={isPhotoLoading}
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none
+                    focus:ring-2 focus:ring-blue-500
+                    file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0
+                    file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100
+                    ${isPhotoLoading ? 'opacity-60 cursor-not-allowed border-yellow-300 bg-yellow-50'
+                      : photoError   ? 'border-red-300'
+                      : siteExpensesData.Bill_Photo_1 ? 'border-green-300'
+                      : 'border-gray-300'
+                    }`}
                 />
-                {billPhotoName && (
-                  <p className="text-xs text-green-600 mt-1">✅ {billPhotoName} — Ready to upload</p>
+
+                {/* Processing */}
+                {isPhotoLoading && (
+                  <div className="mt-2 flex items-center gap-2 text-yellow-700 text-sm
+                    bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+                    <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                    <span>Photo compress ho rahi hai... ek second rukho</span>
+                  </div>
+                )}
+
+                {/* Error */}
+                {photoError && (
+                  <div className="mt-2 flex items-center gap-2 text-red-700 text-sm
+                    bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                    <X className="w-4 h-4 flex-shrink-0" />
+                    <span>{photoError}</span>
+                  </div>
+                )}
+
+                {/* Success + preview */}
+                {siteExpensesData.Bill_Photo_1 && !isPhotoLoading && !photoError && (
+                  <div className="mt-2 flex items-center gap-3 bg-green-50 border
+                    border-green-200 rounded-lg px-3 py-2">
+                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <span className="text-green-700 text-sm font-medium flex-1 truncate">
+                      {billPhotoName} — Ready
+                    </span>
+                    {photoPreviewUrl && (
+                      <img
+                        src={photoPreviewUrl}
+                        alt="preview"
+                        className="w-12 h-12 object-cover rounded-lg border border-green-300"
+                      />
+                    )}
+                  </div>
                 )}
               </div>
 
-              {/* Contractor fields — only when Contractor Head */}
+              {/* Contractor fields */}
               {isSiteContractorHead && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    {/* ✅ Required when Contractor Head */}
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       <HardHat className="w-4 h-4 inline mr-1" />Contractor Name <span className="text-red-500">*</span>
                     </label>
@@ -1684,7 +1835,8 @@ const SiteExpensesForm = () => {
                       <select
                         value={siteExpensesData.Contractor_Name_1}
                         onChange={(e) => handleContractorChange('siteExpenses', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                          focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
                       >
                         <option value="">-- Select Contractor --</option>
                         {contractorOptions.map((opt, i) => (
@@ -1696,13 +1848,13 @@ const SiteExpensesForm = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      <Building className="w-4 h-4 inline mr-1" />Contractor Firm Name
+                      <Building className="w-4 h-4 inline mr-1" />Contractor Firm
                       <span className="text-xs text-gray-400 ml-1">(auto)</span>
                     </label>
-                    <input
-                      type="text" readOnly
+                    <input type="text" readOnly
                       value={siteExpensesData.Contractor_Firm_Name_1}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 cursor-not-allowed text-gray-600"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        bg-gray-50 cursor-not-allowed text-gray-600"
                     />
                   </div>
                 </div>
@@ -1713,11 +1865,11 @@ const SiteExpensesForm = () => {
                 <div className="bg-blue-50 px-4 py-3 flex items-center justify-between border-b border-blue-200">
                   <h3 className="font-semibold text-blue-800 flex items-center gap-2">
                     <FileText className="w-5 h-5" />Expense Items <span className="text-red-500">*</span>
-                    <span className="text-xs text-blue-600 font-normal">(har item alag row banega sheet mein)</span>
+                    <span className="text-xs text-blue-600 font-normal">(har item alag row)</span>
                   </h3>
-                  <button
-                    type="button" onClick={addItem}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  <button type="button" onClick={addItem}
+                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg
+                      hover:bg-blue-700 transition-colors font-medium"
                   >
                     + Add Item
                   </button>
@@ -1727,16 +1879,14 @@ const SiteExpensesForm = () => {
                   {siteExpenseItems.map((item, index) => (
                     <div key={index} className="bg-gray-50 p-4 rounded-xl border border-gray-200 relative">
                       {siteExpenseItems.length > 1 && (
-                        <button
-                          type="button" onClick={() => removeItem(index)}
-                          className="absolute top-3 right-3 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                        <button type="button" onClick={() => removeItem(index)}
+                          className="absolute top-3 right-3 w-6 h-6 bg-red-500 text-white
+                            rounded-full flex items-center justify-center hover:bg-red-600"
                         >
                           <X className="w-4 h-4" />
                         </button>
                       )}
-
                       <p className="text-sm font-semibold text-gray-600 mb-3">Item {index + 1}</p>
-
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -1746,7 +1896,8 @@ const SiteExpensesForm = () => {
                             <select
                               value={item.Exp_Head_1}
                               onChange={(e) => handleItemChange(index, 'Exp_Head_1', e.target.value)}
-                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm
+                                focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
                             >
                               <option value="">-- Select --</option>
                               {expenseWorkTypeOptions.map((opt, i) => (
@@ -1756,28 +1907,28 @@ const SiteExpensesForm = () => {
                             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                           </div>
                         </div>
-
                         <div>
                           <label className="block text-xs font-medium text-gray-600 mb-1">
                             Amount (₹) <span className="text-red-500">*</span>
                           </label>
-                          <input
-                            type="number"
+                          <input type="number"
                             value={item.Amount_1}
                             onChange={(e) => handleItemChange(index, 'Amount_1', e.target.value)}
                             placeholder="0.00"
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm
+                              focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
-
                         <div className="md:col-span-2">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Details of Work <span className="text-red-500">*</span></label>
-                          <input
-                            type="text"
+                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                            Details of Work <span className="text-red-500">*</span>
+                          </label>
+                          <input type="text"
                             value={item.Details_of_Work_1}
                             onChange={(e) => handleItemChange(index, 'Details_of_Work_1', e.target.value)}
                             placeholder="Work details..."
-                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm
+                              focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
                       </div>
@@ -1787,7 +1938,7 @@ const SiteExpensesForm = () => {
 
                 <div className="bg-blue-50 px-4 py-3 border-t border-blue-200 flex items-center justify-between">
                   <span className="text-sm font-semibold text-blue-800">
-                    Total Items: {siteExpenseItems.filter(i => i.Exp_Head_1 && i.Amount_1 && i.Details_of_Work_1.trim()).length} valid
+                    Valid Items: {siteExpenseItems.filter(i => i.Exp_Head_1 && i.Amount_1 && i.Details_of_Work_1.trim()).length}
                   </span>
                   <span className="text-lg font-bold text-blue-700">
                     ₹{siteExpenseItems.reduce((sum, i) => sum + (parseFloat(i.Amount_1) || 0), 0).toFixed(2)}
@@ -1795,31 +1946,40 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
-              {/* Remark — optional (no * star) */}
+              {/* Remark */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <MessageSquare className="w-4 h-4 inline mr-1" />Remark
                 </label>
-                <textarea
-                  value={siteExpensesData.Remark_1} rows={2}
+                <textarea rows={2}
+                  value={siteExpensesData.Remark_1}
                   onChange={(e) => handleSiteExpenseChange('Remark_1', e.target.value)}
                   placeholder="Enter any remarks..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
               </div>
 
               {/* Buttons */}
               <div className="flex gap-4 pt-4 border-t">
                 <button type="button" onClick={resetSiteExpensesForm}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl
+                    hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-4 h-4" /> Reset
                 </button>
-                <button type="submit" disabled={isSiteLoading || isDropdownLoading}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                <button
+                  type="submit"
+                  disabled={isSiteLoading || isDropdownLoading || isPhotoLoading}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600
+                    text-white rounded-xl hover:from-blue-700 hover:to-indigo-700
+                    transition-colors font-medium flex items-center justify-center gap-2
+                    disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSiteLoading
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                    : isPhotoLoading
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Photo Processing...</>
                     : <><Send className="w-4 h-4" /> Submit Site Expense</>
                   }
                 </button>
@@ -1827,10 +1987,9 @@ const SiteExpensesForm = () => {
             </form>
           )}
 
-          {/* ════════════════════ LABOUR FORM ════════════════════ */}
+          {/* ════ LABOUR FORM ════ */}
           {activeTab === 'labour' && (
             <form onSubmit={handleSubmitLabour} className="p-6 space-y-6">
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SelectField
                   label="Project Name" icon={Building} required
@@ -1849,7 +2008,6 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
-              {/* ✅ Required */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <Wrench className="w-4 h-4 inline mr-1" />Work Type <span className="text-red-500">*</span>
@@ -1857,7 +2015,8 @@ const SiteExpensesForm = () => {
                 <div className="relative">
                   <select value={labourData.Work_Type_1}
                     onChange={(e) => handleLabourChange('Work_Type_1', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                      focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
                   >
                     <option value="">-- Select Work Type --</option>
                     {labourWorkTypeOptions.map((opt, i) => (
@@ -1868,15 +2027,15 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
-              {/* ✅ Required */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <FileText className="w-4 h-4 inline mr-1" />Work Description <span className="text-red-500">*</span>
                 </label>
-                <textarea value={labourData.Work_Description_1} rows={3}
+                <textarea rows={3} value={labourData.Work_Description_1}
                   onChange={(e) => handleLabourChange('Work_Description_1', e.target.value)}
                   placeholder="Describe the work..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                    focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                 />
               </div>
 
@@ -1885,7 +2044,6 @@ const SiteExpensesForm = () => {
                   <Users className="w-5 h-5" />Labour Details
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* ✅ Required */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Labour Category 1 <span className="text-red-500">*</span>
@@ -1893,7 +2051,8 @@ const SiteExpensesForm = () => {
                     <div className="relative">
                       <select value={labourData.Labour_Category_1}
                         onChange={(e) => handleLabourChange('Labour_Category_1', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                          focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
                       >
                         <option value="">-- Select --</option>
                         {labourCategoryOptions.map((opt, i) => (
@@ -1903,7 +2062,6 @@ const SiteExpensesForm = () => {
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     </div>
                   </div>
-                  {/* ✅ Required */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Number of Labour (Cat 1) <span className="text-red-500">*</span>
@@ -1911,16 +2069,17 @@ const SiteExpensesForm = () => {
                     <input type="number" min="0" placeholder="0"
                       value={labourData.Number_Of_Labour_1}
                       onChange={(e) => handleLabourChange('Number_Of_Labour_1', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
-                  {/* Optional — no * */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Labour Category 2</label>
                     <div className="relative">
                       <select value={labourData.Labour_Category_2}
                         onChange={(e) => handleLabourChange('Labour_Category_2', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                          focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
                       >
                         <option value="">-- Select --</option>
                         {labourCategoryOptions.map((opt, i) => (
@@ -1930,17 +2089,16 @@ const SiteExpensesForm = () => {
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     </div>
                   </div>
-                  {/* Optional — no * */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Number of Labour (Cat 2)</label>
                     <input type="number" min="0" placeholder="0"
                       value={labourData.Number_Of_Labour_2}
                       onChange={(e) => handleLabourChange('Number_Of_Labour_2', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
-
                 <div className="bg-white p-4 rounded-xl border border-emerald-300 flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <Calculator className="w-4 h-4" />Total Labour (Auto)
@@ -1951,18 +2109,17 @@ const SiteExpensesForm = () => {
                 </div>
               </div>
 
-              {/* ✅ Required */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <Calendar className="w-4 h-4 inline mr-1" />Date of Required <span className="text-red-500">*</span>
                 </label>
                 <input type="date" value={labourData.Date_Of_Required_1}
                   onChange={(e) => handleLabourChange('Date_Of_Required_1', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                    focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
 
-              {/* ✅ Required */}
               <div className={`grid grid-cols-1 gap-4 ${isLabourContractorHead ? 'md:grid-cols-3' : ''}`}>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1978,7 +2135,8 @@ const SiteExpensesForm = () => {
                           ...(val !== 'Contractor Head' && { Name_Of_Contractor_1: '', Contractor_Firm_Name_1: '' })
                         }));
                       }}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
                     >
                       <option value="">-- Select --</option>
                       {['Company Head', 'Contractor Head'].map((opt, i) => (
@@ -1988,10 +2146,8 @@ const SiteExpensesForm = () => {
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-
                 {isLabourContractorHead && (
                   <>
-                    {/* ✅ Required when Contractor Head */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         <HardHat className="w-4 h-4 inline mr-1" />Name of Contractor <span className="text-red-500">*</span>
@@ -1999,7 +2155,8 @@ const SiteExpensesForm = () => {
                       <div className="relative">
                         <select value={labourData.Name_Of_Contractor_1}
                           onChange={(e) => handleContractorChange('labour', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                            focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
                         >
                           <option value="">-- Select --</option>
                           {contractorOptions.map((opt, i) => (
@@ -2015,33 +2172,38 @@ const SiteExpensesForm = () => {
                         <span className="text-xs text-gray-400 ml-1">(auto)</span>
                       </label>
                       <input type="text" readOnly value={labourData.Contractor_Firm_Name_1}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 cursor-not-allowed text-gray-600"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                          bg-gray-50 cursor-not-allowed text-gray-600"
                       />
                     </div>
                   </>
                 )}
               </div>
 
-              {/* Remark — optional (no * star) */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <MessageSquare className="w-4 h-4 inline mr-1" />Remark
                 </label>
-                <textarea value={labourData.Remark_1} rows={2}
+                <textarea rows={2} value={labourData.Remark_1}
                   onChange={(e) => handleLabourChange('Remark_1', e.target.value)}
                   placeholder="Enter any remarks..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                    focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                 />
               </div>
 
               <div className="flex gap-4 pt-4 border-t">
                 <button type="button" onClick={resetLabourForm}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl
+                    hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-4 h-4" /> Reset
                 </button>
                 <button type="submit" disabled={isLabourLoading || isDropdownLoading}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600
+                    text-white rounded-xl hover:from-emerald-700 hover:to-teal-700
+                    transition-colors font-medium flex items-center justify-center gap-2
+                    disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLabourLoading
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
@@ -2052,10 +2214,9 @@ const SiteExpensesForm = () => {
             </form>
           )}
 
-          {/* ════════════════════ DEBIT FORM ════════════════════ */}
+          {/* ════ DEBIT FORM ════ */}
           {activeTab === 'debit' && (
             <form onSubmit={handleSubmitDebit} className="p-6 space-y-6">
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SelectField
                   label="Project Name" icon={Building} required
@@ -2082,7 +2243,8 @@ const SiteExpensesForm = () => {
                   <div className="relative">
                     <select value={debitData.Contractor_Name_1}
                       onChange={(e) => handleContractorChange('debit', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white"
                     >
                       <option value="">-- Select Contractor --</option>
                       {contractorOptions.map((opt, i) => (
@@ -2111,7 +2273,8 @@ const SiteExpensesForm = () => {
                   <div className="relative">
                     <select value={debitData.Work_Type_1}
                       onChange={(e) => handleDebitChange('Work_Type_1', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white"
                     >
                       <option value="">-- Select --</option>
                       {labourWorkTypeOptions.map((opt, i) => (
@@ -2127,7 +2290,8 @@ const SiteExpensesForm = () => {
                   </label>
                   <input type="date" value={debitData.Work_Date_1}
                     onChange={(e) => handleDebitChange('Work_Date_1', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                      focus:outline-none focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
               </div>
@@ -2136,10 +2300,11 @@ const SiteExpensesForm = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   <FileText className="w-4 h-4 inline mr-1" />Work Description
                 </label>
-                <textarea value={debitData.Work_Description_1} rows={3}
+                <textarea rows={3} value={debitData.Work_Description_1}
                   onChange={(e) => handleDebitChange('Work_Description_1', e.target.value)}
                   placeholder="Describe the work..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                    focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
                 />
               </div>
 
@@ -2154,7 +2319,8 @@ const SiteExpensesForm = () => {
                   <div className="relative">
                     <select value={debitData.Particular_1}
                       onChange={(e) => handleDebitChange('Particular_1', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white"
                     >
                       <option value="">-- Select Particular --</option>
                       {['Labour Work', 'Material Supply', 'Transportation', 'Equipment Rent', 'Advance', 'Other'].map((opt, i) => (
@@ -2164,7 +2330,6 @@ const SiteExpensesForm = () => {
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2173,7 +2338,8 @@ const SiteExpensesForm = () => {
                     <input type="number" min="0" step="0.01" placeholder="0"
                       value={debitData.Qty_1}
                       onChange={(e) => handleDebitChange('Qty_1', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
                   <div>
@@ -2183,11 +2349,11 @@ const SiteExpensesForm = () => {
                     <input type="number" min="0" step="0.01" placeholder="0"
                       value={debitData.Rate_Wages_1}
                       onChange={(e) => handleDebitChange('Rate_Wages_1', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl
+                        focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
                 </div>
-
                 <div className="bg-white p-4 rounded-xl border border-purple-300 flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <IndianRupee className="w-4 h-4" />Total Amount (Auto)
@@ -2200,12 +2366,16 @@ const SiteExpensesForm = () => {
 
               <div className="flex gap-4 pt-4 border-t">
                 <button type="button" onClick={resetDebitForm}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl
+                    hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-4 h-4" /> Reset
                 </button>
                 <button type="submit" disabled={isDebitLoading || isDropdownLoading}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600
+                    text-white rounded-xl hover:from-purple-700 hover:to-indigo-700
+                    transition-colors font-medium flex items-center justify-center gap-2
+                    disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isDebitLoading
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>

@@ -46,8 +46,9 @@ const Advancesection=require('./All_Fms_Api/Advance_payment')
 
 const app = express();
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '30mb' }));
+app.use(express.urlencoded({ limit: '30mb', extended: true }));
+
 app.use(express.json());
 app.use(cors()); // Allow requests from React frontend
 app.use(express.json());
