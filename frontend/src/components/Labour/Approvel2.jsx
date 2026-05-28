@@ -392,6 +392,9 @@ const Approvel2 = () => {
                     </div>
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap bg-blue-900">
+                    Commission
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap bg-blue-900">
                     <div className="flex items-center gap-2">
                       <Wallet className="w-4 h-4" />
                       Total Paid 3
@@ -576,6 +579,12 @@ const Approvel2 = () => {
                     <td className="px-4 py-4 whitespace-nowrap bg-green-50">
                       <span className="text-sm text-gray-700">
                         ₹{item.Conveyanance_3 || '0'}
+                      </span>
+                    </td>
+
+                     <td className="px-4 py-4 whitespace-nowrap bg-green-50">
+                      <span className="text-sm font-medium text-gray-900">
+                        ₹{item.Contractor_Commission_3 || '0'}
                       </span>
                     </td>
                     

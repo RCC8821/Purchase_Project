@@ -637,6 +637,7 @@ router.get('/get-Approvel-ashokSir', async (req, res) => {
         Labour_Rate_2_3:         row[38] || '',
         Total_Wages_3:         row[39] || '',
         Conveyanance_3:         row[40] || '',
+        Contractor_Commission_3:         row[41] || '',
         Total_Paid_Amount_3:         row[42] || '',
         Company_Head_Amount_3:         row[43] || '',
         Contractor_Head_Amount_3:         row[44] || '',

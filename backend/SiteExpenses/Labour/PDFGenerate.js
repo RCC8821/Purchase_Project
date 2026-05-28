@@ -55,19 +55,656 @@ router.get('/Get-Next-BillNo', async (req, res) => {
 });
 
 // ─── PDF Generator ─────────────────────────────────────────────────────────────
+// async function generateLabourPDF(records, billNo, paidName) {
+//   return new Promise((resolve, reject) => {
+//     const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape' });
+//     const buffers = [];
+
+//     doc.on('data', chunk => buffers.push(chunk));
+//     doc.on('end',  () => resolve(Buffer.concat(buffers)));
+//     doc.on('error', reject);
+
+//     const pageWidth    = 841.89;
+//     const margin       = 40;
+//     const contentWidth = pageWidth - margin * 2;
+//     const first        = records[0];
+
+//     const cleanNum = val => {
+//       if (val == null || val === '') return 0;
+//       const cleaned = val.toString().replace(/[^0-9.-]/g, '');
+//       return parseFloat(cleaned) || 0;
+//     };
+
+//     // ✅ Check: Kisi bhi record mein contractor amount hai ya nahi
+//     const hasAnyContractorAmount = records.some(
+//       r => cleanNum(r.Revised_Contractor_Head_Amount_4) > 0
+//     );
+
+//     // ─── Company Name ─────────────────────────────────────────────────────
+//     doc.fontSize(16).font('Helvetica-Bold')
+//       .text('R. C. C. Infrastructures', margin, 30, { 
+//         align: 'center', width: contentWidth 
+//       });
+
+//     doc.moveDown(0.4);
+
+//     doc.fontSize(13).font('Helvetica-Bold')
+//       .text('LABOUR DEPLOYED REPORT', margin, doc.y, { 
+//         align: 'center', width: contentWidth 
+//       });
+
+//     // ✅ "Debit Note" - RED color - sirf tab dikhao jab contractor amount ho
+//     if (hasAnyContractorAmount) {
+//       doc.moveDown(0.3);
+
+//       const debitText  = 'Debit Note';
+//       const debitFontSize = 12;
+//       doc.fontSize(debitFontSize).font('Helvetica-Bold');
+//       const textWidth  = doc.widthOfString(debitText);
+//       const textHeight = doc.currentLineHeight();
+
+//       const textX = margin + (contentWidth - textWidth) / 2;
+//       const textY = doc.y;
+//       const padX  = 12;
+//       const padY  = 4;
+
+//       // Red highlight background
+//       doc.save();
+//       doc.roundedRect(
+//         textX - padX,
+//         textY - padY,
+//         textWidth + padX * 2,
+//         textHeight + padY * 2,
+//         4
+//       ).fill('#DC2626');
+
+//       // White text on red background
+//       doc.fillColor('#FFFFFF')
+//         .fontSize(debitFontSize)
+//         .font('Helvetica-Bold')
+//         .text(debitText, textX, textY, {
+//           width:     textWidth,
+//           align:     'center',
+//           lineBreak: false,
+//         });
+//       doc.restore();
+//       doc.fillColor('#000000');
+
+//       doc.moveDown(0.5);
+//     }
+
+//     doc.moveDown(0.5);
+//     doc.moveTo(margin, doc.y)
+//       .lineTo(margin + contentWidth, doc.y)
+//       .lineWidth(1).stroke();
+//     doc.moveDown(0.4);
+
+//     const headerStartY = doc.y;
+//     const col1X        = margin;
+//     const col2X        = margin + contentWidth / 2;
+//     const labelWidth   = 130;
+//     const valueWidth   = 200;
+//     const lineHeight   = 16;
+
+//     const totalAllLabour = records.reduce((s, r) =>
+//       s + cleanNum(r.Number_Of_Labour_1_3) + cleanNum(r.Number_Of_Labour_2_3), 0);
+
+//     const headerField = (label, value, x, y) => {
+//       doc.fontSize(8.5).font('Helvetica-Bold')
+//         .text(`${label} :`, x, y, {
+//           width:     labelWidth,
+//           lineBreak: false,
+//           ellipsis:  false,
+//         });
+//       doc.fontSize(8.5).font('Helvetica')
+//         .text(value || '-', x + labelWidth + 4, y, {
+//           width:     valueWidth,
+//           lineBreak: false,
+//           ellipsis:  true,
+//         });
+//     };
+
+//     // Row 1
+//     headerField('Project Name',           first.projectName,                     col1X, headerStartY);
+//     headerField('Bill No.',               billNo,                                col2X, headerStartY);
+//     // Row 2
+//     headerField('Labour Contractor Name', first.Labouar_Contractor_Name_3,       col1X, headerStartY + lineHeight);
+//     headerField('Bill Date',              new Date().toLocaleDateString('en-IN'), col2X, headerStartY + lineHeight);
+//     // Row 3
+//     headerField('Paid By',                paidName,                              col1X, headerStartY + lineHeight * 2);
+//     headerField('Total Labour',           totalAllLabour.toString(),             col2X, headerStartY + lineHeight * 2);
+
+//     const tableStartY = headerStartY + lineHeight * 2 + 28;
+
+//     doc.moveTo(margin, tableStartY - 8)
+//        .lineTo(margin + contentWidth, tableStartY - 8)
+//        .lineWidth(0.5).stroke();
+
+//     // ─── Table Columns ────────────────────────────────────────────────────
+//     const columns = [
+//       { label: 'Sr.\nNo.',              width: 28  },
+//       { label: 'Date\nRequired',        width: 55  },
+//       { label: 'UID No.',               width: 70  },
+//       { label: 'Work Details',          width: 135 },
+//       { label: 'Contractor\nDebit Name', width: 85  },
+//       { label: 'Labour\nCategory 1',    width: 60  },
+//       { label: 'Labour\nNo. 1',         width: 40  },
+//       { label: 'Labour\nCategory 2',    width: 60  },
+//       { label: 'Labour\nNo. 2',         width: 40  },
+//       { label: 'Total\nLabour',         width: 40  },
+//       { label: 'Company\nHead Amt',     width: 72  },
+//       { label: 'Contractor\nHead Amt',  width: 72  },
+//     ];
+
+//     const headerHeight = 30;
+//     const rowHeight    = 22;
+//     const tableX       = margin;
+//     let   tableY       = tableStartY;
+
+//     // ─── Table Header Row ─────────────────────────────────────────────────
+//     let cx = tableX;
+//     columns.forEach(col => {
+//       doc.rect(cx, tableY, col.width, headerHeight)
+//         .fillAndStroke('#1a3c6e', '#000000');
+//       doc.fillColor('#ffffff').fontSize(8).font('Helvetica-Bold')
+//         .text(col.label, cx + 2, tableY + 4, {
+//           width:   col.width - 4,
+//           align:   'center',
+//           lineGap: 1,
+//         });
+//       doc.fillColor('#000000');
+//       cx += col.width;
+//     });
+
+//     tableY += headerHeight;
+
+//     // ─── Data Rows ────────────────────────────────────────────────────────
+//     records.forEach((row, i) => {
+//       const rowTotalLabour = cleanNum(row.Number_Of_Labour_1_3) 
+//                            + cleanNum(row.Number_Of_Labour_2_3);
+//       const companyAmt     = cleanNum(row.Revised_Company_Head_Amount_4);
+//       const contractorAmt  = cleanNum(row.Revised_Contractor_Head_Amount_4);
+
+//       const rowData = [
+//         (i + 1).toString(),
+//         row.dateRequired         || '-',
+//         row.uid                  || '-',
+//         row.workDescription      || '-',
+//         row.contractorFirmName   || '-',
+//         row.Labour_Category_1_3  || '-',
+//         row.Number_Of_Labour_1_3 || '-',
+//         row.Labour_Category_2_3  || '-',
+//         row.Number_Of_Labour_2_3 || '-',
+//         rowTotalLabour > 0 ? rowTotalLabour.toString() : '-',
+//         companyAmt    > 0  ? companyAmt.toFixed(2)     : '-',
+//         contractorAmt > 0  ? contractorAmt.toFixed(2)  : '-',
+//       ];
+
+//       const bgColor = i % 2 === 0 ? '#f0f5ff' : '#ffffff';
+//       cx = tableX;
+
+//       rowData.forEach((cell, j) => {
+//         doc.rect(cx, tableY, columns[j].width, rowHeight)
+//           .fillAndStroke(bgColor, '#cccccc');
+//         doc.fillColor('#000000').fontSize(9.5).font('Helvetica')
+//           .text(String(cell), cx + 2, tableY + 6, {
+//             width:     columns[j].width - 4,
+//             align:     'center',
+//             ellipsis:  true,
+//             lineBreak: false,
+//           });
+//         cx += columns[j].width;
+//       });
+
+//       tableY += rowHeight;
+//     });
+
+//     // ─── Total Row ────────────────────────────────────────────────────────
+//     const totalCompanyHead    = records.reduce(
+//       (s, r) => s + cleanNum(r.Revised_Company_Head_Amount_4), 0
+//     );
+//     const totalContractorHead = records.reduce(
+//       (s, r) => s + cleanNum(r.Revised_Contractor_Head_Amount_4), 0
+//     );
+//     const totalLabourAll      = records.reduce(
+//       (s, r) => s + cleanNum(r.Number_Of_Labour_1_3) 
+//                    + cleanNum(r.Number_Of_Labour_2_3), 0
+//     );
+
+//     const totalRowData = [
+//       '', '', '', '', '', '', '', '', '',
+//       totalLabourAll.toString(),
+//       totalCompanyHead.toFixed(2),
+//       totalContractorHead.toFixed(2),
+//     ];
+
+//     cx = tableX;
+//     totalRowData.forEach((cell, j) => {
+//       doc.rect(cx, tableY, columns[j].width, rowHeight)
+//         .fillAndStroke('#cfe2ff', '#000000');
+//       doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold')
+//         .text(cell || '', cx + 2, tableY + 7, {
+//           width:     columns[j].width - 4,
+//           align:     'center',
+//           lineBreak: false,
+//         });
+//       cx += columns[j].width;
+//     });
+
+//     tableY += rowHeight + 12;
+
+//     // ─── Summary Box ──────────────────────────────────────────────────────
+//      // ─── Summary Box ──────────────────────────────────────────────────────
+//     const boxWidth = 290;
+//     const boxX     = margin + contentWidth - boxWidth;
+//     const boxRowH  = 22;
+
+//     // Company Head Row
+//     doc.rect(boxX, tableY, boxWidth / 2, boxRowH)
+//       .fillAndStroke('#0d2b4e', '#000000');
+//     doc.fillColor('#ffffff').fontSize(7.5).font('Helvetica-Bold')
+//       .text('Total Company Head Amt', boxX + 5, tableY + 6, {
+//         width: boxWidth / 2 - 10, align: 'left', lineBreak: false,
+//       });
+//     doc.rect(boxX + boxWidth / 2, tableY, boxWidth / 2, boxRowH)
+//       .fillAndStroke('#cfe2ff', '#000000');
+//     // ✅ Font size 8 → 10
+//     doc.fillColor('#000000').fontSize(10).font('Helvetica-Bold')
+//       .text(totalCompanyHead.toFixed(2), boxX + boxWidth / 2 + 5, tableY + 5, {
+//         width: boxWidth / 2 - 10, align: 'right', lineBreak: false,
+//       });
+
+//     tableY += boxRowH;
+
+//     // Contractor Head Row
+//     doc.rect(boxX, tableY, boxWidth / 2, boxRowH)
+//       .fillAndStroke('#0d2b4e', '#000000');
+//     doc.fillColor('#ffffff').fontSize(7.5).font('Helvetica-Bold')
+//       .text('Total Contractor Head Amt', boxX + 5, tableY + 6, {
+//         width: boxWidth / 2 - 10, align: 'left', lineBreak: false,
+//       });
+//     doc.rect(boxX + boxWidth / 2, tableY, boxWidth / 2, boxRowH)
+//       .fillAndStroke('#d4edda', '#000000');
+//     // ✅ Font size 8 → 10
+//     doc.fillColor('#000000').fontSize(10).font('Helvetica-Bold')
+//       .text(totalContractorHead.toFixed(2), boxX + boxWidth / 2 + 5, tableY + 5, {
+//         width: boxWidth / 2 - 10, align: 'right', lineBreak: false,
+//       });
+
+//     tableY += boxRowH + 30;
+
+//     // ─── Signatures ───────────────────────────────────────────────────────
+//     doc.fontSize(9).font('Helvetica-Bold')
+//       .text('Prepared By: _____________________', margin,       tableY)
+//       .text('Checked By:  _____________________', margin + 240, tableY)
+//       .text('Approved By: _____________________', margin + 490, tableY);
+
+//     doc.end();
+//   });
+// }
+
+
+
+
+// async function generateLabourPDF(records, billNo, paidName) {
+//   return new Promise((resolve, reject) => {
+//     const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape' });
+//     const buffers = [];
+
+//     doc.on('data', chunk => buffers.push(chunk));
+//     doc.on('end', () => resolve(Buffer.concat(buffers)));
+//     doc.on('error', reject);
+
+//     const pageWidth = 841.89;
+//     const margin = 40;
+//     const contentWidth = pageWidth - margin * 2;
+//     const first = records[0];
+
+//     const cleanNum = val => {
+//       if (val == null || val === '') return 0;
+//       const cleaned = val.toString().replace(/[^0-9.-]/g, '');
+//       return parseFloat(cleaned) || 0;
+//     };
+
+//     const hasAnyContractorAmount = records.some(
+//       r => cleanNum(r.Revised_Contractor_Head_Amount_4) > 0
+//     );
+
+//     // ─── Company Name ─────────────────────────────────────────────────────
+//     doc.fontSize(16).font('Helvetica-Bold')
+//       .text('R. C. C. Infrastructures', margin, 30, {
+//         align: 'center', width: contentWidth
+//       });
+
+//     doc.moveDown(0.4);
+
+//     doc.fontSize(13).font('Helvetica-Bold')
+//       .text('LABOUR DEPLOYED REPORT', margin, doc.y, {
+//         align: 'center', width: contentWidth
+//       });
+
+//     if (hasAnyContractorAmount) {
+//       doc.moveDown(0.3);
+
+//       const debitText = 'Debit Note';
+//       const debitFontSize = 12;
+//       doc.fontSize(debitFontSize).font('Helvetica-Bold');
+//       const textWidth = doc.widthOfString(debitText);
+//       const textHeight = doc.currentLineHeight();
+
+//       const textX = margin + (contentWidth - textWidth) / 2;
+//       const textY = doc.y;
+//       const padX = 12;
+//       const padY = 4;
+
+//       doc.save();
+//       doc.roundedRect(
+//         textX - padX,
+//         textY - padY,
+//         textWidth + padX * 2,
+//         textHeight + padY * 2,
+//         4
+//       ).fill('#DC2626');
+
+//       doc.fillColor('#FFFFFF')
+//         .fontSize(debitFontSize)
+//         .font('Helvetica-Bold')
+//         .text(debitText, textX, textY, {
+//           width: textWidth,
+//           align: 'center',
+//           lineBreak: false,
+//         });
+//       doc.restore();
+//       doc.fillColor('#000000');
+
+//       doc.moveDown(0.5);
+//     }
+
+//     doc.moveDown(0.5);
+//     doc.moveTo(margin, doc.y)
+//       .lineTo(margin + contentWidth, doc.y)
+//       .lineWidth(1).stroke();
+//     doc.moveDown(0.4);
+
+//     const headerStartY = doc.y;
+//     const col1X = margin;
+//     const col2X = margin + contentWidth / 2;
+//     const labelWidth = 130;
+//     const valueWidth = 200;
+//     const lineHeight = 16;
+
+//     const totalAllLabour = records.reduce((s, r) =>
+//       s + cleanNum(r.Number_Of_Labour_1_3) + cleanNum(r.Number_Of_Labour_2_3), 0);
+
+//     const headerField = (label, value, x, y) => {
+//       doc.fontSize(8.5).font('Helvetica-Bold')
+//         .text(`${label} :`, x, y, {
+//           width: labelWidth,
+//           lineBreak: false,
+//           ellipsis: false,
+//         });
+//       doc.fontSize(8.5).font('Helvetica')
+//         .text(value || '-', x + labelWidth + 4, y, {
+//           width: valueWidth,
+//           lineBreak: false,
+//           ellipsis: true,
+//         });
+//     };
+
+//     headerField('Project Name', first.projectName, col1X, headerStartY);
+//     headerField('Bill No.', billNo, col2X, headerStartY);
+//     headerField('Labour Contractor Name', first.Labouar_Contractor_Name_3, col1X, headerStartY + lineHeight);
+//     headerField('Bill Date', new Date().toLocaleDateString('en-IN'), col2X, headerStartY + lineHeight);
+//     headerField('Paid By', paidName, col1X, headerStartY + lineHeight * 2);
+//     headerField('Total Labour', totalAllLabour.toString(), col2X, headerStartY + lineHeight * 2);
+
+//     const tableStartY = headerStartY + lineHeight * 2 + 28;
+
+//     doc.moveTo(margin, tableStartY - 8)
+//       .lineTo(margin + contentWidth, tableStartY - 8)
+//       .lineWidth(0.5).stroke();
+
+//     // ─── Table Columns ────────────────────────────────────────────────────
+//     const columns = [
+//       { label: 'Sr.\nNo.', width: 28 },
+//       { label: 'Date\nRequired', width: 55 },
+//       { label: 'UID No.', width: 70 },
+//       { label: 'Work Details', width: 135 },
+//       { label: 'Contractor\nDebit Name', width: 85 },
+//       { label: 'Labour\nCategory 1', width: 60 },
+//       { label: 'Labour\nNo. 1', width: 40 },
+//       { label: 'Labour\nCategory 2', width: 60 },
+//       { label: 'Labour\nNo. 2', width: 40 },
+//       { label: 'Total\nLabour', width: 40 },
+//       { label: 'Company\nHead Amt', width: 72 },
+//       { label: 'Contractor\nHead Amt', width: 72 },
+//     ];
+
+//     const headerHeight = 30;
+//     const minRowHeight = 22;
+//     const tableX = margin;
+//     let tableY = tableStartY;
+
+//     // ─── Helper: Draw Table Header ────────────────────────────────────────
+//     const drawTableHeader = (y) => {
+//       let hx = tableX;
+//       columns.forEach(col => {
+//         doc.rect(hx, y, col.width, headerHeight)
+//           .fillAndStroke('#1a3c6e', '#000000');
+//         doc.fillColor('#ffffff').fontSize(8).font('Helvetica-Bold')
+//           .text(col.label, hx + 2, y + 4, {
+//             width: col.width - 4,
+//             align: 'center',
+//             lineGap: 1,
+//           });
+//         doc.fillColor('#000000');
+//         hx += col.width;
+//       });
+//     };
+
+//     drawTableHeader(tableY);
+//     tableY += headerHeight;
+
+//     // ─── Data Rows (Dynamic Height) ───────────────────────────────────────
+//     const fontSize = 9;
+//     const fontName = 'Helvetica';
+//     const verticalPadding = 10; // 5 top + 5 bottom
+
+//     records.forEach((row, i) => {
+//       const rowTotalLabour = cleanNum(row.Number_Of_Labour_1_3)
+//         + cleanNum(row.Number_Of_Labour_2_3);
+//       const companyAmt = cleanNum(row.Revised_Company_Head_Amount_4);
+//       const contractorAmt = cleanNum(row.Revised_Contractor_Head_Amount_4);
+
+//       const rowData = [
+//         (i + 1).toString(),
+//         row.dateRequired || '-',
+//         row.uid || '-',
+//         row.workDescription || '-',
+//         row.contractorFirmName || '-',
+//         row.Labour_Category_1_3 || '-',
+//         row.Number_Of_Labour_1_3 || '-',
+//         row.Labour_Category_2_3 || '-',
+//         row.Number_Of_Labour_2_3 || '-',
+//         rowTotalLabour > 0 ? rowTotalLabour.toString() : '-',
+//         companyAmt > 0 ? companyAmt.toFixed(2) : '-',
+//         contractorAmt > 0 ? contractorAmt.toFixed(2) : '-',
+//       ];
+
+//       // ✅ STEP 1: Calculate max height by checking EVERY cell
+//       doc.fontSize(fontSize).font(fontName);
+
+//       let maxCellHeight = minRowHeight;
+
+//       rowData.forEach((cell, j) => {
+//         const text = String(cell || '-');
+//         // ✅ Important: use 'left' align for accurate height calculation
+//         const textH = doc.heightOfString(text, {
+//           width: columns[j].width - 6,
+//           align: 'left',
+//         });
+//         const requiredH = textH + verticalPadding;
+//         if (requiredH > maxCellHeight) {
+//           maxCellHeight = requiredH;
+//         }
+//       });
+
+//       // ✅ STEP 2: Page break check
+//       if (tableY + maxCellHeight > doc.page.height - 60) {
+//         doc.addPage();
+//         tableY = margin;
+//         drawTableHeader(tableY);
+//         tableY += headerHeight;
+//       }
+
+//       // ✅ STEP 3: Draw row with calculated height
+//       const bgColor = i % 2 === 0 ? '#f0f5ff' : '#ffffff';
+//       let cx = tableX;
+
+//       rowData.forEach((cell, j) => {
+//         const text = String(cell || '-');
+
+//         // Draw cell background
+//         doc.rect(cx, tableY, columns[j].width, maxCellHeight)
+//           .fillAndStroke(bgColor, '#cccccc');
+
+//         // Calculate this cell's actual text height
+//         doc.fontSize(fontSize).font(fontName);
+//         const cellTextH = doc.heightOfString(text, {
+//           width: columns[j].width - 6,
+//           align: 'left',
+//         });
+
+//         // Vertically center
+//         const textY = tableY + (maxCellHeight - cellTextH) / 2;
+
+//         // ✅ Draw with text wrapping ENABLED
+//         doc.fillColor('#000000')
+//           .fontSize(fontSize)
+//           .font(fontName)
+//           .text(text, cx + 3, textY, {
+//             width: columns[j].width - 6,
+//             align: 'center',
+//           });
+
+//         cx += columns[j].width;
+//       });
+
+//       tableY += maxCellHeight;
+//     });
+
+//     // ─── Total Row ────────────────────────────────────────────────────────
+//     const totalCompanyHead = records.reduce(
+//       (s, r) => s + cleanNum(r.Revised_Company_Head_Amount_4), 0
+//     );
+//     const totalContractorHead = records.reduce(
+//       (s, r) => s + cleanNum(r.Revised_Contractor_Head_Amount_4), 0
+//     );
+//     const totalLabourAll = records.reduce(
+//       (s, r) => s + cleanNum(r.Number_Of_Labour_1_3)
+//         + cleanNum(r.Number_Of_Labour_2_3), 0
+//     );
+
+//     if (tableY + 22 > doc.page.height - 100) {
+//       doc.addPage();
+//       tableY = margin;
+//       drawTableHeader(tableY);
+//       tableY += headerHeight;
+//     }
+
+//     const totalRowData = [
+//       '', '', '', '', '', '', '', '', '',
+//       totalLabourAll.toString(),
+//       totalCompanyHead.toFixed(2),
+//       totalContractorHead.toFixed(2),
+//     ];
+
+//     let cx = tableX;
+//     const totalRowHeight = 22;
+//     totalRowData.forEach((cell, j) => {
+//       doc.rect(cx, tableY, columns[j].width, totalRowHeight)
+//         .fillAndStroke('#cfe2ff', '#000000');
+//       doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold')
+//         .text(cell || '', cx + 2, tableY + 7, {
+//           width: columns[j].width - 4,
+//           align: 'center',
+//           lineBreak: false,
+//         });
+//       cx += columns[j].width;
+//     });
+
+//     tableY += totalRowHeight + 12;
+
+//     // ─── Summary Box ──────────────────────────────────────────────────────
+//     if (tableY + 80 > doc.page.height - 60) {
+//       doc.addPage();
+//       tableY = margin;
+//     }
+
+//     const boxWidth = 290;
+//     const boxX = margin + contentWidth - boxWidth;
+//     const boxRowH = 22;
+
+//     doc.rect(boxX, tableY, boxWidth / 2, boxRowH)
+//       .fillAndStroke('#0d2b4e', '#000000');
+//     doc.fillColor('#ffffff').fontSize(7.5).font('Helvetica-Bold')
+//       .text('Total Company Head Amt', boxX + 5, tableY + 6, {
+//         width: boxWidth / 2 - 10, align: 'left', lineBreak: false,
+//       });
+//     doc.rect(boxX + boxWidth / 2, tableY, boxWidth / 2, boxRowH)
+//       .fillAndStroke('#cfe2ff', '#000000');
+//     doc.fillColor('#000000').fontSize(10).font('Helvetica-Bold')
+//       .text(totalCompanyHead.toFixed(2), boxX + boxWidth / 2 + 5, tableY + 5, {
+//         width: boxWidth / 2 - 10, align: 'right', lineBreak: false,
+//       });
+
+//     tableY += boxRowH;
+
+//     doc.rect(boxX, tableY, boxWidth / 2, boxRowH)
+//       .fillAndStroke('#0d2b4e', '#000000');
+//     doc.fillColor('#ffffff').fontSize(7.5).font('Helvetica-Bold')
+//       .text('Total Contractor Head Amt', boxX + 5, tableY + 6, {
+//         width: boxWidth / 2 - 10, align: 'left', lineBreak: false,
+//       });
+//     doc.rect(boxX + boxWidth / 2, tableY, boxWidth / 2, boxRowH)
+//       .fillAndStroke('#d4edda', '#000000');
+//     doc.fillColor('#000000').fontSize(10).font('Helvetica-Bold')
+//       .text(totalContractorHead.toFixed(2), boxX + boxWidth / 2 + 5, tableY + 5, {
+//         width: boxWidth / 2 - 10, align: 'right', lineBreak: false,
+//       });
+
+//     tableY += boxRowH + 30;
+
+//     // ─── Signatures ───────────────────────────────────────────────────────
+//     if (tableY + 30 > doc.page.height - 40) {
+//       doc.addPage();
+//       tableY = margin;
+//     }
+
+//     doc.fontSize(9).font('Helvetica-Bold')
+//       .text('Prepared By: _____________________', margin, tableY)
+//       .text('Checked By:  _____________________', margin + 240, tableY)
+//       .text('Approved By: _____________________', margin + 490, tableY);
+
+//     doc.end();
+//   });
+// }
+
+
+
 async function generateLabourPDF(records, billNo, paidName) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape' });
     const buffers = [];
 
     doc.on('data', chunk => buffers.push(chunk));
-    doc.on('end',  () => resolve(Buffer.concat(buffers)));
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
 
-    const pageWidth    = 841.89;
-    const margin       = 40;
+    const pageWidth = 841.89;
+    const margin = 40;
     const contentWidth = pageWidth - margin * 2;
-    const first        = records[0];
+    const first = records[0];
 
     const cleanNum = val => {
       if (val == null || val === '') return 0;
@@ -75,40 +712,37 @@ async function generateLabourPDF(records, billNo, paidName) {
       return parseFloat(cleaned) || 0;
     };
 
-    // ✅ Check: Kisi bhi record mein contractor amount hai ya nahi
     const hasAnyContractorAmount = records.some(
       r => cleanNum(r.Revised_Contractor_Head_Amount_4) > 0
     );
 
     // ─── Company Name ─────────────────────────────────────────────────────
     doc.fontSize(16).font('Helvetica-Bold')
-      .text('R. C. C. Infrastructures', margin, 30, { 
-        align: 'center', width: contentWidth 
+      .text('R. C. C. Infrastructures', margin, 30, {
+        align: 'center', width: contentWidth
       });
 
     doc.moveDown(0.4);
 
     doc.fontSize(13).font('Helvetica-Bold')
-      .text('LABOUR DEPLOYED REPORT', margin, doc.y, { 
-        align: 'center', width: contentWidth 
+      .text('LABOUR DEPLOYED REPORT', margin, doc.y, {
+        align: 'center', width: contentWidth
       });
 
-    // ✅ "Debit Note" - RED color - sirf tab dikhao jab contractor amount ho
     if (hasAnyContractorAmount) {
       doc.moveDown(0.3);
 
-      const debitText  = 'Debit Note';
+      const debitText = 'Debit Note';
       const debitFontSize = 12;
       doc.fontSize(debitFontSize).font('Helvetica-Bold');
-      const textWidth  = doc.widthOfString(debitText);
+      const textWidth = doc.widthOfString(debitText);
       const textHeight = doc.currentLineHeight();
 
       const textX = margin + (contentWidth - textWidth) / 2;
       const textY = doc.y;
-      const padX  = 12;
-      const padY  = 4;
+      const padX = 12;
+      const padY = 4;
 
-      // Red highlight background
       doc.save();
       doc.roundedRect(
         textX - padX,
@@ -118,13 +752,12 @@ async function generateLabourPDF(records, billNo, paidName) {
         4
       ).fill('#DC2626');
 
-      // White text on red background
       doc.fillColor('#FFFFFF')
         .fontSize(debitFontSize)
         .font('Helvetica-Bold')
         .text(debitText, textX, textY, {
-          width:     textWidth,
-          align:     'center',
+          width: textWidth,
+          align: 'center',
           lineBreak: false,
         });
       doc.restore();
@@ -140,11 +773,11 @@ async function generateLabourPDF(records, billNo, paidName) {
     doc.moveDown(0.4);
 
     const headerStartY = doc.y;
-    const col1X        = margin;
-    const col2X        = margin + contentWidth / 2;
-    const labelWidth   = 130;
-    const valueWidth   = 200;
-    const lineHeight   = 16;
+    const col1X = margin;
+    const col2X = margin + contentWidth / 2;
+    const labelWidth = 130;
+    const valueWidth = 200;
+    const lineHeight = 16;
 
     const totalAllLabour = records.reduce((s, r) =>
       s + cleanNum(r.Number_Of_Labour_1_3) + cleanNum(r.Number_Of_Labour_2_3), 0);
@@ -152,124 +785,198 @@ async function generateLabourPDF(records, billNo, paidName) {
     const headerField = (label, value, x, y) => {
       doc.fontSize(8.5).font('Helvetica-Bold')
         .text(`${label} :`, x, y, {
-          width:     labelWidth,
+          width: labelWidth,
           lineBreak: false,
-          ellipsis:  false,
+          ellipsis: false,
         });
       doc.fontSize(8.5).font('Helvetica')
         .text(value || '-', x + labelWidth + 4, y, {
-          width:     valueWidth,
+          width: valueWidth,
           lineBreak: false,
-          ellipsis:  true,
+          ellipsis: true,
         });
     };
 
-    // Row 1
-    headerField('Project Name',           first.projectName,                     col1X, headerStartY);
-    headerField('Bill No.',               billNo,                                col2X, headerStartY);
-    // Row 2
-    headerField('Labour Contractor Name', first.Labouar_Contractor_Name_3,       col1X, headerStartY + lineHeight);
-    headerField('Bill Date',              new Date().toLocaleDateString('en-IN'), col2X, headerStartY + lineHeight);
-    // Row 3
-    headerField('Paid By',                paidName,                              col1X, headerStartY + lineHeight * 2);
-    headerField('Total Labour',           totalAllLabour.toString(),             col2X, headerStartY + lineHeight * 2);
+    headerField('Project Name', first.projectName, col1X, headerStartY);
+    headerField('Bill No.', billNo, col2X, headerStartY);
+    headerField('Labour Contractor Name', first.Labouar_Contractor_Name_3, col1X, headerStartY + lineHeight);
+    headerField('Bill Date', new Date().toLocaleDateString('en-IN'), col2X, headerStartY + lineHeight);
+    headerField('Paid By', paidName, col1X, headerStartY + lineHeight * 2);
+    headerField('Total Labour', totalAllLabour.toString(), col2X, headerStartY + lineHeight * 2);
 
     const tableStartY = headerStartY + lineHeight * 2 + 28;
 
     doc.moveTo(margin, tableStartY - 8)
-       .lineTo(margin + contentWidth, tableStartY - 8)
-       .lineWidth(0.5).stroke();
+      .lineTo(margin + contentWidth, tableStartY - 8)
+      .lineWidth(0.5).stroke();
 
     // ─── Table Columns ────────────────────────────────────────────────────
     const columns = [
-      { label: 'Sr.\nNo.',              width: 28  },
-      { label: 'Date\nRequired',        width: 55  },
-      { label: 'UID No.',               width: 70  },
-      { label: 'Work Details',          width: 135 },
-      { label: 'Contractor\nDebit Name', width: 85  },
-      { label: 'Labour\nCategory 1',    width: 60  },
-      { label: 'Labour\nNo. 1',         width: 40  },
-      { label: 'Labour\nCategory 2',    width: 60  },
-      { label: 'Labour\nNo. 2',         width: 40  },
-      { label: 'Total\nLabour',         width: 40  },
-      { label: 'Company\nHead Amt',     width: 72  },
-      { label: 'Contractor\nHead Amt',  width: 72  },
+      { label: 'Sr.\nNo.', width: 28 },
+      { label: 'Date\nRequired', width: 55 },
+      { label: 'UID No.', width: 70 },
+      { label: 'Work Details', width: 135 },
+      { label: 'Contractor\nDebit Name', width: 95 }, // ✅ Width thodi badhayi
+      { label: 'Labour\nCategory 1', width: 60 },
+      { label: 'Labour\nNo. 1', width: 38 },
+      { label: 'Labour\nCategory 2', width: 60 },
+      { label: 'Labour\nNo. 2', width: 38 },
+      { label: 'Total\nLabour', width: 38 },
+      { label: 'Company\nHead Amt', width: 68 },
+      { label: 'Contractor\nHead Amt', width: 68 },
     ];
 
     const headerHeight = 30;
-    const rowHeight    = 22;
-    const tableX       = margin;
-    let   tableY       = tableStartY;
+    const minRowHeight = 22;
+    const tableX = margin;
+    let tableY = tableStartY;
 
-    // ─── Table Header Row ─────────────────────────────────────────────────
-    let cx = tableX;
-    columns.forEach(col => {
-      doc.rect(cx, tableY, col.width, headerHeight)
-        .fillAndStroke('#1a3c6e', '#000000');
-      doc.fillColor('#ffffff').fontSize(8).font('Helvetica-Bold')
-        .text(col.label, cx + 2, tableY + 4, {
-          width:   col.width - 4,
-          align:   'center',
-          lineGap: 1,
-        });
-      doc.fillColor('#000000');
-      cx += col.width;
-    });
+    // ─── Helper: Draw Table Header ────────────────────────────────────────
+    const drawTableHeader = (y) => {
+      let hx = tableX;
+      columns.forEach(col => {
+        doc.rect(hx, y, col.width, headerHeight)
+          .fillAndStroke('#1a3c6e', '#000000');
+        doc.fillColor('#ffffff').fontSize(8).font('Helvetica-Bold')
+          .text(col.label, hx + 2, y + 4, {
+            width: col.width - 4,
+            align: 'center',
+            lineGap: 1,
+          });
+        doc.fillColor('#000000');
+        hx += col.width;
+      });
+    };
 
+    drawTableHeader(tableY);
     tableY += headerHeight;
 
-    // ─── Data Rows ────────────────────────────────────────────────────────
-    records.forEach((row, i) => {
-      const rowTotalLabour = cleanNum(row.Number_Of_Labour_1_3) 
-                           + cleanNum(row.Number_Of_Labour_2_3);
-      const companyAmt     = cleanNum(row.Revised_Company_Head_Amount_4);
-      const contractorAmt  = cleanNum(row.Revised_Contractor_Head_Amount_4);
+    // ─── Data Rows (Dynamic Height) ───────────────────────────────────────
+    const fontSize = 9;
+    const fontName = 'Helvetica';
+    const verticalPadding = 10;
 
+    // ✅ Helper: Long word ko break karne ke liye spaces add karo agar zarurat ho
+    const breakLongWords = (text, maxCharsPerLine = 15) => {
+      if (!text) return '-';
+      return String(text)
+        .split(' ')
+        .map(word => {
+          if (word.length > maxCharsPerLine) {
+            // Long word me har N character ke baad zero-width space daalo
+            const chunks = [];
+            for (let i = 0; i < word.length; i += maxCharsPerLine) {
+              chunks.push(word.slice(i, i + maxCharsPerLine));
+            }
+            return chunks.join(' ');
+          }
+          return word;
+        })
+        .join(' ');
+    };
+
+    records.forEach((row, i) => {
+      const rowTotalLabour = cleanNum(row.Number_Of_Labour_1_3)
+        + cleanNum(row.Number_Of_Labour_2_3);
+      const companyAmt = cleanNum(row.Revised_Company_Head_Amount_4);
+      const contractorAmt = cleanNum(row.Revised_Contractor_Head_Amount_4);
+
+      // ✅ Long text columns ke liye breakLongWords lagao
       const rowData = [
         (i + 1).toString(),
-        row.dateRequired         || '-',
-        row.uid                  || '-',
-        row.workDescription      || '-',
-        row.contractorFirmName   || '-',
-        row.Labour_Category_1_3  || '-',
+        row.dateRequired || '-',
+        row.uid || '-',
+        breakLongWords(row.workDescription, 20),       // ✅ Work Details
+        breakLongWords(row.contractorFirmName, 14),    // ✅ Contractor Debit Name
+        breakLongWords(row.Labour_Category_1_3, 12),   // ✅ Labour Category 1
         row.Number_Of_Labour_1_3 || '-',
-        row.Labour_Category_2_3  || '-',
+        breakLongWords(row.Labour_Category_2_3, 12),   // ✅ Labour Category 2
         row.Number_Of_Labour_2_3 || '-',
         rowTotalLabour > 0 ? rowTotalLabour.toString() : '-',
-        companyAmt    > 0  ? companyAmt.toFixed(2)     : '-',
-        contractorAmt > 0  ? contractorAmt.toFixed(2)  : '-',
+        companyAmt > 0 ? companyAmt.toFixed(2) : '-',
+        contractorAmt > 0 ? contractorAmt.toFixed(2) : '-',
       ];
 
-      const bgColor = i % 2 === 0 ? '#f0f5ff' : '#ffffff';
-      cx = tableX;
+      // ✅ STEP 1: Calculate max height across ALL cells in the row
+      doc.fontSize(fontSize).font(fontName);
+
+      let maxCellHeight = minRowHeight;
 
       rowData.forEach((cell, j) => {
-        doc.rect(cx, tableY, columns[j].width, rowHeight)
+        const text = String(cell || '-');
+        // Use 'left' for accurate height calculation
+        const textH = doc.heightOfString(text, {
+          width: columns[j].width - 6,
+          align: 'left',
+        });
+        const requiredH = textH + verticalPadding;
+        if (requiredH > maxCellHeight) {
+          maxCellHeight = requiredH;
+        }
+      });
+
+      // ✅ STEP 2: Page break check
+      if (tableY + maxCellHeight > doc.page.height - 60) {
+        doc.addPage();
+        tableY = margin;
+        drawTableHeader(tableY);
+        tableY += headerHeight;
+      }
+
+      // ✅ STEP 3: Draw row with calculated height
+      const bgColor = i % 2 === 0 ? '#f0f5ff' : '#ffffff';
+      let cx = tableX;
+
+      rowData.forEach((cell, j) => {
+        const text = String(cell || '-');
+
+        // Draw cell background
+        doc.rect(cx, tableY, columns[j].width, maxCellHeight)
           .fillAndStroke(bgColor, '#cccccc');
-        doc.fillColor('#000000').fontSize(9.5).font('Helvetica')
-          .text(String(cell), cx + 2, tableY + 6, {
-            width:     columns[j].width - 4,
-            align:     'center',
-            ellipsis:  true,
-            lineBreak: false,
+
+        // Calculate this cell's actual text height
+        doc.fontSize(fontSize).font(fontName);
+        const cellTextH = doc.heightOfString(text, {
+          width: columns[j].width - 6,
+          align: 'left',
+        });
+
+        // Vertically center
+        const textY = tableY + (maxCellHeight - cellTextH) / 2;
+
+        // Draw with text wrapping
+        doc.fillColor('#000000')
+          .fontSize(fontSize)
+          .font(fontName)
+          .text(text, cx + 3, textY, {
+            width: columns[j].width - 6,
+            align: 'center',
           });
+
         cx += columns[j].width;
       });
 
-      tableY += rowHeight;
+      tableY += maxCellHeight;
     });
 
     // ─── Total Row ────────────────────────────────────────────────────────
-    const totalCompanyHead    = records.reduce(
+    const totalCompanyHead = records.reduce(
       (s, r) => s + cleanNum(r.Revised_Company_Head_Amount_4), 0
     );
     const totalContractorHead = records.reduce(
       (s, r) => s + cleanNum(r.Revised_Contractor_Head_Amount_4), 0
     );
-    const totalLabourAll      = records.reduce(
-      (s, r) => s + cleanNum(r.Number_Of_Labour_1_3) 
-                   + cleanNum(r.Number_Of_Labour_2_3), 0
+    const totalLabourAll = records.reduce(
+      (s, r) => s + cleanNum(r.Number_Of_Labour_1_3)
+        + cleanNum(r.Number_Of_Labour_2_3), 0
     );
+
+    if (tableY + 22 > doc.page.height - 100) {
+      doc.addPage();
+      tableY = margin;
+      drawTableHeader(tableY);
+      tableY += headerHeight;
+    }
 
     const totalRowData = [
       '', '', '', '', '', '', '', '', '',
@@ -278,28 +985,32 @@ async function generateLabourPDF(records, billNo, paidName) {
       totalContractorHead.toFixed(2),
     ];
 
-    cx = tableX;
+    let cx = tableX;
+    const totalRowHeight = 22;
     totalRowData.forEach((cell, j) => {
-      doc.rect(cx, tableY, columns[j].width, rowHeight)
+      doc.rect(cx, tableY, columns[j].width, totalRowHeight)
         .fillAndStroke('#cfe2ff', '#000000');
       doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold')
         .text(cell || '', cx + 2, tableY + 7, {
-          width:     columns[j].width - 4,
-          align:     'center',
+          width: columns[j].width - 4,
+          align: 'center',
           lineBreak: false,
         });
       cx += columns[j].width;
     });
 
-    tableY += rowHeight + 12;
+    tableY += totalRowHeight + 12;
 
     // ─── Summary Box ──────────────────────────────────────────────────────
-     // ─── Summary Box ──────────────────────────────────────────────────────
-    const boxWidth = 290;
-    const boxX     = margin + contentWidth - boxWidth;
-    const boxRowH  = 22;
+    if (tableY + 80 > doc.page.height - 60) {
+      doc.addPage();
+      tableY = margin;
+    }
 
-    // Company Head Row
+    const boxWidth = 290;
+    const boxX = margin + contentWidth - boxWidth;
+    const boxRowH = 22;
+
     doc.rect(boxX, tableY, boxWidth / 2, boxRowH)
       .fillAndStroke('#0d2b4e', '#000000');
     doc.fillColor('#ffffff').fontSize(7.5).font('Helvetica-Bold')
@@ -308,7 +1019,6 @@ async function generateLabourPDF(records, billNo, paidName) {
       });
     doc.rect(boxX + boxWidth / 2, tableY, boxWidth / 2, boxRowH)
       .fillAndStroke('#cfe2ff', '#000000');
-    // ✅ Font size 8 → 10
     doc.fillColor('#000000').fontSize(10).font('Helvetica-Bold')
       .text(totalCompanyHead.toFixed(2), boxX + boxWidth / 2 + 5, tableY + 5, {
         width: boxWidth / 2 - 10, align: 'right', lineBreak: false,
@@ -316,7 +1026,6 @@ async function generateLabourPDF(records, billNo, paidName) {
 
     tableY += boxRowH;
 
-    // Contractor Head Row
     doc.rect(boxX, tableY, boxWidth / 2, boxRowH)
       .fillAndStroke('#0d2b4e', '#000000');
     doc.fillColor('#ffffff').fontSize(7.5).font('Helvetica-Bold')
@@ -325,7 +1034,6 @@ async function generateLabourPDF(records, billNo, paidName) {
       });
     doc.rect(boxX + boxWidth / 2, tableY, boxWidth / 2, boxRowH)
       .fillAndStroke('#d4edda', '#000000');
-    // ✅ Font size 8 → 10
     doc.fillColor('#000000').fontSize(10).font('Helvetica-Bold')
       .text(totalContractorHead.toFixed(2), boxX + boxWidth / 2 + 5, tableY + 5, {
         width: boxWidth / 2 - 10, align: 'right', lineBreak: false,
@@ -334,8 +1042,13 @@ async function generateLabourPDF(records, billNo, paidName) {
     tableY += boxRowH + 30;
 
     // ─── Signatures ───────────────────────────────────────────────────────
+    if (tableY + 30 > doc.page.height - 40) {
+      doc.addPage();
+      tableY = margin;
+    }
+
     doc.fontSize(9).font('Helvetica-Bold')
-      .text('Prepared By: _____________________', margin,       tableY)
+      .text('Prepared By: _____________________', margin, tableY)
       .text('Checked By:  _____________________', margin + 240, tableY)
       .text('Approved By: _____________________', margin + 490, tableY);
 

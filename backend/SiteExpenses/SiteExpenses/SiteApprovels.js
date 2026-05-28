@@ -472,11 +472,225 @@ router.get("/Site-Paid-Step", async (req, res) => {
 //  AH = col 34  → Remark
 // ─────────────────────────────────────────────────────────────
 
+// router.post("/Post-Site-Paid-Step", async (req, res) => {
+//   const {
+//     records,           // ✅ Array: [{ RccBillNo, costAmount }]
+//     TDS_AMOUNT,        // Z  → last record only
+//     STATUS_3,          // W  → every row
+//     PAYMENT_MODE_3,    // AB → every row
+//     BANK_DETAILS_3,    // AC → every row
+//     PAYMENT_DETAILS_3, // AD → every row
+//     PAYMENT_DATE_3,    // AE → every row
+//     Receiver_Name,     // AF → every row
+//     Remark,            // AH → every row
+//   } = req.body;
+
+//   // ── Validation ──────────────────────────────────────────
+//   if (!records || !Array.isArray(records) || records.length === 0) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "records array is required and must not be empty",
+//     });
+//   }
+
+//   const missingBillNos = records.filter((r) => !r.RccBillNo);
+//   if (missingBillNos.length > 0) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "Each record must have a RccBillNo",
+//     });
+//   }
+
+//   if (!STATUS_3) {
+//     return res.status(400).json({ success: false, message: "STATUS_3 is required" });
+//   }
+
+//   // ── TDS Calculation ─────────────────────────────────────
+//   const tdsValue = parseFloat(TDS_AMOUNT || 0) || 0;
+
+//   try {
+//     // ── Fetch sheet data ─────────────────────────────────
+//     const response = await sheets.spreadsheets.values.get({
+//       spreadsheetId: SiteExpeseSheetId,
+//       range: "Site_Exp_Payment_FMS!A7:AH",
+//     });
+
+//     const rows = response.data.values || [];
+
+//     if (rows.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No data found in sheet",
+//       });
+//     }
+
+//     const batchData = [];
+//     const results   = [];
+//     const notFound  = [];
+
+//     // ── Process each record ──────────────────────────────
+//     for (let i = 0; i < records.length; i++) {
+//       const { RccBillNo, costAmount } = records[i];
+//       const isLastRecord = i === records.length - 1;
+
+//       // Find row in sheet (RccBillNo is at column C → index 2)
+//       const rowIndex = rows.findIndex(
+//         (row) => row[2] && String(row[2]).trim() === String(RccBillNo).trim()
+//       );
+
+//       if (rowIndex === -1) {
+//         notFound.push(RccBillNo);
+//         continue;
+//       }
+
+//       const sheetRowNumber = 7 + rowIndex;
+//       const paidAmount     = parseFloat(costAmount || 0) || 0;
+
+//       // TDS & Net only on last record
+//       const tdsForThisRow = isLastRecord ? tdsValue : 0;
+//       const netAmount     = isLastRecord ? paidAmount - tdsValue : paidAmount;
+
+//       console.log(
+//         `[${i + 1}/${records.length}] RccBillNo: ${RccBillNo} | ` +
+//         `Row: ${sheetRowNumber} | Paid: ${paidAmount} | ` +
+//         `TDS: ${tdsForThisRow} | Net: ${netAmount} | isLast: ${isLastRecord}`
+//       );
+
+//       // ── W → STATUS_3 (every row) ────────────────────────
+//       if (STATUS_3 && String(STATUS_3).trim() !== "") {
+//         batchData.push({
+//           range: `Site_Exp_Payment_FMS!W${sheetRowNumber}`,
+//           values: [[STATUS_3]],
+//         });
+//       }
+
+//       // ── Z → TDS_AMOUNT (last row only) ──────────────────
+//       if (isLastRecord && tdsValue > 0) {
+//         batchData.push({
+//           range: `Site_Exp_Payment_FMS!Z${sheetRowNumber}`,
+//           values: [[tdsValue]],
+//         });
+//       }
+
+//       // ── AA → NET_AMOUNT (last row only) ─────────────────
+//       if (isLastRecord) {
+//         batchData.push({
+//           range: `Site_Exp_Payment_FMS!AA${sheetRowNumber}`,
+//           values: [[netAmount]],
+//         });
+//       }
+
+//       // ── AB → PAYMENT_MODE_3 (every row) ─────────────────
+//       if (PAYMENT_MODE_3 && String(PAYMENT_MODE_3).trim() !== "") {
+//         batchData.push({
+//           range: `Site_Exp_Payment_FMS!AB${sheetRowNumber}`,
+//           values: [[PAYMENT_MODE_3]],
+//         });
+//       }
+
+//       // ── AC → BANK_DETAILS_3 (every row) ─────────────────
+//       if (BANK_DETAILS_3 && String(BANK_DETAILS_3).trim() !== "") {
+//         batchData.push({
+//           range: `Site_Exp_Payment_FMS!AC${sheetRowNumber}`,
+//           values: [[BANK_DETAILS_3]],
+//         });
+//       }
+
+//       // ── AD → PAYMENT_DETAILS_3 (every row) ──────────────
+//       if (PAYMENT_DETAILS_3 && String(PAYMENT_DETAILS_3).trim() !== "") {
+//         batchData.push({
+//           range: `Site_Exp_Payment_FMS!AD${sheetRowNumber}`,
+//           values: [[PAYMENT_DETAILS_3]],
+//         });
+//       }
+
+//       // ── AE → PAYMENT_DATE_3 (every row) ─────────────────
+//       if (PAYMENT_DATE_3 && String(PAYMENT_DATE_3).trim() !== "") {
+//         batchData.push({
+//           range: `Site_Exp_Payment_FMS!AE${sheetRowNumber}`,
+//           values: [[PAYMENT_DATE_3]],
+//         });
+//       }
+
+//       // ── AF → Receiver_Name (every row) ──────────────────
+//       if (Receiver_Name && String(Receiver_Name).trim() !== "") {
+//         batchData.push({
+//           range: `Site_Exp_Payment_FMS!AF${sheetRowNumber}`,
+//           values: [[Receiver_Name]],
+//         });
+//       }
+
+//       // ── AH → Remark (every row) ─────────────────────────
+//       if (Remark && String(Remark).trim() !== "") {
+//         batchData.push({
+//           range: `Site_Exp_Payment_FMS!AH${sheetRowNumber}`,
+//           values: [[Remark]],
+//         });
+//       }
+
+//       results.push({
+//         RccBillNo,
+//         sheetRowNumber,
+//         paidAmount,
+//         tdsApplied: tdsForThisRow,
+//         netAmount,
+//         isLastRecord,
+//       });
+//     }
+
+//     // ── Handle not found ─────────────────────────────────
+//     if (notFound.length > 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: `RccBillNo(s) not found in sheet: ${notFound.join(", ")}`,
+//         notFound,
+//       });
+//     }
+
+//     if (batchData.length === 0) {
+//       return res.json({
+//         success: true,
+//         message: "No valid fields to update",
+//       });
+//     }
+
+//     // ── Single batchUpdate ───────────────────────────────
+//     await sheets.spreadsheets.values.batchUpdate({
+//       spreadsheetId: SiteExpeseSheetId,
+//       resource: {
+//         valueInputOption: "USER_ENTERED",
+//         data: batchData,
+//       },
+//     });
+
+//     console.log(`✅ Bulk updated ${results.length} records, ${batchData.length} cells`);
+
+//     return res.json({
+//       success: true,
+//       message: `Payment updated for ${results.length} record(s)`,
+//       totalRecords: records.length,
+//       updatedCount: batchData.length,
+//       tdsValue,
+//       summary: results,
+//     });
+
+//   } catch (error) {
+//     console.error("❌ Site paid bulk update error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Bulk update failed",
+//       error: error.message,
+//     });
+//   }
+// });
+
+
+
 router.post("/Post-Site-Paid-Step", async (req, res) => {
   const {
-    records,           // ✅ Array: [{ RccBillNo, costAmount }]
-    TDS_AMOUNT,        // Z  → last record only
-    STATUS_3,          // W  → every row
+    records,           // [{ UID, costAmount }] ya [{ RccBillNo, costAmount }]
+    TDS_AMOUNT,        // Z → last row only
+    STATUS_3,          // W → every row
     PAYMENT_MODE_3,    // AB → every row
     BANK_DETAILS_3,    // AC → every row
     PAYMENT_DETAILS_3, // AD → every row
@@ -493,20 +707,34 @@ router.post("/Post-Site-Paid-Step", async (req, res) => {
     });
   }
 
-  const missingBillNos = records.filter((r) => !r.RccBillNo);
-  if (missingBillNos.length > 0) {
+  // UID ya RccBillNo dono accept karo
+  const missingIDs = records.filter((r) => !r.UID && !r.RccBillNo);
+  if (missingIDs.length > 0) {
     return res.status(400).json({
       success: false,
-      message: "Each record must have a RccBillNo",
+      message: "Each record must have a UID or RccBillNo",
     });
   }
 
   if (!STATUS_3) {
-    return res.status(400).json({ success: false, message: "STATUS_3 is required" });
+    return res.status(400).json({
+      success: false,
+      message: "STATUS_3 is required",
+    });
   }
 
-  // ── TDS Calculation ─────────────────────────────────────
-  const tdsValue = parseFloat(TDS_AMOUNT || 0) || 0;
+  const tdsValue = Number(String(TDS_AMOUNT || 0).replace(/,/g, "").trim()) || 0;
+
+  // Helper function - amount normalize
+  const normalizeAmount = (val) => {
+    if (val === null || val === undefined || val === "") return null;
+    const cleaned = String(val).replace(/₹/g, "").replace(/,/g, "").trim();
+    const num = Number(cleaned);
+    return Number.isFinite(num) ? num : null;
+  };
+
+  // Helper function - UID normalize
+  const normalizeUID = (val) => String(val || "").trim();
 
   try {
     // ── Fetch sheet data ─────────────────────────────────
@@ -524,36 +752,62 @@ router.post("/Post-Site-Paid-Step", async (req, res) => {
       });
     }
 
+    // ✅ B column (index 1) se UID map banao
+    const uidRowMap = new Map();
+
+    rows.forEach((row, index) => {
+      const uid = normalizeUID(row[1]); // ✅ B column = index 1
+      if (!uid) return;
+
+      const actualRowNumber = 7 + index;
+
+      if (!uidRowMap.has(uid)) {
+        uidRowMap.set(uid, []);
+      }
+      uidRowMap.get(uid).push(actualRowNumber);
+    });
+
+    console.log("UID Row Map (first 10):", [...uidRowMap.entries()].slice(0, 10));
+
     const batchData = [];
-    const results   = [];
-    const notFound  = [];
+    const results = [];
+    const notFound = [];
+    const invalidAmounts = [];
 
     // ── Process each record ──────────────────────────────
     for (let i = 0; i < records.length; i++) {
-      const { RccBillNo, costAmount } = records[i];
+      const record = records[i];
       const isLastRecord = i === records.length - 1;
 
-      // Find row in sheet (RccBillNo is at column C → index 2)
-      const rowIndex = rows.findIndex(
-        (row) => row[2] && String(row[2]).trim() === String(RccBillNo).trim()
+      // UID ya RccBillNo jo bhi ho use karo
+      const itemUID = record.UID || record.RccBillNo;
+
+      // Amount get karo
+      const paidAmount = normalizeAmount(
+        record.costAmount ?? record.amount ?? record.Amount
       );
 
-      if (rowIndex === -1) {
-        notFound.push(RccBillNo);
+      if (paidAmount === null) {
+        invalidAmounts.push({
+          UID: itemUID,
+          receivedAmount: record.costAmount ?? record.amount ?? record.Amount,
+        });
         continue;
       }
 
-      const sheetRowNumber = 7 + rowIndex;
-      const paidAmount     = parseFloat(costAmount || 0) || 0;
+      // ✅ B column se matching
+      const uid = normalizeUID(itemUID);
+      const rowQueue = uidRowMap.get(uid);
 
-      // TDS & Net only on last record
-      const tdsForThisRow = isLastRecord ? tdsValue : 0;
-      const netAmount     = isLastRecord ? paidAmount - tdsValue : paidAmount;
+      if (!rowQueue || rowQueue.length === 0) {
+        notFound.push(itemUID);
+        continue;
+      }
+
+      const sheetRowNumber = rowQueue.shift(); // Next available row
 
       console.log(
-        `[${i + 1}/${records.length}] RccBillNo: ${RccBillNo} | ` +
-        `Row: ${sheetRowNumber} | Paid: ${paidAmount} | ` +
-        `TDS: ${tdsForThisRow} | Net: ${netAmount} | isLast: ${isLastRecord}`
+        `[${i + 1}/${records.length}] UID: ${itemUID} | Row: ${sheetRowNumber} | Amount: ${paidAmount}`
       );
 
       // ── W → STATUS_3 (every row) ────────────────────────
@@ -572,13 +826,11 @@ router.post("/Post-Site-Paid-Step", async (req, res) => {
         });
       }
 
-      // ── AA → NET_AMOUNT (last row only) ─────────────────
-      if (isLastRecord) {
-        batchData.push({
-          range: `Site_Exp_Payment_FMS!AA${sheetRowNumber}`,
-          values: [[netAmount]],
-        });
-      }
+      // ── AA → Amount (every row - apna apna amount) ──────
+      batchData.push({
+        range: `Site_Exp_Payment_FMS!AA${sheetRowNumber}`,
+        values: [[paidAmount]],
+      });
 
       // ── AB → PAYMENT_MODE_3 (every row) ─────────────────
       if (PAYMENT_MODE_3 && String(PAYMENT_MODE_3).trim() !== "") {
@@ -629,11 +881,10 @@ router.post("/Post-Site-Paid-Step", async (req, res) => {
       }
 
       results.push({
-        RccBillNo,
+        UID: itemUID,
         sheetRowNumber,
         paidAmount,
-        tdsApplied: tdsForThisRow,
-        netAmount,
+        tdsApplied: isLastRecord ? tdsValue : 0,
         isLastRecord,
       });
     }
@@ -642,8 +893,17 @@ router.post("/Post-Site-Paid-Step", async (req, res) => {
     if (notFound.length > 0) {
       return res.status(404).json({
         success: false,
-        message: `RccBillNo(s) not found in sheet: ${notFound.join(", ")}`,
+        message: `UID(s) not found in sheet: ${notFound.join(", ")}`,
         notFound,
+      });
+    }
+
+    // ── Handle invalid amounts ───────────────────────────
+    if (invalidAmounts.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Some records have invalid/missing amount",
+        invalidAmounts,
       });
     }
 
@@ -654,16 +914,22 @@ router.post("/Post-Site-Paid-Step", async (req, res) => {
       });
     }
 
-    // ── Single batchUpdate ───────────────────────────────
+    // ── Log AA updates ───────────────────────────────────
+    console.log(
+      "AA column updates:",
+      batchData.filter((item) => item.range.includes("!AA"))
+    );
+
+    // ── Batch Update ─────────────────────────────────────
     await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: SiteExpeseSheetId,
       resource: {
-        valueInputOption: "USER_ENTERED",
+        valueInputOption: "RAW",
         data: batchData,
       },
     });
 
-    console.log(`✅ Bulk updated ${results.length} records, ${batchData.length} cells`);
+    console.log(`✅ Updated ${results.length} records, ${batchData.length} cells`);
 
     return res.json({
       success: true,
@@ -683,9 +949,6 @@ router.post("/Post-Site-Paid-Step", async (req, res) => {
     });
   }
 });
-
-
-
 
 
 

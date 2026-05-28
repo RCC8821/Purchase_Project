@@ -432,58 +432,59 @@ const SitePaidAmount = () => {
   };
 
   // ── Submit ──────────────────────────────────────────────────
-  const handleSubmit = async () => {
-    if (selectedItems.length === 0) return;
-    if (!formData.STATUS_3)          return alert('Please select Payment Status');
-    if (!formData.PAYMENT_MODE_3)    return alert('Please select Payment Mode');
-    if (!formData.BANK_DETAILS_3)    return alert('Please select Bank');
-    if (!formData.PAYMENT_DETAILS_3) return alert('Please enter Payment Details / Reference');
-    if (!formData.PAYMENT_DATE_3)    return alert('Please select Payment Date');
-    if (!formData.Receiver_Name)     return alert('Please enter Receiver Name');
-    if (isTdsInvalid)                return alert('TDS amount cannot exceed total paid amount!');
+const handleSubmit = async () => {
+  if (selectedItems.length === 0) return;
+  if (!formData.STATUS_3)          return alert('Please select Payment Status');
+  if (!formData.PAYMENT_MODE_3)    return alert('Please select Payment Mode');
+  if (!formData.BANK_DETAILS_3)    return alert('Please select Bank');
+  if (!formData.PAYMENT_DETAILS_3) return alert('Please enter Payment Details / Reference');
+  if (!formData.PAYMENT_DATE_3)    return alert('Please select Payment Date');
+  if (!formData.Receiver_Name)     return alert('Please enter Receiver Name');
+  if (isTdsInvalid)                return alert('TDS amount cannot exceed total paid amount!');
 
-    // ── Build records array ────────────────────────────────
-    const records = selectedItems.map(item => ({
-      RccBillNo:  item.RccBillNo,
-      costAmount: parseAmount(item.costAmount),
-    }));
+  // ✅ UID bhejo - B column se match hoga
+  const records = selectedItems.map(item => ({
+    UID:        item.uid,
+    costAmount: parseAmount(item.costAmount),
+  }));
 
-    // ── Single API call (bulk) ─────────────────────────────
-    const payload = {
-      records,
-      TDS_AMOUNT:        tdsValue || 0,
-      STATUS_3:          formData.STATUS_3,
-      PAYMENT_MODE_3:    formData.PAYMENT_MODE_3,
-      BANK_DETAILS_3:    formData.BANK_DETAILS_3,
-      PAYMENT_DETAILS_3: formData.PAYMENT_DETAILS_3,
-      PAYMENT_DATE_3:    formData.PAYMENT_DATE_3,
-      Receiver_Name:     formData.Receiver_Name,
-      Remark:            formData.Remark,
-    };
+  console.log("📤 Sending records:", records); // debug
 
-    try {
-      const result = await postSitePaidStep(payload).unwrap();
-
-      if (result?.success) {
-        const msg =
-          `✅ Bulk Payment Successful!\n` +
-          `Records: ${result.totalRecords}\n` +
-          `Total Amount: ₹${formatAmount(totalAmount)}\n` +
-          `TDS Deducted: ₹${formatAmount(tdsValue)}\n` +
-          `Net Amount: ₹${formatAmount(netAmount)}`;
-        alert(msg);
-      } else {
-        alert(`⚠️ ${result?.message || 'Partial or unknown result'}`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert(`❌ Failed: ${err?.data?.message || err?.message || 'Unknown error'}`);
-    }
-
-    setShowModal(false);
-    setSelectedItems([]);
-    refetch();
+  const payload = {
+    records,
+    TDS_AMOUNT:        tdsValue || 0,
+    STATUS_3:          formData.STATUS_3,
+    PAYMENT_MODE_3:    formData.PAYMENT_MODE_3,
+    BANK_DETAILS_3:    formData.BANK_DETAILS_3,
+    PAYMENT_DETAILS_3: formData.PAYMENT_DETAILS_3,
+    PAYMENT_DATE_3:    formData.PAYMENT_DATE_3,
+    Receiver_Name:     formData.Receiver_Name,
+    Remark:            formData.Remark,
   };
+
+  try {
+    const result = await postSitePaidStep(payload).unwrap();
+
+    if (result?.success) {
+      const msg =
+        `✅ Bulk Payment Successful!\n` +
+        `Records: ${result.totalRecords}\n` +
+        `Total Amount: ₹${formatAmount(totalAmount)}\n` +
+        `TDS Deducted: ₹${formatAmount(tdsValue)}\n` +
+        `Net Amount: ₹${formatAmount(netAmount)}`;
+      alert(msg);
+    } else {
+      alert(`⚠️ ${result?.message || 'Partial or unknown result'}`);
+    }
+  } catch (err) {
+    console.error(err);
+    alert(`❌ Failed: ${err?.data?.message || err?.message || 'Unknown error'}`);
+  }
+
+  setShowModal(false);
+  setSelectedItems([]);
+  refetch();
+};
 
   // ── Loading / Error states ──────────────────────────────────
   if (isLoading) {
