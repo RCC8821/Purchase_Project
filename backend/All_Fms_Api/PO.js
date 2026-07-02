@@ -1144,7 +1144,7 @@ const generatePODocument = (approvedItems, quotationNo, indentNo, expectedDelive
   doc.text('310 Saket Nagar, 9B Near Sagar Public School, Bhopal, 462026', pageWidth - 15, addressStartY + 4, { align: 'right' });
   doc.text('Contact: 7869962504', pageWidth - 15, addressStartY + 8, { align: 'right' });
   doc.text('Email: mayank@rccinfrastructure.com', pageWidth - 15, addressStartY + 12, { align: 'right' });
-  doc.text('GST: 23ABHFR3130L1ZA', pageWidth - 15, addressStartY + 16, { align: 'right' });
+  doc.text('GST: 23AARPC4273A2Z4', pageWidth - 15, addressStartY + 16, { align: 'right' });
 
   doc.setDrawColor(220, 53, 69);
   doc.setLineWidth(0.5);
