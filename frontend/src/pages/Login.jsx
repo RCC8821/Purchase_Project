@@ -296,3 +296,156 @@
 // };
 
 // export default Login;
+
+
+
+
+
+
+
+
+
+import React, { useState, useEffect } from 'react';
+
+const Login = () => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const FloatingShapes = React.memo(() => (
+    <>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full opacity-20"
+            style={{
+              width: `${60 + i * 10}px`,
+              height: `${60 + i * 10}px`,
+              left: `${20 + i * 20}%`,
+              top: `${10 + i * 20}%`,
+              background: `linear-gradient(45deg, rgb(147, 51, 234), rgb(219, 39, 119))`,
+              animation: `float${i} ${4 + i}s ease-in-out infinite`,
+              animationDelay: `${i * 0.5}s`,
+            }}
+          />
+        ))}
+      </div>
+      <style jsx>{`
+        @keyframes float0 { 0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); } 50% { transform: translateY(-10px) rotate(90deg) scale(1.05); } }
+        @keyframes float1 { 0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); } 50% { transform: translateY(-15px) rotate(90deg) scale(1.05); } }
+        @keyframes float2 { 0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); } 50% { transform: translateY(-20px) rotate(90deg) scale(1.05); } }
+        @keyframes float3 { 0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); } 50% { transform: translateY(-25px) rotate(90deg) scale(1.05); } }
+      `}</style>
+    </>
+  ));
+
+  const ParticleSystem = React.memo(() => (
+    <>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-purple-400 rounded-full opacity-30"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
+              animationDelay: `${Math.random() * 2}s`,
+            }}
+          />
+        ))}
+      </div>
+      <style jsx>{`
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.3); } }
+      `}</style>
+    </>
+  ));
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
+      <FloatingShapes />
+      <ParticleSystem />
+      <div className="absolute inset-0 opacity-10">
+        <div
+          className="w-full h-full"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(147, 51, 234, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(147, 51, 234, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+            animation: 'gridMove 20s linear infinite',
+          }}
+        />
+      </div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl" />
+
+      <div className="relative z-10">
+        <div
+          className={`w-full max-w-md transform transition-all duration-1000 ease-out ${
+            mounted ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-8 opacity-0 scale-95'
+          }`}
+        >
+          <div className="backdrop-blur-md bg-gray-900/60 border border-gray-700/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10" />
+            <div className="absolute inset-[1px] rounded-3xl bg-gray-900/80" />
+            <div className="relative z-10 text-center py-6">
+              
+              {/* Logo */}
+              <div className="mb-6 relative">
+                <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 flex items-center justify-center relative overflow-hidden">
+                  <div
+                    className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400"
+                    style={{ animation: 'spin 3s linear infinite' }}
+                  />
+                  <div className="absolute inset-2 rounded-full bg-gray-900" />
+                  <img
+                    src="/rcc-logo.png"
+                    alt="RCC Logo"
+                    className="w-12 h-12 relative z-10 object-contain"
+                  />
+                </div>
+              </div>
+
+              {/* Main Notice */}
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-300 via-orange-300 to-yellow-400 bg-clip-text text-transparent mb-4">
+                Attention / सूचना 📢
+              </h1>
+              
+              <div className="space-y-3 mb-8 text-gray-300 px-2">
+                <p className="text-lg font-semibold text-white">
+                  Yeh purani website ab band ho gayi hai.
+                </p>
+                <p className="text-sm border border-dashed border-purple-500/40 rounded-xl p-3 bg-purple-950/30">
+                  Humne ek **Naya Portal/Purchase** shuru kiya hai. Kripya aage se saara kaam naye link par hi karein.
+                </p>
+              </div>
+              
+              {/* Redirect Button */}
+              <a
+                href="https://my-shop-app-project.vercel.app" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-full py-4 px-6 rounded-2xl font-bold text-lg text-white bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-700 hover:scale-105 hover:shadow-2xl hover:shadow-emerald-500/40 active:scale-95 transition-all duration-300"
+              >
+                ✨ Go to New Website / नय पोर्टल पर जाएं
+              </a>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style jsx global>{`
+        @keyframes gridMove { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, 50px); } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
+  );
+};
+
+export default Login;
